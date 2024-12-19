@@ -8,7 +8,7 @@ export interface SelectFruitByIdProps {
     id: Fruit["id"];
 }
 
-export interface SelectRandomFruitReturn {
+export interface FruitTypeReturn {
     name: string;
     id: string;
     description: string;

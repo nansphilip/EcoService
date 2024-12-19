@@ -1,8 +1,10 @@
 import { SelectEveryFruit } from "@actions/database/Fruit";
-import { ImageCard, Text, Title } from "@comps/server/ImageCommon";
-import { Img } from "@comps/server/ImageCard";
+import { ImageCard, Img, Text, Title } from "@comps/server/ImageCard";
 
-export default async function ServerFruitPage() {
+// Server component (can be async function)
+export default async function FruitPage() {
+
+    // This server comonent can use a server action directly to fetch data
     const fruitList = await SelectEveryFruit();
 
     return (

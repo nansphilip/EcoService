@@ -4,17 +4,26 @@ import { combo } from "@lib/combo";
 
 type InputProps = {
     label: string;
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-    value: string;
+    type: "text" | "email" | "password" | "file";
 
-    type: "text" | "email" | "password";
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    value?: string | never;
+
     placeholder?: string | boolean;
     onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
 
     classDiv?: string;
     classLabel?: string;
     classInput?: string;
-};
+} & ({
+    // If type is text, email, or password
+    type: "text" | "email" | "password";
+    value: string;
+}|{
+    // If type is file
+    type: "file";
+    value: never;
+})
 
 export default function InputClient(props: InputProps) {
     const {
@@ -39,6 +48,18 @@ export default function InputClient(props: InputProps) {
             : placeholder
             ? labelFirstLetterCapitalized
             : "";
+
+    if (type === "file") {
+        return (
+            <input
+                className="h-6 cursor-pointer rounded border text-xs ring-teal-400 ring-offset-2 transition-all duration-150 file:pointer-events-none file:h-6 file:cursor-pointer file:border-none file:text-xs file:transition-all file:duration-150 hover:bg-gray-50 hover:file:bg-gray-200 focus:ring-2"
+                name="profilePicture"
+                type="file"
+                accept="image/*"
+                onChange={onChange}
+            />
+        );
+    }
 
     return (
         <div className={combo("flex flex-col gap-1", classDiv)}>

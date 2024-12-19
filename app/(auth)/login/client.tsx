@@ -94,6 +94,8 @@ export default function LoginClient() {
             >
                 Login
             </ButtonClient>
+            {/* <InputClient label="Email" type="file" onChange={(e)=>{console.log(e.target.files)}} /> */}
+
         </div>
     );
 }

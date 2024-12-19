@@ -1,19 +1,21 @@
-'use client'
+"use client";
 
 import { SelectRandomFruit } from "@actions/database/Fruit";
 import ButtonClient from "@comps/client/Button";
 import { useState } from "react";
-import { ImgClient } from "@comps/client/ImageCard";
-import { ImageCard, Text, Title } from "@comps/server/ImageCommon";
-import { Image as ImageTemplate } from "lucide-react";
-import { SelectRandomFruitReturn } from "@actions/types/Fruit";
+import { ImageCard, Img, Text, Title } from "@comps/server/ImageCard";
+import { FruitTypeReturn } from "@actions/types/Fruit";
 
-export default function ClientFruitPage() {
-    const [fruitList, setFruitList] = useState<SelectRandomFruitReturn[]>([]);
+// Client component (can't be async fucntion)
+export default function FruitPageClient() {
+    const [fruitList, setFruitList] = useState<FruitTypeReturn[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
+    // This client component can't use server actions directly, it needs to create an async function to fetch data from server
     const fetchRandomFruit = async () => {
+        // Start loading
         setIsLoading(true);
+
         const randomFruit = await SelectRandomFruit();
 
         if (!randomFruit) {
@@ -21,6 +23,8 @@ export default function ClientFruitPage() {
         }
 
         setFruitList([...fruitList, randomFruit]);
+
+        // Stop loading
         setIsLoading(false);
     };
 
@@ -29,21 +33,25 @@ export default function ClientFruitPage() {
             <div className="grid columns-1 grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
                 {fruitList
                     ? fruitList.map(({ name, description, image }, index) => (
-                        <ImageCard key={index}>
-                            {image ?
-                                <ImgClient src={image} alt={name} />
-                                : <ImageTemplate width={300} height={200} />
-                            }
-                            <div className="w-[200px] space-y-1 p-4">
-                                <Title>{name}</Title>
-                                <Text>{description}</Text>
-                            </div>
-                        </ImageCard>
-                    ))
+                          <ImageCard key={index}>
+                              <Img src={image} alt={name} />
+                              <div className="w-[200px] space-y-1 p-4">
+                                  <Title>{name}</Title>
+                                  <Text>{description}</Text>
+                              </div>
+                          </ImageCard>
+                      ))
                     : "No fruits found."}
             </div>
             <div className="flex items-center justify-center">
-                <ButtonClient type="button" label="new-fruit" isLoading={isLoading} onClick={fetchRandomFruit}>Get new fruit</ButtonClient>
+                <ButtonClient
+                    type="button"
+                    label="new-fruit"
+                    isLoading={isLoading}
+                    onClick={fetchRandomFruit}
+                >
+                    Get new fruit
+                </ButtonClient>
             </div>
         </>
     );
