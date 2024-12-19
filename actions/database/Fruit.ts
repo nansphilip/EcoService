@@ -1,8 +1,44 @@
 "use server";
 
-import { SelectFruitByIdProps, FruitTypeReturn } from "@actions/types/Fruit";
-import { existingFile } from "@actions/utils/checkfile";
+import {
+    SelectFruitByIdProps,
+    FruitTypeReturn,
+    CreateFruitProps,
+    FruitType,
+} from "@actions/types/Fruit";
+import { FileExists } from "@actions/utils/FileExists";
+import { StringToSlug } from "@actions/utils/StringToSlug";
 import Prisma from "@lib/prisma";
+
+export const CreateFruit = async (
+    props: CreateFruitProps
+): Promise<FruitTypeReturn | null> => {
+    try {
+        const { name, description, extension } = props;
+
+        // TODO : zod validation
+
+        const imageSlug = await StringToSlug(name);
+
+        const fileExists = await FileExists(imageSlug + "." + extension, "public");
+
+        if (!fileExists) {
+            return null;
+        }
+
+        const fruitData: FruitType = await Prisma.fruit.create({
+            data: {
+                name,
+                description,
+                image: await StringToSlug(name),
+            },
+        });
+
+        return fruitData;
+    } catch (error) {
+        throw new Error("CreateFruit -> " + (error as Error).message);
+    }
+};
 
 export const SelectFruitById = async (
     props: SelectFruitByIdProps
@@ -26,7 +62,7 @@ export const SelectFruitById = async (
 
         const fruitData: FruitTypeReturn = fruitDataRaw;
 
-        const fileExists = await existingFile(fruitData.image, "public");
+        const fileExists = await FileExists(fruitData.image, "public");
 
         if (!fileExists) {
             fruitData.image = null;
@@ -51,7 +87,7 @@ export const SelectEveryFruit = async (): Promise<FruitTypeReturn[] | null> => {
         );
 
         fruitDataList.map(async (fruit) => {
-            const fileExists = await existingFile(fruit.image, "public");
+            const fileExists = await FileExists(fruit.image, "public");
 
             if (!fileExists) {
                 fruit.image = null;
@@ -76,7 +112,7 @@ export const SelectRandomFruit = async (): Promise<FruitTypeReturn | null> => {
 
         const fruitData: FruitTypeReturn = fruitDataListRaw[randomIndex];
 
-        const fileExists = await existingFile(fruitData.image, "public");
+        const fileExists = await FileExists(fruitData.image, "public");
 
         if (!fileExists) {
             fruitData.image = null;

@@ -4,6 +4,12 @@ import { Fruit } from "@prisma/client";
 
 export type FruitType = Fruit;
 
+export interface CreateFruitProps {
+    name: string;
+    description: string;
+    extension: "png" | "jpg" | "jpeg" | "webp";
+}
+
 export interface SelectFruitByIdProps {
     id: Fruit["id"];
 }
