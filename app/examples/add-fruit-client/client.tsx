@@ -1,7 +1,8 @@
 "use client";
 
 import { CreateFruit } from "@actions/database/Fruit";
-import ToSlug, { StringToSlug } from "@actions/utils/StringToSlug";
+import ImageUploads from "@actions/utils/ImageUploads";
+import { StringToSlug } from "@actions/utils/StringToSlug";
 import ButtonClient from "@comps/client/Button";
 import InputClient from "@comps/client/Input";
 import Card from "@comps/server/Card";
@@ -18,31 +19,31 @@ export default function AddFruitClient() {
     const [image, setImage] = useState<File | null>();
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const fileList = Array.from(e.target.files as FileList);
+        const imageFile = e.target.files?.[0] as File;
 
-        if (!fileList) {
-            return setImportFeedback("Aucun fichier sélectionné");
+        if (!imageFile) {
+            setImportFeedback("Aucun fichier sélectionné");
+            return
         }
 
-        if (fileList.length > 3) {
-            return setImportFeedback("Trop d'images sélectionnées");
-        }
+        const ext = "."+imageFile.name.split(".").pop();
+        const name = imageFile.name.replace(ext, "")
+        console.log(name, ext);
 
         const imageExtensions = ["image/jpeg", "image/png", "image/webp"];
         const imageSize = 5 * 1024 * 1024; // 5MB
 
-        fileList.map((file) => {
-            if (file.size > imageSize) {
+            if (imageFile.size > imageSize) {
                 return setImportFeedback("Fichier trop volumineux");
             }
-            if (!imageExtensions.includes(file.type)) {
+
+            if (!imageExtensions.includes(imageFile.type)) {
                 return setImportFeedback("Format de fichier invalide");
             }
-        });
 
         // Store raw file list
         setImportFeedback("Fichiers importés avec succès");
-        setImageFileList(fileList);
+        setImage(imageFile);
     }
 
     const handleSubmit = async () => {
@@ -55,9 +56,7 @@ export default function AddFruitClient() {
             return;
         }
 
-        const extension
-
-        const uploadSucceeded = await ImageUploads({});
+        const uploadSucceeded = await ImageUploads({imageName: image.name, imageExtension: image.type, imageFile:image, folderName: "fruit"});
 
         if (!uploadSucceeded) {
             setMessage("Upload failed, please try again later.");
