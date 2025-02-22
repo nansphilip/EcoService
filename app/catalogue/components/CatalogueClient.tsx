@@ -30,6 +30,7 @@ export default function CatalogueClient() {
                 skip: page > 1 ? (page - 1) * take : undefined,
                 take,
                 where: category ? { categoryId: category } : undefined,
+                // TODO: add search
             });
 
             const productAmount = await SelectProductAmount({

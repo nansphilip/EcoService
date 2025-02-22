@@ -34,6 +34,7 @@ export default async function Page(props: PageProps) {
         }),
         take,
         where: category ? { categoryId: category } : undefined,
+        // TODO: add search
     });
 
     const categoryList = await SelectCategoryList({
@@ -44,8 +45,8 @@ export default async function Page(props: PageProps) {
     }
 
     return (
-        <div className="flex flex-1 flex-col gap-4">
-            <h1 className="px-6 pt-6 text-4xl font-bold">Catalogue</h1>
+        <div className="flex flex-1 flex-col">
+            <h1 className="bg-primary px-6 pt-6 text-4xl font-bold text-secondary">Catalogue</h1>
             <div className="flex flex-1 flex-col justify-start gap-4 overflow-hidden">
                 <FilterProvider
                     productList={productList}

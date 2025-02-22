@@ -1,4 +1,5 @@
 import { combo } from "@lib/combo";
+import Image from "next/image";
 import Link from "next/link";
 
 type FooterProps = {
@@ -16,7 +17,9 @@ export default function FooterClient(props: FooterProps) {
             )}
         >
             <div className="flex flex-col items-center justify-center gap-4">
-                <div className="size-24 rounded-full bg-white"></div>
+                <div className="size-24 rounded-full bg-white flex items-center justify-center">
+                <Image src="/logo.png" alt="Eco Service" width={80} height={80} />
+                </div>
                 <h1 className="text-4xl font-bold text-white">Eco Service</h1>
             </div>
             <div className="flex flex-row items-center justify-center gap-20">

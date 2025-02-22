@@ -2,10 +2,14 @@
 
 Complete auth and user management
 
-## Team
+## User Experience
 
-- Read me
-- Coding chart
+- [ ] Home icone: underline animation when hover on header categories link
+- [ ] Search: make request and zod validation
+- [ ] Accessibility: header menu `enter` key to open menu
+
+- [ ] Issue: if user is on `/catalogue`, header categories link does not refresh the categories list
+- [ ] Issue: footer links or scrollbar not clickable
 
 ## Security
 
