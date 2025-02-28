@@ -1,220 +1,188 @@
 generator client {
-    provider = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-    provider = "mysql"
-    url      = env("DATABASE_URL")
+  provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
-    id            String  @id @unique @default(nanoid())
-    name          String
-    email         String  @unique
-    emailVerified Boolean
-    image         String?
+  id              String    @id @unique @default(nanoid())
+  name            String
+  email           String    @unique
+  emailVerified   Boolean
+  image           String?
+  phone           String?
+  stripeId        String?
+  stripeConnectId String?
+  isOnboarded     Boolean   @default(false)
+  isSeller        Boolean   @default(false)
+  role            Role      @default(USER)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  Account         Account[]
+  Adress          Address[]
+  Order           Order[]
+  Product         Product[]
+  Session         Session[]
 
-    phone    String?
-
-    stripeId        String? // Regular Stripe Customer ID
-    stripeConnectId String? // Stripe Connect Account ID
-    isOnboarded     Boolean @default(false) // Track if seller has completed Stripe onboarding
-    isSeller        Boolean @default(false) // Track if user wants to be a seller
-
-    Adress   Address[]
-    Order    Order[]
-
-    role    Role      @default(USER)
-    Product Product[] // for vendor only
-
-    // One to Many
-    Session Session[]
-    Account Account[]
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@map("user")
-}
-
-enum Role {
-    USER
-    VENDOR
-    EMPLOYEE
-    ADMIN
+  @@map("user")
 }
 
 model Category {
-    id          String    @id @unique @default(nanoid())
-    name        String
-    description String?
-    products    Product[] @relation("CategoryToProduct") // Relation avec les produits
+  id          String    @id @unique @default(nanoid())
+  name        String
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    Product[] @relation("CategoryToProduct")
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@map("categories")
+  @@map("categories")
 }
 
 model Product {
-    id          String @id @unique @default(nanoid())
-    name        String
-    description String
-    image       String
-    price       Float
-    stock       Int
+  id          String     @id @unique @default(nanoid())
+  name        String
+  description String
+  image       String
+  price       Float
+  stock       Int
+  vendorId    String
+  categoryId  String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  category    Category?  @relation("CategoryToProduct", fields: [categoryId], references: [id])
+  user        User       @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  quantity    Quantity[]
 
-    vendorId    String
-    user        User   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
-
-    quantity    Quantity[]
-
-    categoryId  String? // Ajout de la clé étrangère
-    category    Category? @relation("CategoryToProduct", fields: [categoryId], references: [id])
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@map("product")
+  @@index([categoryId], map: "product_categoryId_fkey")
+  @@index([vendorId], map: "product_vendorId_fkey")
+  @@map("product")
 }
 
 model Quantity {
-    id String @id @unique @default(nanoid())
-    quantity Int
+  id        String   @id @unique @default(nanoid())
+  quantity  Int
+  productId String
+  orderId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-    productId String
-    product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-    orderId String
-    order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@map("quantity")
+  @@index([orderId], map: "quantity_orderId_fkey")
+  @@index([productId], map: "quantity_productId_fkey")
+  @@map("quantity")
 }
 
 model Order {
-    id String @id @unique @default(nanoid())
-    // orderNumber String
+  id            String        @id @unique @default(nanoid())
+  orderStatus   OrderStatus   @default(PENDING)
+  paymentStatus PaymentStatus @default(PENDING)
+  userId        String
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quantity      Quantity[]
 
-    // items         Json
-    orderStatus   OrderStatus   @default(PENDING)
-    paymentStatus PaymentStatus @default(PENDING)
-
-    // Many to One
-    userId String
-    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-    quantity Quantity[]
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@map("order")
-}
-
-enum OrderStatus {
-    PENDING // in cart
-    ACCEPTED // order paid
-    PREPARING // preparing for shipment
-    DELIVERING // in delivering
-    COMPLETED // delivered
-    CANCELLED // order cancelled
-    RETURNING // order retturning
-    REFOUNDED // order refunded
-}
-
-enum PaymentStatus {
-    PENDING
-    ACCEPTED
-    REFUSED
-    REFUNDED
+  @@index([userId], map: "order_userId_fkey")
+  @@map("order")
 }
 
 model Address {
-    id      String @id @unique @default(nanoid())
-    address String
-    postal  String
-    city    String
-    country String
+  id        String   @id @unique @default(nanoid())
+  address   String
+  postal    String
+  city      String
+  country   String
+  isPrimary Boolean
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    isPrimary Boolean
-
-    // Many to One
-    userId String
-    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@map("address")
+  @@index([userId], map: "address_userId_fkey")
+  @@map("address")
 }
 
 model Session {
-    id        String   @id @unique @default(nanoid())
-    token     String
-    expiresAt DateTime
-    ipAddress String?
-    userAgent String?
+  id        String   @id @unique @default(nanoid())
+  token     String
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    // Many to One
-    userId String
-    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@index([userId])
-    @@map("session")
+  @@index([userId])
+  @@map("session")
 }
 
 model Account {
-    id         String @id @unique @default(nanoid())
-    accountId  String
-    providerId String
+  id                    String    @id @unique @default(nanoid())
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    // Many to One
-    userId String
-    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-    accessToken  String?
-    refreshToken String?
-
-    accessTokenExpiresAt  DateTime?
-    refreshTokenExpiresAt DateTime?
-
-    scope    String?
-    password String?
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@map("account")
+  @@index([userId], map: "account_userId_fkey")
+  @@map("account")
 }
 
 model Verification {
-    id         String   @id @unique @default(nanoid())
-    identifier String
-    value      String
-    expiresAt  DateTime
+  id         String   @id @unique @default(nanoid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@map("verification")
+  @@map("verification")
 }
 
 model Fruit {
-    id          String @id @unique @default(nanoid())
-    name        String
-    description String
-    image       String
+  id          String   @id @unique @default(nanoid())
+  name        String
+  description String
+  image       String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@map("fruits")
+  @@map("fruits")
 }
 
+enum Role {
+  USER
+  VENDOR
+  EMPLOYEE
+  ADMIN
+}
 
+enum OrderStatus {
+  PENDING
+  ACCEPTED
+  PREPARING
+  DELIVERING
+  COMPLETED
+  CANCELLED
+  RETURNING
+  REFOUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  ACCEPTED
+  REFUSED
+  REFUNDED
+}

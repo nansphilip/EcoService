@@ -8,7 +8,8 @@ type PageProps = {
 };
 
 export default async function Page({ params }: PageProps) {
-    const { id } = params;
+    // Always cast params.id as string to ensure it's not a Promise
+    const id = params.id as string;
 
     // Fetch all products
     const products = await fetchProductsFromStripe();

@@ -27,30 +27,34 @@ export default function CatalogueClient() {
 
     useEffect(() => {
         const fetch = async () => {
-            const data = await SelectProductList({
-                orderBy:
-                    priceOrder !== "not" ? { price: priceOrder } : undefined,
-                skip: page > 1 ? (page - 1) * take : undefined,
-                take,
-                where: {
-                    ...(category && { categoryId: category }),
-                    ...(search && {
-                        name: {
-                            contains: search
-                        },
-                    }),
-                },
-            });
-
-            const productAmount = await SelectProductAmount({
-                where: category ? { categoryId: category } : undefined,
-            });
-            if (!productAmount) {
-                throw new Error("We don't have any product...");
+            // For client-side, we'll just use the data that was already loaded server-side
+            // The page.tsx file handles the initial data loading from Stripe
+            // We only load data client-side when the component first mounts or when the URL params change
+            
+            try {
+                // Instead of fetching from Stripe directly, we'll use an API route
+                // This prevents exposing Stripe keys on the client
+                const response = await fetch('/api/products?' + new URLSearchParams({
+                    ...(category && { category }),
+                    ...(search && { search }),
+                    ...(priceOrder !== 'not' && { priceOrder }),
+                    page: page.toString(),
+                    take: take.toString()
+                }));
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch products');
+                }
+                
+                const { products, total } = await response.json();
+                
+                setProductList(products);
+                setProductAmount(total);
+            } catch (error) {
+                console.error('Error fetching products:', error);
+                setProductList([]);
+                setProductAmount(0);
             }
-
-            setProductList(data);
-            setProductAmount(productAmount);
         };
 
         if (productList === "isLoading") {

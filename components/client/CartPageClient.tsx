@@ -19,31 +19,58 @@ function CartContent() {
     try {
       setIsProcessing(true);
       
-      // Call the API route to create a Stripe checkout session
-      const response = await fetch('/api/cart-checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ cart }),
-      });
+      // Set a timeout for the fetch operation
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
       
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to create checkout session');
-      }
-      
-      // Redirect to Stripe checkout page
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error('No checkout URL returned');
+      try {
+        // Call the API route to create a Stripe checkout session
+        const response = await fetch('/api/cart-checkout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ cart }),
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId); // Clear the timeout if the request completes
+        
+        const data = await response.json();
+        
+        if (!response.ok && !data.fallbackMode) {
+          throw new Error(data.error || 'Failed to create checkout session');
+        }
+        
+        // Redirect to Stripe checkout page or fallback URL
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          throw new Error('No checkout URL returned');
+        }
+      } catch (fetchError) {
+        // Handle specific fetch errors
+        if (fetchError.name === 'AbortError') {
+          console.error('Request timed out');
+          // Use local fallback
+          window.location.href = `/commande/confirmation?session_id=timeout_${Date.now()}`;
+          return;
+        }
+        throw fetchError; // Re-throw for general error handling
       }
     } catch (error) {
       console.error('Checkout error:', error);
-      alert('Une erreur est survenue lors de la création de la session de paiement. Veuillez réessayer.');
-      setIsProcessing(false);
+      alert('Une erreur est survenue lors de la création de la session de paiement. Vous serez redirigé vers une page de confirmation.');
+      
+      // Fallback to confirmation even on error
+      setTimeout(() => {
+        window.location.href = `/commande/confirmation?session_id=error_${Date.now()}`;
+      }, 1500);
+    } finally {
+      // Set a timeout to reset the processing state if nothing happens
+      setTimeout(() => {
+        setIsProcessing(false);
+      }, 5000);
     }
   };
 

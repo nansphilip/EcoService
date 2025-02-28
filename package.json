@@ -11,6 +11,8 @@
         "format": "pnpm exec prettier . --write",
         "db:setup": "tsx scripts/db.ts setup.sql",
         "db:reset": "tsx scripts/db.ts reset.sql",
+        "db:seed-products": "tsx scripts/seed-products.ts",
+        "db:sync-stripe": "tsx scripts/sync-stripe-products.ts",
         "prisma:generate": "pnpm dlx prisma generate",
         "prisma:migrate": "pnpm dlx prisma migrate dev",
         "prisma:deploy": "pnpm dlx prisma migrate deploy",
