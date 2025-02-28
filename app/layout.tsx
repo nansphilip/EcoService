@@ -15,17 +15,18 @@ export const metadata: Metadata = {
     description: "A fully auth-ready application template for Next.js.",
 };
 
-type LayoutProps = {
+type RootLayoutProps = {
     children: ReactNode;
 };
 
-export default async function Layout(props: LayoutProps) {
-    const { children } = props;
-
-    const categorieList = await SelectCategoryList({ orderBy: { name: "asc" } });
-
+export default async function RootLayout({ children }: RootLayoutProps) {
+    // Try to get categories, but use an empty array if not available
+    let categorieList = await SelectCategoryList({ orderBy: { name: "asc" } });
+    
+    // If database hasn't been set up yet, provide default empty categories
     if (!categorieList) {
-        return <div>Mmmm... It seems there is not data.</div>;
+        // Just provide an empty array instead of showing an error
+        categorieList = [];
     }
 
     return (

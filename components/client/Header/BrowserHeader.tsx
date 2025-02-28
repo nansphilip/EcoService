@@ -19,6 +19,8 @@ import ButtonClient from "../Button";
 import InputClient from "../Input";
 import LogoutClient from "../Logout";
 import { useHeaderStore } from "./HeaderStore";
+import { CartProvider } from "../CartContext";
+import CartIndicator from "../CartIndicator";
 
 type BrowserHeaderProps = {
     session: BetterSessionClient | null;
@@ -214,19 +216,9 @@ const NavSection = () => {
                         <ChevronUp className="text-gray-700" />
                     </motion.span>
                 </ButtonClient>
-                <ButtonClient
-                    type="button"
-                    label="toggle-basket-section-visibility"
-                    variant="ghost"
-                    className="p-[4px]"
-                    onMouseEnter={() => {
-                        setAccountOpen(false);
-                        setSearchOpen(false);
-                        setCategorieOpen(false);
-                    }}
-                >
-                    <ShoppingCart />
-                </ButtonClient>
+                <CartProvider>
+                  <CartIndicator />
+                </CartProvider>
             </div>
         </nav>
     );
