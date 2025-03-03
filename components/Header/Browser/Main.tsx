@@ -9,6 +9,8 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import ButtonClient from "../../client/Button";
 import { useHeaderStore } from "../HeaderStore";
+import CartIndicator from "@comps/client/CartIndicator";
+import { CartProvider } from "@comps/client/CartContext";
 
 export default function Main() {
     return (
@@ -149,9 +151,16 @@ const RightNav = () => {
                     setBasketOpen(!basketOpen);
                 }}
             >
-                <div className="absolute translate-x-[40%] translate-y-[-35%] scale-[0.7] rounded-full bg-black px-[7px] font-bold text-white">{basketProductList.length}</div>
+                <div className="absolute translate-x-[40%] translate-y-[-35%] scale-[0.7] rounded-full bg-black px-[7px] font-bold text-white">
+                    {basketProductList.length}
+                </div>
                 <ShoppingCart />
             </ButtonClient>
+
+            {/* Cart indicator (Aissam) */}
+            <CartProvider>
+                <CartIndicator />
+            </CartProvider>
         </div>
     );
 };
