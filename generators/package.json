@@ -1,0 +1,30 @@
+{
+  "name": "ecoservice-generators",
+  "version": "1.0.0",
+  "description": "Générateurs de code pour EcoService",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "setup-deps": "node setup-deps.js",
+    "postbuild": "npm run setup-deps",
+    "generate": "node ./.build/index.js",
+    "generate:model": "node ./.build/index.js --model",
+    "generate:all": "node ./.build/index.js --all",
+    "generate:list": "node ./.build/index.js list",
+    "generate:type": "node ./.build/index.js type",
+    "generate:crud": "node ./.build/index.js crud",
+    "generate:api": "node ./.build/index.js api"
+  },
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "commander": "^11.0.0",
+    "fs-extra": "^11.1.1",
+    "inquirer": "^8.2.5"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.1",
+    "@types/inquirer": "^9.0.3",
+    "@types/node": "^20.5.0",
+    "typescript": "^5.1.6"
+  }
+} 

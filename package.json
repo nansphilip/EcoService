@@ -19,7 +19,11 @@
         "fixtures:setup": "tsx scripts/fixtures.ts setup",
         "fixtures:reset": "tsx scripts/fixtures.ts reset",
         "fixtures:reload": "tsx scripts/fixtures.ts reload",
-        "help": "tsx scripts/help.ts help"
+        "help": "tsx scripts/help.ts help",
+        "generate:setup": "cd generators && npm install && npm run build",
+        "generate:list": "cd generators && npm run build && node ./run.js list",
+        "generate:model": "cd generators && npm run build && node ./run.js",
+        "generate:all": "cd generators && npm run build && node ./run.js --all"
     },
     "dependencies": {
         "@plunk/node": "^3.0.3",
