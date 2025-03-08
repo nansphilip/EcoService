@@ -7,34 +7,44 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
+/**
+ * User model
+ */
 model User {
     id            String  @id @unique @default(nanoid())
     name          String
     email         String  @unique
     emailVerified Boolean
     image         String?
-
+    
+    role    Role      @default(USER)
     phone    String?
 
+    Article Article[]
+    DoItYourself DoItYourself[]
+    Adress   Address[]
+    Order    Order[]
+
+    /** Stripe managment */
     stripeId        String? // Regular Stripe Customer ID
     stripeConnectId String? // Stripe Connect Account ID
     isOnboarded     Boolean @default(false) // Track if seller has completed Stripe onboarding
     isSeller        Boolean @default(false) // Track if user wants to be a seller
 
-    Adress   Address[]
-    Order    Order[]
+    /** Products list if user is a vendor */
+    Product Product[]
 
-    role    Role      @default(USER)
-    Product Product[] // for vendor only
-
-    // One to Many
+    /** BetterAuth managment */
     Session Session[]
     Account Account[]
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    @@map("user")
+    @@index([id])
+    @@index([email])
+    @@index([stripeId])
+    @@index([stripeConnectId])
 }
 
 enum Role {
@@ -44,6 +54,144 @@ enum Role {
     ADMIN
 }
 
+/**
+ * Session model (BetterAuth)
+ */
+model Session {
+    id        String   @id @unique @default(nanoid())
+    token     String
+    expiresAt DateTime
+    ipAddress String?
+    userAgent String?
+
+    // Many to One
+    userId String
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([id])
+    @@index([userId])
+    @@index([token])
+}
+
+/**
+ * Account model (BetterAuth)
+ */
+model Account {
+    id         String @id @unique @default(nanoid())
+    accountId  String
+    providerId String
+
+    // Many to One
+    userId String
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    accessToken  String?
+    refreshToken String?
+
+    accessTokenExpiresAt  DateTime?
+    refreshTokenExpiresAt DateTime?
+
+    scope    String?
+    idToken  String?
+    password String?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([id])
+    @@index([userId])
+    @@index([accountId])
+    @@index([providerId])
+    @@index([accessToken])
+    @@index([refreshToken])
+    @@index([idToken])
+}
+
+/**
+ * Verification model (BetterAuth)
+ */
+model Verification {
+    id         String   @id @unique @default(nanoid())
+    identifier String
+    value      String
+    expiresAt  DateTime
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([id])
+    @@index([identifier])
+}
+
+/**
+ * Address model
+ */
+model Address {
+    id      String @id @unique @default(nanoid())
+    address String
+    postal  String
+    city    String
+    country String
+
+    isDefault Boolean
+
+    // Many to One
+    userId String
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([id])
+    @@index([userId])
+}
+
+/**
+ * Article model
+ */
+model Article {
+    id String @id @unique @default(nanoid())
+    title String
+    content String
+    image String
+
+    authorId String
+    author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([id])
+    @@index([title])
+    @@index([authorId])
+}
+
+/**
+ * DoItYourself model
+ */
+model DoItYourself {
+    id String @id @unique @default(nanoid())
+    title String
+    content String
+    image String
+
+    authorId String
+    author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([id])
+    @@index([title])
+    @@index([authorId])
+}
+
+/**
+ * Category model
+ */
 model Category {
     id          String    @id @unique @default(nanoid())
     name        String
@@ -53,9 +201,13 @@ model Category {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    @@map("categories")
+    @@index([id])
+    @@index([name])
 }
 
+/**
+ * Product model
+ */
 model Product {
     id          String @id @unique @default(nanoid())
     name        String
@@ -65,7 +217,7 @@ model Product {
     stock       Int
 
     vendorId    String
-    user        User   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+    vendor      User   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
 
     quantity    Quantity[]
 
@@ -75,9 +227,15 @@ model Product {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    @@map("product")
+    @@index([id])
+    @@index([name])
+    @@index([vendorId])
+    @@index([categoryId])
 }
 
+/**
+ * Quantity model
+ */
 model Quantity {
     id String @id @unique @default(nanoid())
     quantity Int
@@ -91,14 +249,20 @@ model Quantity {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    @@map("quantity")
+    @@index([id])
+    @@index([productId])
+    @@index([orderId])
 }
 
+/**
+ * Order model
+ */
 model Order {
     id String @id @unique @default(nanoid())
-    // orderNumber String
 
-    // items         Json
+    /** Order number for the customer */
+    orderNumber Int @unique @default(autoincrement())
+
     orderStatus   OrderStatus   @default(PENDING)
     paymentStatus PaymentStatus @default(PENDING)
 
@@ -111,7 +275,9 @@ model Order {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    @@map("order")
+    @@index([id])
+    @@index([userId])
+    @@index([orderNumber])
 }
 
 enum OrderStatus {
@@ -132,79 +298,9 @@ enum PaymentStatus {
     REFUNDED
 }
 
-model Address {
-    id      String @id @unique @default(nanoid())
-    address String
-    postal  String
-    city    String
-    country String
-
-    isPrimary Boolean
-
-    // Many to One
-    userId String
-    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@map("address")
-}
-
-model Session {
-    id        String   @id @unique @default(nanoid())
-    token     String
-    expiresAt DateTime
-    ipAddress String?
-    userAgent String?
-
-    // Many to One
-    userId String
-    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@index([userId])
-    @@map("session")
-}
-
-model Account {
-    id         String @id @unique @default(nanoid())
-    accountId  String
-    providerId String
-
-    // Many to One
-    userId String
-    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-    accessToken  String?
-    refreshToken String?
-
-    accessTokenExpiresAt  DateTime?
-    refreshTokenExpiresAt DateTime?
-
-    scope    String?
-    password String?
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@map("account")
-}
-
-model Verification {
-    id         String   @id @unique @default(nanoid())
-    identifier String
-    value      String
-    expiresAt  DateTime
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    @@map("verification")
-}
-
+/**
+ * Fruit model
+ */
 model Fruit {
     id          String @id @unique @default(nanoid())
     name        String
@@ -214,5 +310,6 @@ model Fruit {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    @@map("fruits")
+    @@index([id])
+    @@index([name])
 }
