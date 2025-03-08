@@ -1,5 +1,5 @@
-import { DataResponse, Fetch, FetchProps } from "./Fetch";
-import { Routes } from "./Routes";
+import { Routes } from "@api/Routes";
+import { DataResponse, Fetch, FetchProps } from "@api/utils/Fetch";
 
 /**
  * The type of the fetch parameters

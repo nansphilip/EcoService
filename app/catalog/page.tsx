@@ -1,4 +1,4 @@
-import { Fetch } from "@actions/utils/Fetch";
+import { Fetch } from "@api/utils/Fetch";
 import CatalogClient from "./components/CatalogClient";
 import CatalogContextProvider from "./components/ContextProvider";
 import { QueryParamType, queryParamCached } from "./components/FilterTypes";

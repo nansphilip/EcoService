@@ -1,6 +1,6 @@
 import ButtonClient from "@comps/client/Button";
 import ImageRatio from "@comps/server/ImageRatio";
-import { Fetch } from "@actions/utils/Fetch";
+import { Fetch } from "@api/utils/Fetch";
 
 type PageProps = {
     params: Promise<{ id: string }>;

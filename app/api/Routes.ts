@@ -19,48 +19,48 @@ import { SelectProductResponse } from "@app/api/products/unique/route";
  */
 export type Routes = {
     /**
-     * Route for fetching a list of products
-     * GET /api/get/products
+     * Route for fetching a list of products \
+     * GET `/api/get/products`
      */
     "/products": {
         params?: SelectProductListProps;
         response: SelectProductListResponse;
     };
     /**
-     * Route for fetching a single product by ID
-     * GET /api/get/products/unique
+     * Route for fetching a single product by ID \
+     * GET `/api/get/products/unique`
      */
     "/products/unique": {
         params?: SelectProductProps;
         response: SelectProductResponse;
     };
     /**
-     * Route for fetching the count of products
-     * GET /api/get/products/count
+     * Route for fetching the count of products \
+     * GET `/api/get/products/count`
      */
     "/products/count": {
         params?: SelectProductAmountProps;
         response: SelectProductAmountResponse;
     };
     /**
-     * Route for fetching a list of categories
-     * GET /api/get/categories
+     * Route for fetching a list of categories \
+     * GET `/api/get/categories`
      */
     "/categories": {
         params?: SelectCategoryListProps;
         response: SelectCategoryListResponse;
     };
     /**
-     * Route for fetching a single category by ID
-     * GET /api/get/categories/unique
+     * Route for fetching a single category by ID \
+     * GET `/api/get/categories/unique`
      */
     "/categories/unique": {
         params?: SelectCategoryProps;
         response: SelectCategoryResponse;
     };
     /**
-     * Route for fetching the count of categories
-     * GET /api/get/categories/count
+     * Route for fetching the count of categories \
+     * GET `/api/get/categories/count`
      */
     "/categories/count": {
         params?: SelectCategoryAmountProps;

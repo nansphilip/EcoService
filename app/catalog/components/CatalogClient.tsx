@@ -1,7 +1,7 @@
 "use client";
 
 import { ProductType } from "@actions/types/Product";
-import { useFetch } from "@actions/utils/FetchHook";
+import { useFetch } from "@api/utils/FetchHook";
 import { useBasketStore } from "@comps/Basket/BasketStore";
 import ButtonClient from "@comps/client/Button";
 import Card from "@comps/server/Card";

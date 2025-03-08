@@ -1,4 +1,4 @@
-import { Routes } from "./Routes";
+import { Routes } from "@api/Routes";
 
 /**
  * Props for the Fetch function

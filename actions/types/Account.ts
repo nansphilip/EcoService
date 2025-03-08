@@ -46,6 +46,7 @@ export const accountCommonSchema: ZodType<AccountCommon> = z.object({
     refreshToken: z.string().nullable(),
     accessTokenExpiresAt: z.date().nullable(),
     refreshTokenExpiresAt: z.date().nullable(),
+    idToken: z.string().nullable(),
     scope: z.string().nullable(),
     password: z.string().nullable(),
 });

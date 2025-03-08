@@ -40,6 +40,7 @@ export const orderIdObjectSchema: ZodType<OrderId> = z.object({
 });
 
 export const orderCommonSchema: ZodType<OrderCommon> = z.object({
+    orderNumber: z.number(),
     orderStatus: z.nativeEnum($Enums.OrderStatus),
     paymentStatus: z.nativeEnum($Enums.PaymentStatus),
     userId: z.string(),

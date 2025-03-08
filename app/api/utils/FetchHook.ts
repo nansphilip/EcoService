@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Routes } from "@api/Routes";
 import { DataResponse, Fetch, FetchProps } from "./Fetch";
-import { Routes } from "./Routes";
 
 /**
  * Props for the useFetch hook

@@ -47,7 +47,7 @@ export const addressCommonSchema: ZodType<AddressCommon> = z.object({
     postal: z.string(),
     city: z.string(),
     country: z.string(),
-    isPrimary: z.boolean(),
+    isDefault: z.boolean(),
     userId: z.string().nanoid(),
 });
 
