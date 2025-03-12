@@ -3,9 +3,10 @@
 Complete auth and user management
 
 - METADATA !!!!!!!!!
+- REMOVE `export const dynamic = "force-dynamic";` when an update solve it
 
-- Auto infer zod common schema
 - Zod schema page per page
+- API et Actions based on the same Prisma request
 
 - ESlint Tailwind
 - Prettier

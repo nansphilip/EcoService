@@ -16,6 +16,7 @@
         "prisma:generate": "pnpm dlx prisma generate",
         "prisma:migrate": "pnpm dlx prisma migrate dev",
         "prisma:deploy": "pnpm dlx prisma migrate deploy",
+        "prisma:reset": "pnpm dlx prisma migrate reset",
         "fixtures:setup": "tsx scripts/fixtures.ts setup",
         "fixtures:reset": "tsx scripts/fixtures.ts reset",
         "fixtures:reload": "tsx scripts/fixtures.ts reload",
