@@ -3,13 +3,9 @@ generator client {
 }
 
 generator zod {
-    provider         = "zod-prisma"
+    provider         = "zod-prisma-types"
+    useMultipleFiles = true
     output           = "../actions/zod-generated"
-    relationModel    = true
-    // relationModel = "default"
-    modelCase        = "PascalCase"
-    // modelCase     = "camelCase"
-    modelSuffix      = "Model"
 }
 
 datasource db {
@@ -19,10 +15,10 @@ datasource db {
 
 /// User model
 model User {
-    id            String  @id @default(nanoid()) /// @zod.nanoid()
+    id            String  @id @default(nanoid())
     /// Firstname Lastname
     name          String
-    email         String  @unique /// @zod.email()
+    email         String  @unique
     emailVerified Boolean
     image         String?
 
@@ -65,7 +61,7 @@ enum Role {
 
 /// Session model (BetterAuth)
 model Session {
-    id        String   @id @default(nanoid()) /// @zod.nanoid()
+    id        String   @id @default(nanoid())
     token     String
     expiresAt DateTime
     ipAddress String?
@@ -84,7 +80,7 @@ model Session {
 
 /// Account model (BetterAuth)
 model Account {
-    id         String @id @default(nanoid()) /// @zod.nanoid()
+    id         String @id @default(nanoid())
     accountId  String
     providerId String
 
@@ -115,7 +111,7 @@ model Account {
 
 /// Verification model (BetterAuth)
 model Verification {
-    id         String   @id @default(nanoid()) /// @zod.nanoid()
+    id         String   @id @default(nanoid())
     identifier String
     value      String
     expiresAt  DateTime
@@ -129,7 +125,7 @@ model Verification {
 
 /// Address model
 model Address {
-    id      String @id @default(nanoid()) /// @zod.nanoid()
+    id      String @id @default(nanoid())
     address String
     postal  String
     city    String
@@ -149,7 +145,7 @@ model Address {
 
 /// Article model
 model Article {
-    id    String @id @default(nanoid()) /// @zod.nanoid()
+    id    String @id @default(nanoid())
     title String
 
     Content Content[]
@@ -167,7 +163,7 @@ model Article {
 
 /// DoItYourself model
 model DoItYourself {
-    id    String @id @default(nanoid()) /// @zod.nanoid()
+    id    String @id @default(nanoid())
     title String
 
     Content Content[]
@@ -185,7 +181,7 @@ model DoItYourself {
 
 /// Content model
 model Content {
-    id      String @id @default(nanoid()) /// @zod.nanoid()
+    id      String @id @default(nanoid())
     content String
     image   String
 
@@ -205,7 +201,7 @@ model Content {
 
 /// Category model
 model Category {
-    id          String  @id @default(nanoid()) /// @zod.nanoid()
+    id          String  @id @default(nanoid())
     name        String
     description String?
 
@@ -220,7 +216,7 @@ model Category {
 
 /// Product model
 model Product {
-    id          String @id @default(nanoid()) /// @zod.nanoid()
+    id          String @id @default(nanoid())
     name        String
     description String
     image       String
@@ -246,7 +242,7 @@ model Product {
 
 /// Quantity model
 model Quantity {
-    id       String @id @default(nanoid()) /// @zod.nanoid()
+    id       String @id @default(nanoid())
     quantity Int
 
     productId String
@@ -265,7 +261,7 @@ model Quantity {
 
 /// Order model
 model Order {
-    id String @id @default(nanoid()) /// @zod.nanoid()
+    id String @id @default(nanoid())
 
     /// Order number for the customer
     orderNumber Int @unique @default(autoincrement())
@@ -318,7 +314,7 @@ enum PaymentStatus {
 
 /// Fruit model
 model Fruit {
-    id          String @id @default(nanoid()) /// @zod.nanoid()
+    id          String @id @default(nanoid())
     name        String
     description String
     image       String
