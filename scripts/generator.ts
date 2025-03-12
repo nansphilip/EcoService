@@ -229,148 +229,6 @@ function generateModel(modelName: string): void {
     console.log(`✅ Génération pour ${modelName} terminée avec succès!`);
 }
 
-// Fonction pour remplacer .nullish() par .nullable() dans les fichiers générés par zod-prisma
-function fixNullishInZodGenerated(): void {
-    console.log('🔧 Correction des types nullish dans les fichiers générés par zod-prisma...');
-    
-    const zodGeneratedDir = path.join(process.cwd(), 'actions/zod-generated');
-    
-    if (!fs.existsSync(zodGeneratedDir)) {
-        console.error(`❌ Le répertoire ${zodGeneratedDir} n'existe pas.`);
-        return;
-    }
-    
-    // Lire tous les fichiers du répertoire
-    const files = fs.readdirSync(zodGeneratedDir);
-    
-    let totalModified = 0;
-    
-    for (const file of files) {
-        if (!file.endsWith('.ts')) continue;
-        
-        const filePath = path.join(zodGeneratedDir, file);
-        let content = fs.readFileSync(filePath, 'utf-8');
-        
-        // Vérifier si le fichier contient des motifs à remplacer
-        if (content.includes('.nullish()')) {
-            console.log(`🔍 Motif '.nullish()' trouvé dans ${file}`);
-            
-            // Remplacer .nullish() par .nullable()
-            const originalContent = content;
-            content = content.replace(/\.nullish\(\)/g, '.nullable()');
-            
-            // Vérifier si des modifications ont été apportées
-            if (content !== originalContent) {
-                fs.writeFileSync(filePath, content);
-                console.log(`✅ Modifications appliquées à ${file}`);
-                totalModified++;
-            } else {
-                console.log(`⚠️ Motif trouvé mais aucune modification appliquée à ${file}`);
-            }
-        }
-    }
-    
-    console.log(`🔧 ${totalModified} fichiers modifiés sur ${files.length} fichiers traités.`);
-}
-
-function makeRelationsOptional(): void {
-    const zodGeneratedDir = path.join(process.cwd(), 'actions/zod-generated');
-    const files = fs.readdirSync(zodGeneratedDir);
-
-    let modifiedCount = 0;
-
-    files.forEach(file => {
-        if (!file.endsWith('.ts')) return;
-
-        const filePath = path.join(zodGeneratedDir, file);
-        let content = fs.readFileSync(filePath, 'utf8');
-        let modified = false;
-
-        // Étape 1: Corriger les ?? dans l'interface CompleteXXX
-        const doubleOptionalRegex = /(\s+)(\w+)\?\?:/g;
-        const contentWithFixedDoubleOptional = content.replace(doubleOptionalRegex, '$1$2?:');
-        
-        if (content !== contentWithFixedDoubleOptional) {
-            content = contentWithFixedDoubleOptional;
-            modified = true;
-            console.log(`Fixed double optional in ${file}`);
-        }
-
-        // Étape 2: Corriger les .optional().array().optional() dans le modèle RelatedXXXModel
-        const doubleOptionalArrayRegex = /(\w+): Related(\w+)Model\.optional\(\)\.array\(\)\.optional\(\)/g;
-        const contentWithFixedDoubleOptionalArray = content.replace(doubleOptionalArrayRegex, '$1: Related$2Model.array().optional()');
-        
-        if (content !== contentWithFixedDoubleOptionalArray) {
-            content = contentWithFixedDoubleOptionalArray;
-            modified = true;
-            console.log(`Fixed double optional array in ${file}`);
-        }
-
-        // Étape 3: Corriger les .optional().optional() dans le modèle RelatedXXXModel
-        const doubleOptionalModelRegex = /(\w+): Related(\w+)Model\.optional\(\)\.optional\(\)/g;
-        const contentWithFixedDoubleOptionalModel = content.replace(doubleOptionalModelRegex, '$1: Related$2Model.optional()');
-        
-        if (content !== contentWithFixedDoubleOptionalModel) {
-            content = contentWithFixedDoubleOptionalModel;
-            modified = true;
-            console.log(`Fixed double optional model in ${file}`);
-        }
-
-        // Étape 4: Ajouter .optional() aux relations qui n'en ont pas dans le modèle RelatedXXXModel
-        const modelRegex = /export const Related\w+Model[^{]*{([\s\S]*?)}/;
-        const modelMatch = content.match(modelRegex);
-        
-        if (modelMatch) {
-            const modelContent = modelMatch[1];
-            let modifiedModelContent = modelContent;
-            
-            // Pour les relations de type array sans .optional()
-            modifiedModelContent = modifiedModelContent.replace(
-                /(\s+)(\w+): Related(\w+)Model\.array\(\)(?!\.optional\(\))/g,
-                '$1$2: Related$3Model.array().optional()'
-            );
-            
-            // Pour les relations de type objet sans .optional()
-            modifiedModelContent = modifiedModelContent.replace(
-                /(\s+)(\w+): Related(\w+)Model(?!\.optional\(\))(?!\.array\(\))/g,
-                '$1$2: Related$3Model.optional()'
-            );
-            
-            if (modelContent !== modifiedModelContent) {
-                content = content.replace(modelContent, modifiedModelContent);
-                modified = true;
-                console.log(`Added optional to relations in ${file}`);
-            }
-        }
-
-        // Étape 5: Ajouter ? aux relations qui n'en ont pas dans l'interface CompleteXXX
-        const interfaceRegex = /export interface Complete\w+[^{]*{([\s\S]*?)}/;
-        const interfaceMatch = content.match(interfaceRegex);
-        
-        if (interfaceMatch) {
-            const interfaceContent = interfaceMatch[1];
-            const modifiedInterfaceContent = interfaceContent.replace(
-                /(\s+)(\w+)(?!\?):(\s+)/g,
-                '$1$2?:$3'
-            );
-            
-            if (interfaceContent !== modifiedInterfaceContent) {
-                content = content.replace(interfaceContent, modifiedInterfaceContent);
-                modified = true;
-                console.log(`Added optional to interface in ${file}`);
-            }
-        }
-
-        if (modified) {
-            fs.writeFileSync(filePath, content, 'utf8');
-            modifiedCount++;
-            console.log(`Made relations optional in ${file}`);
-        }
-    });
-
-    console.log(`Made relations optional in ${modifiedCount} files`);
-}
-
 // Fonction pour générer tous les modèles
 function generateAllModels(): void {
     console.log('🚀 Démarrage de la génération des fichiers...');
@@ -404,12 +262,6 @@ function generateAllModels(): void {
     
     // Générer le fichier Routes.ts
     generateRoutesFile(modelNames);
-    
-    // Corriger les types nullish dans les fichiers générés par zod-prisma
-    fixNullishInZodGenerated();
-
-    // Make relations optional in zod-generated files
-    makeRelationsOptional();
     
     console.log('✅ Génération terminée avec succès!');
 }
@@ -481,8 +333,6 @@ function generateRoutesFile(modelNames: string[]): void {
 
 // Fonction pour lister les modèles
 function listModels(): void {
-    console.log('📋 Liste des modèles dans le schéma Prisma:');
-    
     // Extraire les noms des modèles
     const modelNames = extractModelNames();
     
@@ -491,7 +341,7 @@ function listModels(): void {
         return;
     }
     
-    console.log(`\nModèles trouvés (${modelNames.length}): ${modelNames.join(', ')}`);
+    console.log(`📋 Modèles trouvés (${modelNames.length}):\n  - ${modelNames.join('\n  - ')}`);
     console.log('\n✅ Listage terminé avec succès!');
 }
 
@@ -499,21 +349,8 @@ function main(): void {
     const args = process.argv.slice(2);
     const command = args[0];
 
-    if (command === "model") {
-        const modelName = args[1];
-        if (!modelName) {
-            console.error("Please provide a model name");
-            process.exit(1);
-        }
-        generateModel(modelName);
-        fixNullishInZodGenerated();
-        makeRelationsOptional();
-    } else if (command === "list") {
+    if (command === "list") {
         listModels();
-    } else if (command === "fix-nullish") {
-        fixNullishInZodGenerated();
-    } else if (command === "make-relations-optional") {
-        makeRelationsOptional();
     } else {
         generateAllModels();
     }

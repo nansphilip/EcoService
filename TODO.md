@@ -8,6 +8,10 @@ Complete auth and user management
 - Zod schema page per page
 - API et Actions based on the same Prisma request
 
+- Logging error
+- index.ts files for imports
+- Testing for classes
+
 - ESlint Tailwind
 - Prettier
 

@@ -5,7 +5,7 @@ generator client {
 generator zod {
     provider         = "zod-prisma-types"
     useMultipleFiles = true
-    output           = "../actions/zod-generated"
+    output           = "../services/schemas"
 }
 
 datasource db {

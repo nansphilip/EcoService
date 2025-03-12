@@ -27,6 +27,7 @@
             "@lib/*": ["./lib/*"],
             "@prisma/*": ["./prisma/*"],
             "@public/*": ["./public/*"],
+            "@services/*": ["./services/*"],
             "@/*": ["./*"]
         }
     },
