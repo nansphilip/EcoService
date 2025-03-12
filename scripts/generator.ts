@@ -1,8 +1,8 @@
 #!/usr/bin/env tsx
 
 import fs from "fs";
-import path from "path";
 import Handlebars from 'handlebars';
+import path from "path";
 /**
  * Script de génération simplifié pour créer les fichiers backend à partir du schéma Prisma
  * 
@@ -85,10 +85,16 @@ function ensureDir(dir: string): void {
 }
 
 // Fonction pour générer un fichier à partir d'un template
-function generateFile(templatePath: string, outputPath: string, replacements: Record<string, string | boolean>): void {
+function generateFile(templatePath: string, outputPath: string, replacements: Record<string, unknown>): void {
     // Vérifier si le fichier existe déjà
     if (fs.existsSync(outputPath)) {
         console.log(`⏩ Fichier existant, ignoré: ${outputPath}`);
+        return;
+    }
+    
+    // Vérifier si le template existe
+    if (!fs.existsSync(templatePath)) {
+        console.error(`❌ Template non trouvé: ${templatePath}`);
         return;
     }
     
@@ -123,110 +129,134 @@ function removePath(pathToRemove: string): void {
     }
 }
 
-// Fonction pour générer un fichier zod-sensitive s'il n'existe pas
-function generateZodSensitiveFile(modelName: string): void {
-    const outputPath = path.join(process.cwd(), `actions/zod-sensitive/${modelName}.ts`);
-    
-    // Ne pas écraser les fichiers zod-sensitive existants
-    if (fs.existsSync(outputPath)) {
-        console.log(`⏩ Fichier zod-sensitive existant, ignoré: ${outputPath}`);
-        return;
-    }
-    
-    // Utiliser le template base.hbs pour générer le fichier
-    const templatePath = path.join(process.cwd(), 'templates/actions/zod-sensitive/base.hbs');
-    
-    // Remplacements pour le template
-    const replacements = {
-        'modelName': modelName,
-        'modelNameLower': getLowerName(modelName)
-    };
-    
-    // Générer le fichier à partir du template
-    generateFile(templatePath, outputPath, replacements);
-}
-
-// Fonction pour vérifier si un modèle a des relations
-function hasRelations(modelName: string): boolean {
-    const zodGeneratedPath = path.join(process.cwd(), `actions/zod-generated/${getLowerName(modelName)}.ts`);
-    
-    if (!fs.existsSync(zodGeneratedPath)) {
-        console.log(`⚠️ Fichier zod-generated non trouvé pour ${modelName}, supposant qu'il n'a pas de relations`);
-        return false;
-    }
-    
-    const fileContent = fs.readFileSync(zodGeneratedPath, 'utf-8');
-    
-    // Vérifie si le fichier contient une interface CompleteModel
-    return fileContent.includes(`export interface Complete${modelName}`);
-}
-
 // Fonction pour générer un modèle spécifique
 function generateModel(modelName: string): void {
     console.log(`📝 Génération des fichiers pour ${modelName}...`);
     
     const lowerName = getLowerName(modelName);
     const pluralName = getPluralName(modelName);
-    const modelHasRelations = hasRelations(modelName);
     
-    // Générer le fichier zod-sensitive s'il n'existe pas
-    generateZodSensitiveFile(modelName);
+    // Remplacements pour les templates
+    const replacements = {
+        modelName,
+        modelNameLower: lowerName,
+        namePlural: pluralName
+    };
     
-    // Supprimer les fichiers existants pour ce modèle
-    removePath(path.join(process.cwd(), `actions/database/${modelName}.ts`));
-    removePath(path.join(process.cwd(), `actions/types/${modelName}.ts`));
-    removePath(path.join(process.cwd(), `actions/zod/${modelName}.ts`));
-    removePath(path.join(process.cwd(), `app/api/${pluralName}`));
+    // Générer les fichiers de classe
+    generateFile(
+        path.join(process.cwd(), 'templates/services/class/{{model}}Class.hbs'),
+        path.join(process.cwd(), `services/class/${modelName}Class.ts`),
+        replacements
+    );
     
-    // Générer les fichiers à partir des templates
-    const templates = [
-        {
-            template: 'templates/actions/types/base.hbs',
-            output: `actions/types/${modelName}.ts`
-        },
-        {
-            template: 'templates/actions/zod/base.hbs',
-            output: `actions/zod/${modelName}.ts`
-        },
-        {
-            template: 'templates/actions/database/base.hbs',
-            output: `actions/database/${modelName}.ts`
-        },
-        {
-            template: 'templates/app/api/_template/route.hbs',
-            output: `app/api/${pluralName}/route.ts`
-        },
-        {
-            template: 'templates/app/api/_template/unique/route.hbs',
-            output: `app/api/${pluralName}/unique/route.ts`
-        },
-        {
-            template: 'templates/app/api/_template/count/route.hbs',
-            output: `app/api/${pluralName}/count/route.ts`
-        }
-    ];
+    // Générer les fichiers d'actions
+    generateFile(
+        path.join(process.cwd(), 'templates/services/actions/{{model}}Action.hbs'),
+        path.join(process.cwd(), `services/actions/${modelName}Action.ts`),
+        replacements
+    );
     
+    // Générer les fichiers API
     // Créer les dossiers nécessaires
-    ensureDir(path.join(process.cwd(), `app/api/${pluralName}/unique`));
-    ensureDir(path.join(process.cwd(), `app/api/${pluralName}/count`));
+    ensureDir(path.join(process.cwd(), `services/api/${lowerName}/unique`));
+    ensureDir(path.join(process.cwd(), `services/api/${lowerName}/count`));
     
-    // Générer chaque fichier
-    for (const { template, output } of templates) {
-        const outputPath = path.join(process.cwd(), output);
-        
-        // Remplacements pour le template
-        const replacements = {
-            'modelName': modelName,
-            'modelNameLower': lowerName,
-            'namePlural': pluralName,
-            'hasRelations': modelHasRelations
-        };
-        
-        // Générer le fichier à partir du template
-        generateFile(template, outputPath, replacements);
-    }
+    // Générer le fichier index.ts
+    generateFile(
+        path.join(process.cwd(), 'templates/services/api/{{model}}/index.hbs'),
+        path.join(process.cwd(), `services/api/${lowerName}/index.ts`),
+        replacements
+    );
+    
+    // Générer le fichier route.ts principal
+    generateFile(
+        path.join(process.cwd(), 'templates/services/api/{{model}}/route.hbs'),
+        path.join(process.cwd(), `services/api/${lowerName}/route.ts`),
+        replacements
+    );
+    
+    // Générer le fichier unique/route.ts
+    generateFile(
+        path.join(process.cwd(), 'templates/services/api/{{model}}/unique/route.hbs'),
+        path.join(process.cwd(), `services/api/${lowerName}/unique/route.ts`),
+        replacements
+    );
+    
+    // Générer le fichier count/route.ts
+    generateFile(
+        path.join(process.cwd(), 'templates/services/api/{{model}}/count/route.hbs'),
+        path.join(process.cwd(), `services/api/${lowerName}/count/route.ts`),
+        replacements
+    );
     
     console.log(`✅ Génération pour ${modelName} terminée avec succès!`);
+}
+
+// Fonction pour générer les fichiers index
+function generateIndexFiles(modelNames: string[]): void {
+    console.log('📝 Génération des fichiers index...');
+    
+    // Préparer les données pour les templates
+    const models = modelNames.map(name => ({
+        name,
+        nameLower: getLowerName(name),
+        namePlural: getPluralName(getLowerName(name))
+    }));
+    
+    // Générer le fichier index.ts pour services/class
+    generateFile(
+        path.join(process.cwd(), 'templates/services/class/index.hbs'),
+        path.join(process.cwd(), 'services/class/index.ts'),
+        { models }
+    );
+    
+    // Générer le fichier index.ts pour services/actions
+    generateFile(
+        path.join(process.cwd(), 'templates/services/actions/index.hbs'),
+        path.join(process.cwd(), 'services/actions/index.ts'),
+        { models }
+    );
+    
+    // Générer le fichier index.ts pour services/api
+    generateFile(
+        path.join(process.cwd(), 'templates/services/api/index.hbs'),
+        path.join(process.cwd(), 'services/api/index.ts'),
+        { models }
+    );
+    
+    // Générer le fichier index.ts principal pour services
+    generateFile(
+        path.join(process.cwd(), 'templates/services/index.hbs'),
+        path.join(process.cwd(), 'services/index.ts'),
+        { models }
+    );
+    
+    // Générer le fichier Routes.ts
+    generateFile(
+        path.join(process.cwd(), 'templates/app/api/Routes.hbs'),
+        path.join(process.cwd(), 'app/api/Routes.ts'),
+        { models }
+    );
+    
+    console.log('✅ Génération des fichiers index terminée avec succès!');
+}
+
+// Fonction pour générer le fichier [...all]/route.ts
+function generateAllRoute(): void {
+    console.log('📝 Génération du fichier [...all]/route.ts...');
+    
+    // Créer le dossier si nécessaire
+    ensureDir(path.join(process.cwd(), 'app/api/[...all]'));
+    
+    // Générer le fichier route.ts
+    generateFile(
+        path.join(process.cwd(), 'templates/app/api/[...all]/route.hbs'),
+        path.join(process.cwd(), 'app/api/[...all]/route.ts'),
+        {}
+    );
+    
+    console.log('✅ Génération du fichier [...all]/route.ts terminée avec succès!');
 }
 
 // Fonction pour générer tous les modèles
@@ -244,91 +274,30 @@ function generateAllModels(): void {
     console.log(`📋 Modèles trouvés: ${modelNames.join(', ')}`);
     
     // Supprimer les dossiers générés précédemment
-    removePath(path.join(process.cwd(), 'actions/database'));
-    removePath(path.join(process.cwd(), 'actions/types'));
-    removePath(path.join(process.cwd(), 'actions/zod'));
+    removePath(path.join(process.cwd(), 'services/class'));
+    removePath(path.join(process.cwd(), 'services/actions'));
+    removePath(path.join(process.cwd(), 'services/api'));
     removePath(path.join(process.cwd(), 'app/api/Routes.ts'));
+    removePath(path.join(process.cwd(), 'app/api/[...all]'));
     
     // Créer les dossiers nécessaires
-    ensureDir(path.join(process.cwd(), 'actions/database'));
-    ensureDir(path.join(process.cwd(), 'actions/types'));
-    ensureDir(path.join(process.cwd(), 'actions/zod'));
-    ensureDir(path.join(process.cwd(), 'actions/zod-sensitive'));
+    ensureDir(path.join(process.cwd(), 'services/class'));
+    ensureDir(path.join(process.cwd(), 'services/actions'));
+    ensureDir(path.join(process.cwd(), 'services/api'));
+    ensureDir(path.join(process.cwd(), 'app/api/[...all]'));
     
     // Générer les fichiers pour chaque modèle
     for (const modelName of modelNames) {
         generateModel(modelName);
     }
     
-    // Générer le fichier Routes.ts
-    generateRoutesFile(modelNames);
+    // Générer les fichiers index
+    generateIndexFiles(modelNames);
+    
+    // Générer le fichier [...all]/route.ts
+    generateAllRoute();
     
     console.log('✅ Génération terminée avec succès!');
-}
-
-// Fonction pour générer le fichier Routes.ts
-function generateRoutesFile(modelNames: string[]): void {
-    console.log('📝 Génération du fichier Routes.ts...');
-    
-    // Préparer les données pour le template
-    const models = modelNames.map(name => ({
-        name,
-        nameLower: getLowerName(name),
-        namePlural: getPluralName(getLowerName(name))
-    }));
-    
-    // Lire le template
-    const templatePath = path.join(process.cwd(), 'templates/app/api/Routes.hbs');
-    const template = fs.readFileSync(templatePath, 'utf-8');
-    
-    // Extraire les parties du template
-    const headerMatch = template.match(/^([\s\S]*?){{#each models}}/);
-    const header = headerMatch ? headerMatch[1] : '';
-    
-    const importBlockMatch = template.match(/{{#each models}}([\s\S]*?){{\/each}}\s*\n\s*export/);
-    const importTemplate = importBlockMatch ? importBlockMatch[1] : '';
-    
-    const routeBlockMatch = template.match(/export type Routes = {\s*{{#each models}}([\s\S]*?){{\/each}}\s*};/);
-    const routeTemplate = routeBlockMatch ? routeBlockMatch[1] : '';
-    
-    // Générer le contenu
-    let content = header;
-    
-    // Générer les imports
-    for (const model of models) {
-        const importBlock = importTemplate
-            .replace(/{{this\.name}}/g, model.name)
-            .replace(/{{this\.namePlural}}/g, model.namePlural);
-        content += importBlock;
-    }
-    
-    content += 'export type Routes = {\n';
-    
-    // Générer les routes
-    for (let i = 0; i < models.length; i++) {
-        const model = models[i];
-        let routeBlock = routeTemplate
-            .replace(/{{this\.name}}/g, model.name)
-            .replace(/{{this\.namePlural}}/g, model.namePlural);
-        
-        // Gérer le cas spécial {{#unless @last}}
-        if (i < models.length - 1) {
-            routeBlock = routeBlock.replace(/{{#unless @last}}([\s\S]*?){{\/unless}}/g, '$1');
-        } else {
-            routeBlock = routeBlock.replace(/{{#unless @last}}([\s\S]*?){{\/unless}}/g, '');
-        }
-        
-        content += routeBlock;
-    }
-    
-    content += '};';
-    
-    // Écrire le fichier
-    const outputPath = path.join(process.cwd(), 'app/api/Routes.ts');
-    ensureDir(path.dirname(outputPath));
-    fs.writeFileSync(outputPath, content);
-    
-    console.log(`✅ Fichier Routes.ts généré: ${outputPath}`);
 }
 
 // Fonction pour lister les modèles
@@ -348,9 +317,30 @@ function listModels(): void {
 function main(): void {
     const args = process.argv.slice(2);
     const command = args[0];
+    const modelName = args[1];
 
     if (command === "list") {
         listModels();
+    } else if (command === "model" && modelName) {
+        // Vérifier si le modèle existe
+        const modelNames = extractModelNames();
+        if (!modelNames.includes(modelName)) {
+            console.error(`❌ Modèle "${modelName}" non trouvé dans le schéma Prisma`);
+            console.log(`📋 Modèles disponibles: ${modelNames.join(', ')}`);
+            return;
+        }
+        
+        console.log(`🚀 Démarrage de la génération pour le modèle ${modelName}...`);
+        
+        // Créer les dossiers nécessaires s'ils n'existent pas
+        ensureDir(path.join(process.cwd(), 'services/class'));
+        ensureDir(path.join(process.cwd(), 'services/actions'));
+        ensureDir(path.join(process.cwd(), 'services/api'));
+        
+        // Générer les fichiers pour le modèle spécifique
+        generateModel(modelName);
+        
+        console.log(`✅ Génération pour le modèle ${modelName} terminée avec succès!`);
     } else {
         generateAllModels();
     }

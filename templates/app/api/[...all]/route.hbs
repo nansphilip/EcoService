@@ -1,0 +1,134 @@
+/**
+ * Point d'entrée API pour toutes les routes dynamiques
+ * 
+ * Ce fichier utilise un système de routage dynamique pour gérer toutes les requêtes API.
+ * Il analyse le chemin de la requête et redirige vers le gestionnaire approprié.
+ * 
+ * Inspiré par l'approche de BetterAuth, ce système permet de centraliser la logique
+ * de routage et de simplifier l'architecture des API.
+ */
+import { NextRequest, NextResponse } from "next/server";
+import * as Routes from "../Routes";
+
+// Type pour les gestionnaires de route
+type RouteHandler = {
+  GET?: (request: NextRequest) => Promise<NextResponse>;
+  POST?: (request: NextRequest) => Promise<NextResponse>;
+  PUT?: (request: NextRequest) => Promise<NextResponse>;
+  DELETE?: (request: NextRequest) => Promise<NextResponse>;
+  PATCH?: (request: NextRequest) => Promise<NextResponse>;
+};
+
+/**
+ * Fonction pour obtenir le gestionnaire de route approprié en fonction du chemin
+ */
+function getRouteHandler(path: string[]): RouteHandler | null {
+  // Si le chemin est vide, retourner null
+  if (path.length === 0) return null;
+
+  // Récupérer le premier segment du chemin (nom du modèle au pluriel)
+  const modelPlural = path[0];
+  
+  // Vérifier si le modèle existe dans les routes
+  const modelRoutes = (Routes as any)[modelPlural];
+  if (!modelRoutes) return null;
+
+  // Si le chemin a un seul segment, retourner le gestionnaire principal
+  if (path.length === 1) {
+    return modelRoutes.main || null;
+  }
+
+  // Si le chemin a deux segments, vérifier les sous-routes
+  if (path.length === 2) {
+    const subRoute = path[1];
+    return modelRoutes[subRoute] || null;
+  }
+
+  // Si le chemin est plus long, retourner null
+  return null;
+}
+
+/**
+ * Gestionnaire GET pour toutes les routes
+ */
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { all: string[] } }
+): Promise<NextResponse> {
+  const path = params.all;
+  const handler = getRouteHandler(path);
+
+  if (handler && handler.GET) {
+    return handler.GET(request);
+  }
+
+  return NextResponse.json({ error: "Route not found" }, { status: 404 });
+}
+
+/**
+ * Gestionnaire POST pour toutes les routes
+ */
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { all: string[] } }
+): Promise<NextResponse> {
+  const path = params.all;
+  const handler = getRouteHandler(path);
+
+  if (handler && handler.POST) {
+    return handler.POST(request);
+  }
+
+  return NextResponse.json({ error: "Route not found" }, { status: 404 });
+}
+
+/**
+ * Gestionnaire PUT pour toutes les routes
+ */
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { all: string[] } }
+): Promise<NextResponse> {
+  const path = params.all;
+  const handler = getRouteHandler(path);
+
+  if (handler && handler.PUT) {
+    return handler.PUT(request);
+  }
+
+  return NextResponse.json({ error: "Route not found" }, { status: 404 });
+}
+
+/**
+ * Gestionnaire DELETE pour toutes les routes
+ */
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { all: string[] } }
+): Promise<NextResponse> {
+  const path = params.all;
+  const handler = getRouteHandler(path);
+
+  if (handler && handler.DELETE) {
+    return handler.DELETE(request);
+  }
+
+  return NextResponse.json({ error: "Route not found" }, { status: 404 });
+}
+
+/**
+ * Gestionnaire PATCH pour toutes les routes
+ */
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { all: string[] } }
+): Promise<NextResponse> {
+  const path = params.all;
+  const handler = getRouteHandler(path);
+
+  if (handler && handler.PATCH) {
+    return handler.PATCH(request);
+  }
+
+  return NextResponse.json({ error: "Route not found" }, { status: 404 });
+} 

@@ -1,0 +1,78 @@
+/**
+ * API pour récupérer un(e) {{modelNameLower}} unique avec mise en cache
+ * 
+ * Ce fichier définit un point d'API pour récupérer un(e) {{modelNameLower}} par son ID.
+ * Il utilise unstable_cache de Next.js pour mettre en cache les résultats,
+ * ce qui améliore les performances en évitant des requêtes répétées à la base de données.
+ * 
+ * La fonction get{{modelName}}Cached parse les paramètres, appelle le service,
+ * et gère les erreurs potentielles avant de retourner les données.
+ */
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import {
+    {{modelName}}Complete,
+    {{modelName}}Service,
+    FindUnique{{modelName}}Props
+} from "@services/class/{{modelName}}Class";
+import { unstable_cache as cache } from "next/cache";
+import { NextRequest, NextResponse } from "next/server";
+import { ZodError } from "zod";
+
+/**
+ * Type de réponse pour l'API de {{modelNameLower}} unique
+ */
+export type {{modelName}}UniqueApiResponse =
+    | { data: {{modelName}}Complete | null; }
+    | { error: string; };
+
+/**
+ * Récupère un(e) {{modelNameLower}} mis(e) en cache par ID
+ * @param stringParams Paramètres contenant l'ID du/de la {{modelNameLower}} au format JSON
+ * @returns {{modelName}} ou null si non trouvé(e)
+ */
+const get{{modelName}}Cached = cache(
+    async (stringParams: string): Promise<{{modelName}}Complete | null> => {
+        // Parse les paramètres en objet
+        const params: FindUnique{{modelName}}Props = JSON.parse(stringParams);
+        
+        // Utilise le service pour récupérer le/la {{modelNameLower}}
+        const response = await {{modelName}}Service.findUnique(params);
+        
+        // Vérifie si la réponse contient une erreur
+        if ('error' in response) {
+            console.error(response.error);
+            return null;
+        }
+        
+        return response.{{modelNameLower}};
+    },
+    ["/{{modelNameLower}}s/unique"],
+    {
+        revalidate: process.env.NODE_ENV === "development" ? 5 : 300,
+        tags: ["/{{modelNameLower}}s/unique"],
+    },
+);
+
+/**
+ * Gestionnaire de route GET pour récupérer un(e) seul(e) {{modelNameLower}} par ID
+ */
+export const GET = async (request: NextRequest): Promise<NextResponse<{{modelName}}UniqueApiResponse>> => {
+    try {
+        const encodedParams = request.nextUrl.searchParams.get("params") ?? "{}";
+        const stringParams = decodeURIComponent(encodedParams);
+        
+        const {{modelNameLower}} = await get{{modelName}}Cached(stringParams);
+        
+        return NextResponse.json({ data: {{modelNameLower}} }, { status: 200 });
+    } catch (error) {
+        console.error("get{{modelName}}Cached -> " + (error as Error).message);
+        if (process.env.NODE_ENV === "development") {
+            if (error instanceof ZodError)
+                return NextResponse.json({ error: "get{{modelName}}Cached -> Invalid Zod params -> " + error.message });
+            if (error instanceof PrismaClientKnownRequestError)
+                return NextResponse.json({ error: "get{{modelName}}Cached -> Prisma error -> " + error.message });
+            return NextResponse.json({ error: "get{{modelName}}Cached -> " + (error as Error).message });
+        }
+        return NextResponse.json({ error: "Something went wrong..." }, { status: 500 });
+    }
+}; 

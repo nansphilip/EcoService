@@ -1,0 +1,79 @@
+/**
+ * API pour compter les {{modelNameLower}}s avec mise en cache
+ * 
+ * Ce fichier définit un point d'API pour compter les {{modelNameLower}}s avec filtrage.
+ * Il utilise unstable_cache de Next.js pour mettre en cache les résultats.
+ * 
+ * La fonction get{{modelName}}CountCached parse les paramètres, appelle le service,
+ * et gère les erreurs potentielles avant de retourner les données.
+ */
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import {
+    {{modelName}}Count,
+    {{modelName}}Service,
+    Count{{modelName}}Props
+} from "@services/class/{{modelName}}Class";
+import { unstable_cache as cache } from "next/cache";
+import { NextRequest, NextResponse } from "next/server";
+import { ZodError } from "zod";
+
+/**
+ * Type de réponse pour l'API de comptage de {{modelNameLower}}s
+ */
+export type {{modelName}}CountApiResponse =
+    | { data: {{modelName}}Count | null; }
+    | { error: string; };
+
+/**
+ * Récupère un comptage de {{modelNameLower}}s mis en cache
+ */
+const get{{modelName}}CountCached = cache(
+    async (stringParams: string): Promise<{{modelName}}Count | null> => {
+        // Parse les paramètres en objet
+        const params: Count{{modelName}}Props = JSON.parse(stringParams);
+        
+        // Utilise le service pour compter les {{modelNameLower}}s
+        const response = await {{modelName}}Service.count(params);
+        
+        // Vérifie si la réponse contient une erreur
+        if ('error' in response) {
+            console.error(response.error);
+            return null;
+        }
+        
+        return response.{{modelNameLower}}Amount;
+    },
+    ["{{modelNameLower}}s"],
+    {
+        revalidate: process.env.NODE_ENV === "development" ? 5 : 300,
+        tags: ["{{modelNameLower}}s"],
+    },
+);
+
+/**
+ * Gestionnaire de route GET pour l'API de comptage de {{modelNameLower}}s
+ */
+export const GET = async (request: NextRequest): Promise<NextResponse<{{modelName}}CountApiResponse>> => {
+    try {
+        // Récupère les paramètres et les décode
+        const encodedParams = request.nextUrl.searchParams.get("params") ?? "{}";
+        const stringParams = decodeURIComponent(encodedParams);
+
+        // Récupère le comptage des {{modelNameLower}}s
+        const {{modelNameLower}}Amount = await get{{modelName}}CountCached(stringParams);
+
+        // Retourne le comptage des {{modelNameLower}}s
+        return NextResponse.json({ data: {{modelNameLower}}Amount }, { status: 200 });
+    } catch (error) {
+        console.error("get{{modelName}}CountCached -> " + (error as Error).message);
+        if (process.env.NODE_ENV === "development") {
+            if (error instanceof ZodError)
+                return NextResponse.json({ error: "get{{modelName}}CountCached -> Invalid Zod params -> " + error.message });
+            if (error instanceof PrismaClientKnownRequestError)
+                return NextResponse.json({ error: "get{{modelName}}CountCached -> Prisma error -> " + error.message });
+            return NextResponse.json({ error: "get{{modelName}}CountCached -> " + (error as Error).message });
+        }
+        // TODO: add logging
+        return NextResponse.json({ error: "Something went wrong..." }, { status: 500 });
+    }
+}; 

@@ -21,9 +21,9 @@
         "fixtures:reset": "tsx scripts/fixtures.ts reset",
         "fixtures:reload": "tsx scripts/fixtures.ts reload",
         "help": "tsx scripts/help.ts help",
-        "gen:list": "tsx scripts/generator.ts list",
-        "gen:model": "tsx scripts/generator.ts model",
-        "gen:all": "tsx scripts/generator.ts"
+        "generate:list": "tsx scripts/generator.ts list",
+        "generate:model": "tsx scripts/generator.ts model",
+        "generate:all": "tsx scripts/generator.ts"
     },
     "dependencies": {
         "@plunk/node": "^3.0.3",
