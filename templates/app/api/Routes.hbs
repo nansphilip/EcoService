@@ -1,53 +1,57 @@
 /**
- * Définition des types pour toutes les routes API
+ * Type definition for all API routes in the application.
+ * This serves as a centralized registry for route parameters and response types.
+ *
+ * Each route is defined with:
+ * - params: The expected parameters for the route (optional)
+ * - response: The expected response type from the route
+ *
+ * This type is used by the Fetch utility to provide type safety when making API requests.
  * 
- * Ce fichier est généré automatiquement et contient les types pour toutes les routes API.
- * Il importe les gestionnaires de route pour chaque modèle et les exporte sous forme d'objet.
- * 
- * Ne pas modifier ce fichier manuellement, il sera écrasé lors de la prochaine génération.
+ * ATTENTION: Ce fichier est généré automatiquement. Ne pas modifier manuellement.
  */
 
-import { NextRequest, NextResponse } from "next/server";
-
-// Type pour les gestionnaires de route
-type RouteHandler = {
-  GET?: (request: NextRequest) => Promise<NextResponse>;
-  POST?: (request: NextRequest) => Promise<NextResponse>;
-  PUT?: (request: NextRequest) => Promise<NextResponse>;
-  DELETE?: (request: NextRequest) => Promise<NextResponse>;
-  PATCH?: (request: NextRequest) => Promise<NextResponse>;
-};
-
 {{#each models}}
-import { Select{{this.name}}AmountProps, Select{{this.name}}ListProps, Select{{this.name}}Props } from "@actions/types/{{this.name}}";
-import { Select{{this.name}}AmountResponse } from "@app/api/{{this.namePlural}}/count/route";
-import { Select{{this.name}}ListResponse } from "@app/api/{{this.namePlural}}/route";
-import { Select{{this.name}}Response } from "@app/api/{{this.namePlural}}/unique/route";
-// Import des gestionnaires pour {{this.name}}
-import * as {{this.name}}Main from "./{{this.namePlural}}/route";
-import * as {{this.name}}Unique from "./{{this.namePlural}}/unique/route";
-import * as {{this.name}}Count from "./{{this.namePlural}}/count/route";
+import { 
+  Count{{this.name}}Props, 
+  Count{{this.name}}Response,
+  FindMany{{this.name}}Props,
+  FindMany{{this.name}}Response,
+  FindUnique{{this.name}}Props,
+  FindUnique{{this.name}}Response
+} from "@services/class/{{this.name}}Class";
 {{/each}}
 
 export type Routes = {
   {{#each models}}
-  {{this.namePlural}}: {
-    main: RouteHandler;
-    unique: RouteHandler;
-    count: RouteHandler;
+  /**
+   * Route for fetching a list of {{this.namePlural}} \
+   * GET `/api/{{this.namePlural}}`
+   */
+  "/{{this.namePlural}}": {
+    params?: FindMany{{this.name}}Props;
+    response: FindMany{{this.name}}Response;
+  };
+
+  /**
+   * Route for fetching a single {{this.name}} by ID \
+   * GET `/api/{{this.namePlural}}/unique`
+   */
+  "/{{this.namePlural}}/unique": {
+    params?: FindUnique{{this.name}}Props;
+    response: FindUnique{{this.name}}Response;
+  };
+  
+  /**
+   * Route for fetching the count of {{this.namePlural}} \
+   * GET `/api/{{this.namePlural}}/count`
+   */
+  "/{{this.namePlural}}/count": {
+    params?: Count{{this.name}}Props;
+    response: Count{{this.name}}Response;
   };
   {{#unless @last}}
+
   {{/unless}}
   {{/each}}
 };
-
-// Export des routes
-export const {{#each models}}
-{{this.namePlural}} = {
-  main: {{this.name}}Main,
-  unique: {{this.name}}Unique,
-  count: {{this.name}}Count,
-};
-{{#unless @last}}
-{{/unless}}
-{{/each}}

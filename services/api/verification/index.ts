@@ -1,5 +1,5 @@
 /**
- * Point d'entrée pour les API de category
+ * Point d'entrée pour les API de verification
  * 
  * Ce fichier importe les gestionnaires GET de chaque API avec des alias
  * pour éviter les conflits de noms, puis les réexporte.
@@ -7,12 +7,12 @@
  * Cette approche résout le problème d'ambiguïté qui se produirait si nous
  * utilisions "export *" car chaque fichier exporte une fonction nommée GET.
  */
-import { GET as getCategoryCount } from './count/route';
-import { GET as getCategoryList } from './route';
-import { GET as getCategoryUnique } from './unique/route';
+import { GET as getVerificationCount } from './count/route';
+import { GET as getVerificationList } from './route';
+import { GET as getVerificationUnique } from './unique/route';
 
 export {
-    getCategoryCount,
-    getCategoryList,
-    getCategoryUnique
+    getVerificationCount,
+    getVerificationList,
+    getVerificationUnique
 }; 

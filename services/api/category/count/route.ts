@@ -1,13 +1,11 @@
 /**
- * API pour compter les catégories avec mise en cache
+ * API pour compter les categorys avec mise en cache
  * 
- * Ce fichier définit un point d'API pour compter les catégories avec filtrage.
+ * Ce fichier définit un point d'API pour compter les categorys avec filtrage.
  * Il utilise unstable_cache de Next.js pour mettre en cache les résultats.
  * 
  * La fonction getCategoryCountCached parse les paramètres, appelle le service,
  * et gère les erreurs potentielles avant de retourner les données.
- * 
- * Le gestionnaire GET traite les requêtes HTTP et formate les réponses.
  */
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import {
@@ -20,21 +18,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 /**
- * Type de réponse pour l'API de comptage de catégories
+ * Type de réponse pour l'API de comptage de categorys
  */
 export type CategoryCountApiResponse =
     | { data: CategoryCount | null; }
     | { error: string; };
 
 /**
- * Récupère un comptage de catégories mis en cache
+ * Récupère un comptage de categorys mis en cache
  */
 const getCategoryCountCached = cache(
     async (stringParams: string): Promise<CategoryCount | null> => {
         // Parse les paramètres en objet
         const params: CountCategoryProps = JSON.parse(stringParams);
         
-        // Utilise le service pour compter les catégories
+        // Utilise le service pour compter les categorys
         const response = await CategoryService.count(params);
         
         // Vérifie si la réponse contient une erreur
@@ -45,15 +43,15 @@ const getCategoryCountCached = cache(
         
         return response.categoryAmount;
     },
-    ["categories"],
+    ["categorys"],
     {
         revalidate: process.env.NODE_ENV === "development" ? 5 : 300,
-        tags: ["categories"],
+        tags: ["categorys"],
     },
 );
 
 /**
- * Gestionnaire de route GET pour l'API de comptage de catégories
+ * Gestionnaire de route GET pour l'API de comptage de categorys
  */
 export const GET = async (request: NextRequest): Promise<NextResponse<CategoryCountApiResponse>> => {
     try {
@@ -61,10 +59,10 @@ export const GET = async (request: NextRequest): Promise<NextResponse<CategoryCo
         const encodedParams = request.nextUrl.searchParams.get("params") ?? "{}";
         const stringParams = decodeURIComponent(encodedParams);
 
-        // Récupère le comptage des catégories
+        // Récupère le comptage des categorys
         const categoryAmount = await getCategoryCountCached(stringParams);
 
-        // Retourne le comptage des catégories
+        // Retourne le comptage des categorys
         return NextResponse.json({ data: categoryAmount }, { status: 200 });
     } catch (error) {
         console.error("getCategoryCountCached -> " + (error as Error).message);
@@ -78,4 +76,4 @@ export const GET = async (request: NextRequest): Promise<NextResponse<CategoryCo
         // TODO: add logging
         return NextResponse.json({ error: "Something went wrong..." }, { status: 500 });
     }
-};
+}; 

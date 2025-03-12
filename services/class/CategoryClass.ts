@@ -1,7 +1,7 @@
 /**
- * Classe de service pour les opérations CRUD sur les catégories
+ * Classe de service pour les opérations CRUD sur les categorys
  * 
- * Ce fichier centralise toute la logique d'accès aux données pour les catégories.
+ * Ce fichier centralise toute la logique d'accès aux données pour les categorys.
  * Il utilise les schémas Zod générés par zod-prisma-types pour la validation des données.
  * Chaque méthode retourne soit les données demandées, soit une erreur formatée.
  * 
@@ -20,60 +20,6 @@ import {
 } from "@services/schemas/inputTypeSchemas";
 import { CategoryIncludeSchema } from "@services/schemas/inputTypeSchemas/CategoryIncludeSchema";
 import { z, ZodError, ZodType } from "zod";
-
-/*
-// Create
-CategoryCreateInputSchema.ts
-CategoryCreateManyInputSchema.ts
-CategoryUncheckedCreateInputSchema.ts
-
-// Update
-CategoryUpdateInputSchema.ts
-CategoryUncheckedUpdateInputSchema.ts
-CategoryUncheckedUpdateManyInputSchema.ts
-CategoryUpdateManyMutationInputSchema.ts
-
-// Where
-CategoryWhereInputSchema.ts
-CategoryWhereUniqueInputSchema.ts
-
-// Select
-CategorySelectSchema.ts
-
-// Include
-CategoryIncludeSchema.ts
-
-// Aggregates
-CategoryCountOrderByAggregateInputSchema.ts
-CategoryMaxOrderByAggregateInputSchema.ts
-CategoryMinOrderByAggregateInputSchema.ts
-
-// Relations
-CategoryNullableScalarRelationFilterSchema.ts
-
-// Ordering
-CategoryOrderByRelevanceFieldEnumSchema.ts
-CategoryOrderByRelevanceInputSchema.ts
-CategoryOrderByWithAggregationInputSchema.ts
-CategoryOrderByWithRelationInputSchema.ts
-
-// Scalar
-CategoryScalarFieldEnumSchema.ts
-CategoryScalarWhereWithAggregatesInputSchema.ts
-
-// Create with Products
-CategoryCreateNestedOneWithoutProductsInputSchema.ts
-CategoryCreateOrConnectWithoutProductsInputSchema.ts
-CategoryCreateWithoutProductsInputSchema.ts
-
-// With Products
-CategoryUncheckedCreateWithoutProductsInputSchema.ts
-CategoryUncheckedUpdateWithoutProductsInputSchema.ts
-CategoryUpdateOneWithoutProductsNestedInputSchema.ts
-CategoryUpdateToOneWithWhereWithoutProductsInputSchema.ts
-CategoryUpdateWithoutProductsInputSchema.ts
-CategoryUpsertWithoutProductsInputSchema.ts
-*/
 
 // ============== Types ============== //
 
@@ -145,13 +91,13 @@ export type CountCategoryResponse = ResponseFormat<"categoryAmount", CategoryCou
 // ============== Services ============== //
 
 /**
- * Service pour les opérations de base de données sur les catégories
+ * Service pour les opérations de base de données sur les categorys
  */
 export class CategoryService {
     /**
-     * Crée une nouvelle catégorie
-     * @param props Propriétés de la catégorie
-     * @returns Catégorie créée ou erreur
+     * Crée un(e) nouveau/nouvelle category
+     * @param props Propriétés du/de la category
+     * @returns Category créé(e) ou erreur
      */
     static async create(props: CreateCategoryProps): Promise<CreateCategoryResponse> {
         try {
@@ -175,9 +121,9 @@ export class CategoryService {
     }
 
     /**
-     * Met à jour une catégorie
-     * @param props ID de la catégorie et nouvelles données
-     * @returns Catégorie mise à jour ou erreur
+     * Met à jour un(e) category
+     * @param props ID du/de la category et nouvelles données
+     * @returns Category mis(e) à jour ou erreur
      */
     static async update(props: UpdateCategoryProps): Promise<UpdateCategoryResponse> {
         try {
@@ -201,9 +147,9 @@ export class CategoryService {
     }
 
     /**
-     * Supprime une catégorie
-     * @param props ID de la catégorie
-     * @returns Catégorie supprimée ou erreur
+     * Supprime un(e) category
+     * @param props ID du/de la category
+     * @returns Category supprimé(e) ou erreur
      */
     static async delete(props: DeleteCategoryProps): Promise<DeleteCategoryResponse> {
         try {
@@ -227,7 +173,7 @@ export class CategoryService {
     }
 
     /**
-     * Récupère une catégorie par ID ou autre filtre
+     * Récupère un(e) category par ID ou autre filtre
      */
     static async findUnique(props: FindUniqueCategoryProps): Promise<FindUniqueCategoryResponse> {
         try {
@@ -251,7 +197,7 @@ export class CategoryService {
     }
 
     /**
-     * Récupère une liste de catégories avec filtres
+     * Récupère une liste de categorys avec filtres
      */
     static async findMany(props: FindManyCategoryProps): Promise<FindManyCategoryResponse> {
         try {
@@ -270,12 +216,12 @@ export class CategoryService {
                 throw new Error("CategoryService -> FindMany -> " + (error as Error).message);
             }
             // TODO: add logging
-            return { error: "Unable to find categories..." };
+            return { error: "Unable to find categorys..." };
         }
     }
 
     /**
-     * Compte les catégories avec filtres
+     * Compte les categorys avec filtres
      */
     static async count(props: CountCategoryProps): Promise<CountCategoryResponse> {
         try {
@@ -294,7 +240,7 @@ export class CategoryService {
                 throw new Error("CategoryService -> Count -> " + (error as Error).message);
             }
             // TODO: add logging
-            return { error: "Unable to count categories..." };
+            return { error: "Unable to count categorys..." };
         }
     }
-}
+} 

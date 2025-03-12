@@ -6,5 +6,16 @@
  * 
  * À mesure que de nouvelles classes sont ajoutées, elles doivent être exportées ici.
  */
+export * from './UserClass';
+export * from './SessionClass';
+export * from './AccountClass';
+export * from './VerificationClass';
+export * from './AddressClass';
+export * from './ArticleClass';
+export * from './DoItYourselfClass';
+export * from './ContentClass';
 export * from './CategoryClass';
-// Ajouter d'autres exports au fur et à mesure que vous créez d'autres classes 
+export * from './ProductClass';
+export * from './QuantityClass';
+export * from './OrderClass';
+export * from './FruitClass';

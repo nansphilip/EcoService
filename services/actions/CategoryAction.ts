@@ -1,7 +1,7 @@
 "use server";
 
 /**
- * Actions serveur pour les opérations CRUD sur les catégories
+ * Actions serveur pour les opérations CRUD sur les categorys
  * 
  * Ce fichier expose les méthodes de CategoryService comme des actions serveur Next.js.
  * Ces actions peuvent être appelées directement depuis les composants client.
@@ -59,7 +59,7 @@ export const DeleteCategory = async (props: DeleteCategoryProps): Promise<Delete
 /**
  * Retrieves a category by ID or another filter (no caching) \
  * WARNING: do not use this for fetching data -> use API routes with caching instead
- * @param props Category ID or other filter (name, description...)
+ * @param props Category ID or other filter
  * @returns Found category or error
  */
 export const SelectCategory = async (props: FindUniqueCategoryProps): Promise<FindUniqueCategoryResponse> => {
@@ -67,21 +67,21 @@ export const SelectCategory = async (props: FindUniqueCategoryProps): Promise<Fi
 };
 
 /**
- * Retrieves a list of categories with filters (no caching) \
+ * Retrieves a list of categorys with filters (no caching) \
  * WARNING: do not use this for fetching data -> use API routes with caching instead
  * @param props Filter and pagination options
- * @returns List of categories or error
+ * @returns List of categorys or error
  */
 export const SelectCategoryList = async (props: FindManyCategoryProps): Promise<FindManyCategoryResponse> => {
     return CategoryService.findMany(props);
 };
 
 /**
- * Counts categories with filters (no caching) \
+ * Counts categorys with filters (no caching) \
  * WARNING: do not use this for fetching data -> use API routes with caching instead
  * @param props Filter options
- * @returns Count of categories or error
+ * @returns Count of categorys or error
  */
 export const SelectCategoryAmount = async (props: CountCategoryProps): Promise<CountCategoryResponse> => {
     return CategoryService.count(props);
-};
+}; 

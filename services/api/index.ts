@@ -6,4 +6,16 @@
  * 
  * À mesure que de nouvelles API sont ajoutées, elles doivent être exportées ici.
  */
+export * from './user';
+export * from './session';
+export * from './account';
+export * from './verification';
+export * from './address';
+export * from './article';
+export * from './doItYourself';
+export * from './content';
 export * from './category';
+export * from './product';
+export * from './quantity';
+export * from './order';
+export * from './fruit';

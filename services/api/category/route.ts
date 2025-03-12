@@ -1,14 +1,12 @@
 /**
- * API pour récupérer une liste de catégories avec mise en cache
+ * API pour récupérer une liste de categorys avec mise en cache
  * 
- * Ce fichier définit un point d'API pour récupérer une liste de catégories
+ * Ce fichier définit un point d'API pour récupérer une liste de categorys
  * avec filtrage, tri et pagination. Il utilise unstable_cache de Next.js
  * pour mettre en cache les résultats.
  * 
  * La fonction getCategoryListCached parse les paramètres, appelle le service,
  * et gère les erreurs potentielles avant de retourner les données.
- * 
- * Le gestionnaire GET traite les requêtes HTTP et formate les réponses.
  */
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import {
@@ -21,21 +19,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 /**
- * Type de réponse pour l'API de liste de catégories
+ * Type de réponse pour l'API de liste de categorys
  */
 export type CategoryListApiResponse =
     | { data: CategoryComplete[] | null; }
     | { error: string; };
 
 /**
- * Récupère une liste de catégories mise en cache
+ * Récupère une liste de categorys mise en cache
  */
 const getCategoryListCached = cache(
     async (stringParams: string): Promise<CategoryComplete[] | null> => {
         // Parse les paramètres en objet
         const params: FindManyCategoryProps = JSON.parse(stringParams);
         
-        // Utilise le service pour récupérer la liste des catégories
+        // Utilise le service pour récupérer la liste des categorys
         const response = await CategoryService.findMany(params);
         
         // Vérifie si la réponse contient une erreur
@@ -44,19 +42,19 @@ const getCategoryListCached = cache(
             return null;
         }
         
-        console.log("getCategoryList -> Revalidating categories list from database...");
+        console.log("getCategoryList -> Revalidating categorys list from database...");
         
         return response.categoryList;
     },
-    ["categories"],
+    ["categorys"],
     {
         revalidate: process.env.NODE_ENV === "development" ? 5 : 300,
-        tags: ["categories"],
+        tags: ["categorys"],
     },
 );
 
 /**
- * Gestionnaire de route GET pour l'API de catégories
+ * Gestionnaire de route GET pour l'API de categorys
  */
 export const GET = async (request: NextRequest): Promise<NextResponse<CategoryListApiResponse>> => {
     try {
@@ -64,10 +62,10 @@ export const GET = async (request: NextRequest): Promise<NextResponse<CategoryLi
         const encodedParams = request.nextUrl.searchParams.get("params") ?? "{}";
         const stringParams = decodeURIComponent(encodedParams);
 
-        // Récupère la liste des catégories
+        // Récupère la liste des categorys
         const categoryList = await getCategoryListCached(stringParams);
 
-        // Retourne la liste des catégories
+        // Retourne la liste des categorys
         return NextResponse.json({ data: categoryList }, { status: 200 });
     } catch (error) {
         console.error("getCategoryListCached -> " + (error as Error).message);
@@ -81,4 +79,4 @@ export const GET = async (request: NextRequest): Promise<NextResponse<CategoryLi
         // TODO: add logging
         return NextResponse.json({ error: "Something went wrong..." }, { status: 500 });
     }
-};
+}; 

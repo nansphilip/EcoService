@@ -1,14 +1,12 @@
 /**
- * API pour récupérer une catégorie unique avec mise en cache
+ * API pour récupérer un(e) category unique avec mise en cache
  * 
- * Ce fichier définit un point d'API pour récupérer une catégorie par son ID.
+ * Ce fichier définit un point d'API pour récupérer un(e) category par son ID.
  * Il utilise unstable_cache de Next.js pour mettre en cache les résultats,
  * ce qui améliore les performances en évitant des requêtes répétées à la base de données.
  * 
  * La fonction getCategoryCached parse les paramètres, appelle le service,
  * et gère les erreurs potentielles avant de retourner les données.
- * 
- * Le gestionnaire GET traite les requêtes HTTP et formate les réponses.
  */
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import {
@@ -21,23 +19,23 @@ import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 /**
- * Type de réponse pour l'API de catégorie unique
+ * Type de réponse pour l'API de category unique
  */
 export type CategoryUniqueApiResponse =
     | { data: CategoryComplete | null; }
     | { error: string; };
 
 /**
- * Récupère une catégorie mise en cache par ID
- * @param stringParams Paramètres contenant l'ID de la catégorie au format JSON
- * @returns Catégorie ou null si non trouvée
+ * Récupère un(e) category mis(e) en cache par ID
+ * @param stringParams Paramètres contenant l'ID du/de la category au format JSON
+ * @returns Category ou null si non trouvé(e)
  */
 const getCategoryCached = cache(
     async (stringParams: string): Promise<CategoryComplete | null> => {
         // Parse les paramètres en objet
         const params: FindUniqueCategoryProps = JSON.parse(stringParams);
         
-        // Utilise le service pour récupérer la catégorie
+        // Utilise le service pour récupérer le/la category
         const response = await CategoryService.findUnique(params);
         
         // Vérifie si la réponse contient une erreur
@@ -48,15 +46,15 @@ const getCategoryCached = cache(
         
         return response.category;
     },
-    ["/categories/unique"],
+    ["/categorys/unique"],
     {
         revalidate: process.env.NODE_ENV === "development" ? 5 : 300,
-        tags: ["/categories/unique"],
+        tags: ["/categorys/unique"],
     },
 );
 
 /**
- * Gestionnaire de route GET pour récupérer une seule catégorie par ID
+ * Gestionnaire de route GET pour récupérer un(e) seul(e) category par ID
  */
 export const GET = async (request: NextRequest): Promise<NextResponse<CategoryUniqueApiResponse>> => {
     try {
@@ -77,4 +75,4 @@ export const GET = async (request: NextRequest): Promise<NextResponse<CategoryUn
         }
         return NextResponse.json({ error: "Something went wrong..." }, { status: 500 });
     }
-};
+}; 
