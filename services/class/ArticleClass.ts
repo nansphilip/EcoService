@@ -11,13 +11,19 @@
 import PrismaInstance from "@lib/prisma";
 import { Prisma } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
-import { Article, ArticleSchema } from "@services/schemas";
 import {
-    ArticleCreateInputSchema,
-    ArticleUpdateInputSchema,
+    Article,
+    ArticleCreateArgsSchema,
+    ArticleDeleteArgsSchema,
+    ArticleFindManyArgsSchema,
+    ArticleFindUniqueArgsSchema,
+    ArticleOrderByWithRelationInputSchema,
+    ArticleSchema,
+    ArticleUpdateArgsSchema,
+    ArticleUpsertArgsSchema,
     ArticleWhereInputSchema,
-    ArticleWhereUniqueInputSchema,
-} from "@services/schemas/inputTypeSchemas";
+    ArticleWhereUniqueInputSchema
+} from "@services/schemas";
 import { ArticleIncludeSchema } from "@services/schemas/inputTypeSchemas/ArticleIncludeSchema";
 import { z, ZodError, ZodType } from "zod";
 
@@ -33,34 +39,43 @@ export type ArticleCount = number;
 
 // ============== Schema Types ============== //
 
-const createArticleSchema: ZodType<Prisma.ArticleCreateArgs> = z.strictObject({
-    data: ArticleCreateInputSchema,
-});
+const createArticleSchema: ZodType<Prisma.ArticleCreateArgs> = ArticleCreateArgsSchema;
 
-const updateArticleSchema: ZodType<Prisma.ArticleUpdateArgs> = z.strictObject({
-    where: ArticleWhereUniqueInputSchema,
-    data: ArticleUpdateInputSchema,
-});
+const upsertArticleSchema: ZodType<Prisma.ArticleUpsertArgs> = ArticleUpsertArgsSchema;
 
-const deleteArticleSchema: ZodType<Prisma.ArticleDeleteArgs> = z.strictObject({
-    where: ArticleWhereUniqueInputSchema,
-});
+const updateArticleSchema: ZodType<Prisma.ArticleUpdateArgs> = ArticleUpdateArgsSchema;
 
-const selectArticleSchema: ZodType<Prisma.ArticleFindUniqueArgs> = z.strictObject({
-    where: ArticleWhereUniqueInputSchema,
-});
+const deleteArticleSchema: ZodType<Prisma.ArticleDeleteArgs> = ArticleDeleteArgsSchema;
 
-const selectManyArticleSchema: ZodType<Prisma.ArticleFindManyArgs> = z.strictObject({
-    where: ArticleWhereInputSchema,
-});
+const selectArticleSchema: ZodType<Prisma.ArticleFindUniqueArgs> = ArticleFindUniqueArgsSchema;
 
-const countArticleSchema: ZodType<Prisma.ArticleCountArgs> = z.strictObject({
-    where: ArticleWhereInputSchema,
+const selectManyArticleSchema: ZodType<Prisma.ArticleFindManyArgs> = ArticleFindManyArgsSchema;
+
+/**
+ * Définition du schéma pour ArticleCountArgs
+ * 
+ * Ce schéma correspond au type Prisma.ArticleCountArgs qui est défini comme:
+ * Omit<ArticleFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+ *   select?: ArticleCountAggregateInputType | true
+ * }
+ */
+const countArticleSchema: ZodType<Prisma.ArticleCountArgs> = z.object({
+    where: z.lazy(() => ArticleWhereInputSchema).optional(),
+    orderBy: z.union([
+        z.lazy(() => ArticleOrderByWithRelationInputSchema),
+        z.array(z.lazy(() => ArticleOrderByWithRelationInputSchema))
+    ]).optional(),
+    cursor: z.lazy(() => ArticleWhereUniqueInputSchema).optional(),
+    take: z.number().optional(),
+    skip: z.number().optional(),
+    select: z.union([z.literal(true), z.record(z.boolean())]).optional()
 });
 
 // ============== CRUD Props Types ============== //
 
 export type CreateArticleProps = z.infer<typeof createArticleSchema>;
+
+export type UpsertArticleProps = z.infer<typeof upsertArticleSchema>;
 
 export type UpdateArticleProps = z.infer<typeof updateArticleSchema>;
 
@@ -77,6 +92,8 @@ export type CountArticleProps = z.infer<typeof countArticleSchema>;
 export type ResponseFormat<Key extends string, Response> = { [key in Key]: Response } | { error: string };
 
 export type CreateArticleResponse = ResponseFormat<"article", ArticleModel>;
+
+export type UpsertArticleResponse = ResponseFormat<"article", ArticleModel>;
 
 export type UpdateArticleResponse = ResponseFormat<"article", ArticleModel>;
 
@@ -101,13 +118,18 @@ export class ArticleService {
      */
     static async create(props: CreateArticleProps): Promise<CreateArticleResponse> {
         try {
-            const data = createArticleSchema.parse(props);
+            const { data, include, omit, select } = createArticleSchema.parse(props);
 
-            const article: Article = await PrismaInstance.article.create(data);
+            const article: Article = await PrismaInstance.article.create({
+                data,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
 
             return { article };
         } catch (error) {
-            console.error("ArticleService.create -> " + (error as Error).message);
+            console.error("ArticleService -> Create -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("ArticleService -> Create -> Invalid Zod params -> " + error.message);
@@ -120,6 +142,34 @@ export class ArticleService {
         }
     }
 
+    static async upsert(props: UpsertArticleProps): Promise<UpsertArticleResponse> {
+        try {
+            const { create, update, where, include, omit, select } = upsertArticleSchema.parse(props);
+
+            const article: Article = await PrismaInstance.article.upsert({
+                create,
+                update,
+                where,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
+
+            return { article };
+        } catch (error) {
+            console.error("ArticleService -> Upsert -> " + (error as Error).message);
+            if (process.env.NODE_ENV === "development") {
+                if (error instanceof ZodError)
+                    throw new Error("ArticleService -> Upsert -> Invalid Zod params -> " + error.message);
+                if (error instanceof PrismaClientKnownRequestError)
+                    throw new Error("ArticleService -> Upsert -> Prisma error -> " + error.message);
+                throw new Error("ArticleService -> Upsert -> " + (error as Error).message);
+            }
+            // TODO: add logging
+            return { error: "Unable to upsert article..." };
+        }
+    }
+
     /**
      * Met à jour un(e) article
      * @param props ID du/de la article et nouvelles données
@@ -127,13 +177,19 @@ export class ArticleService {
      */
     static async update(props: UpdateArticleProps): Promise<UpdateArticleResponse> {
         try {
-            const data = updateArticleSchema.parse(props);
+            const { data, where, include, omit, select } = updateArticleSchema.parse(props);
 
-            const article: Article = await PrismaInstance.article.update(data);
+            const article: Article = await PrismaInstance.article.update({
+                data,
+                where,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
 
             return { article };
         } catch (error) {
-            console.error("ArticleService.update -> " + (error as Error).message);
+            console.error("ArticleService -> Update -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("ArticleService -> Update -> Invalid Zod params -> " + error.message);
@@ -153,13 +209,18 @@ export class ArticleService {
      */
     static async delete(props: DeleteArticleProps): Promise<DeleteArticleResponse> {
         try {
-            const data = deleteArticleSchema.parse(props);
+            const { where, include, omit, select } = deleteArticleSchema.parse(props);
 
-            const article: Article = await PrismaInstance.article.delete(data);
+            const article: Article = await PrismaInstance.article.delete({
+                where,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
 
             return { article };
         } catch (error) {
-            console.error("ArticleService.delete -> " + (error as Error).message);
+            console.error("ArticleService -> Delete -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("ArticleService -> Delete -> Invalid Zod params -> " + error.message);
@@ -177,13 +238,18 @@ export class ArticleService {
      */
     static async findUnique(props: FindUniqueArticleProps): Promise<FindUniqueArticleResponse> {
         try {
-            const data = selectArticleSchema.parse(props);
+            const { where, include, omit, select } = selectArticleSchema.parse(props);
 
-            const article: ArticleComplete | null = await PrismaInstance.article.findUnique(data);
+            const article: ArticleComplete | null = await PrismaInstance.article.findUnique({
+                where,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
 
             return { article };
         } catch (error) {
-            console.error("ArticleService.findUnique -> " + (error as Error).message);
+            console.error("ArticleService -> FindUnique -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("ArticleService -> FindUnique -> Invalid Zod params -> " + error.message);
@@ -201,13 +267,33 @@ export class ArticleService {
      */
     static async findMany(props: FindManyArticleProps): Promise<FindManyArticleResponse> {
         try {
-            const data = selectManyArticleSchema.parse(props);
+            const {
+                cursor,
+                distinct,
+                include,
+                omit,
+                orderBy,
+                select,
+                skip = 0,
+                take = 10,
+                where,
+            } = selectManyArticleSchema.parse(props);
 
-            const articleList: ArticleComplete[] = await PrismaInstance.article.findMany(data);
+            const articleList: ArticleComplete[] = await PrismaInstance.article.findMany({
+                ...(cursor && { cursor }),
+                ...(distinct && { distinct }),
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(orderBy && { orderBy }),
+                ...(select && { select }),
+                ...(skip && { skip }),
+                ...(take && { take }),
+                ...(where && { where }),
+            });
 
             return { articleList };
         } catch (error) {
-            console.error("ArticleService.findMany -> " + (error as Error).message);
+            console.error("ArticleService -> FindMany -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("ArticleService -> FindMany -> Invalid Zod params -> " + error.message);
@@ -225,13 +311,19 @@ export class ArticleService {
      */
     static async count(props: CountArticleProps): Promise<CountArticleResponse> {
         try {
-            const data = countArticleSchema.parse(props);
+            const { cursor, orderBy, select, skip = 0, take = 10, where } = countArticleSchema.parse(props);
 
-            const articleAmount: ArticleCount = await PrismaInstance.article.count(data);
-
+            const articleAmount: ArticleCount = await PrismaInstance.article.count({
+                ...(cursor && { cursor }),
+                ...(orderBy && { orderBy }),
+                ...(select && { select }),
+                ...(skip && { skip }),
+                ...(take && { take }),
+                ...(where && { where }),
+            });
             return { articleAmount };
         } catch (error) {
-            console.error("ArticleService.count -> " + (error as Error).message);
+            console.error("ArticleService -> Count -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("ArticleService -> Count -> Invalid Zod params -> " + error.message);

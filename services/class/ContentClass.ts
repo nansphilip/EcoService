@@ -11,13 +11,19 @@
 import PrismaInstance from "@lib/prisma";
 import { Prisma } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
-import { Content, ContentSchema } from "@services/schemas";
 import {
-    ContentCreateInputSchema,
-    ContentUpdateInputSchema,
+    Content,
+    ContentCreateArgsSchema,
+    ContentDeleteArgsSchema,
+    ContentFindManyArgsSchema,
+    ContentFindUniqueArgsSchema,
+    ContentOrderByWithRelationInputSchema,
+    ContentSchema,
+    ContentUpdateArgsSchema,
+    ContentUpsertArgsSchema,
     ContentWhereInputSchema,
-    ContentWhereUniqueInputSchema,
-} from "@services/schemas/inputTypeSchemas";
+    ContentWhereUniqueInputSchema
+} from "@services/schemas";
 import { ContentIncludeSchema } from "@services/schemas/inputTypeSchemas/ContentIncludeSchema";
 import { z, ZodError, ZodType } from "zod";
 
@@ -33,34 +39,43 @@ export type ContentCount = number;
 
 // ============== Schema Types ============== //
 
-const createContentSchema: ZodType<Prisma.ContentCreateArgs> = z.strictObject({
-    data: ContentCreateInputSchema,
-});
+const createContentSchema: ZodType<Prisma.ContentCreateArgs> = ContentCreateArgsSchema;
 
-const updateContentSchema: ZodType<Prisma.ContentUpdateArgs> = z.strictObject({
-    where: ContentWhereUniqueInputSchema,
-    data: ContentUpdateInputSchema,
-});
+const upsertContentSchema: ZodType<Prisma.ContentUpsertArgs> = ContentUpsertArgsSchema;
 
-const deleteContentSchema: ZodType<Prisma.ContentDeleteArgs> = z.strictObject({
-    where: ContentWhereUniqueInputSchema,
-});
+const updateContentSchema: ZodType<Prisma.ContentUpdateArgs> = ContentUpdateArgsSchema;
 
-const selectContentSchema: ZodType<Prisma.ContentFindUniqueArgs> = z.strictObject({
-    where: ContentWhereUniqueInputSchema,
-});
+const deleteContentSchema: ZodType<Prisma.ContentDeleteArgs> = ContentDeleteArgsSchema;
 
-const selectManyContentSchema: ZodType<Prisma.ContentFindManyArgs> = z.strictObject({
-    where: ContentWhereInputSchema,
-});
+const selectContentSchema: ZodType<Prisma.ContentFindUniqueArgs> = ContentFindUniqueArgsSchema;
 
-const countContentSchema: ZodType<Prisma.ContentCountArgs> = z.strictObject({
-    where: ContentWhereInputSchema,
+const selectManyContentSchema: ZodType<Prisma.ContentFindManyArgs> = ContentFindManyArgsSchema;
+
+/**
+ * Définition du schéma pour ContentCountArgs
+ * 
+ * Ce schéma correspond au type Prisma.ContentCountArgs qui est défini comme:
+ * Omit<ContentFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+ *   select?: ContentCountAggregateInputType | true
+ * }
+ */
+const countContentSchema: ZodType<Prisma.ContentCountArgs> = z.object({
+    where: z.lazy(() => ContentWhereInputSchema).optional(),
+    orderBy: z.union([
+        z.lazy(() => ContentOrderByWithRelationInputSchema),
+        z.array(z.lazy(() => ContentOrderByWithRelationInputSchema))
+    ]).optional(),
+    cursor: z.lazy(() => ContentWhereUniqueInputSchema).optional(),
+    take: z.number().optional(),
+    skip: z.number().optional(),
+    select: z.union([z.literal(true), z.record(z.boolean())]).optional()
 });
 
 // ============== CRUD Props Types ============== //
 
 export type CreateContentProps = z.infer<typeof createContentSchema>;
+
+export type UpsertContentProps = z.infer<typeof upsertContentSchema>;
 
 export type UpdateContentProps = z.infer<typeof updateContentSchema>;
 
@@ -77,6 +92,8 @@ export type CountContentProps = z.infer<typeof countContentSchema>;
 export type ResponseFormat<Key extends string, Response> = { [key in Key]: Response } | { error: string };
 
 export type CreateContentResponse = ResponseFormat<"content", ContentModel>;
+
+export type UpsertContentResponse = ResponseFormat<"content", ContentModel>;
 
 export type UpdateContentResponse = ResponseFormat<"content", ContentModel>;
 
@@ -101,13 +118,18 @@ export class ContentService {
      */
     static async create(props: CreateContentProps): Promise<CreateContentResponse> {
         try {
-            const data = createContentSchema.parse(props);
+            const { data, include, omit, select } = createContentSchema.parse(props);
 
-            const content: Content = await PrismaInstance.content.create(data);
+            const content: Content = await PrismaInstance.content.create({
+                data,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
 
             return { content };
         } catch (error) {
-            console.error("ContentService.create -> " + (error as Error).message);
+            console.error("ContentService -> Create -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("ContentService -> Create -> Invalid Zod params -> " + error.message);
@@ -120,6 +142,34 @@ export class ContentService {
         }
     }
 
+    static async upsert(props: UpsertContentProps): Promise<UpsertContentResponse> {
+        try {
+            const { create, update, where, include, omit, select } = upsertContentSchema.parse(props);
+
+            const content: Content = await PrismaInstance.content.upsert({
+                create,
+                update,
+                where,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
+
+            return { content };
+        } catch (error) {
+            console.error("ContentService -> Upsert -> " + (error as Error).message);
+            if (process.env.NODE_ENV === "development") {
+                if (error instanceof ZodError)
+                    throw new Error("ContentService -> Upsert -> Invalid Zod params -> " + error.message);
+                if (error instanceof PrismaClientKnownRequestError)
+                    throw new Error("ContentService -> Upsert -> Prisma error -> " + error.message);
+                throw new Error("ContentService -> Upsert -> " + (error as Error).message);
+            }
+            // TODO: add logging
+            return { error: "Unable to upsert content..." };
+        }
+    }
+
     /**
      * Met à jour un(e) content
      * @param props ID du/de la content et nouvelles données
@@ -127,13 +177,19 @@ export class ContentService {
      */
     static async update(props: UpdateContentProps): Promise<UpdateContentResponse> {
         try {
-            const data = updateContentSchema.parse(props);
+            const { data, where, include, omit, select } = updateContentSchema.parse(props);
 
-            const content: Content = await PrismaInstance.content.update(data);
+            const content: Content = await PrismaInstance.content.update({
+                data,
+                where,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
 
             return { content };
         } catch (error) {
-            console.error("ContentService.update -> " + (error as Error).message);
+            console.error("ContentService -> Update -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("ContentService -> Update -> Invalid Zod params -> " + error.message);
@@ -153,13 +209,18 @@ export class ContentService {
      */
     static async delete(props: DeleteContentProps): Promise<DeleteContentResponse> {
         try {
-            const data = deleteContentSchema.parse(props);
+            const { where, include, omit, select } = deleteContentSchema.parse(props);
 
-            const content: Content = await PrismaInstance.content.delete(data);
+            const content: Content = await PrismaInstance.content.delete({
+                where,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
 
             return { content };
         } catch (error) {
-            console.error("ContentService.delete -> " + (error as Error).message);
+            console.error("ContentService -> Delete -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("ContentService -> Delete -> Invalid Zod params -> " + error.message);
@@ -177,13 +238,18 @@ export class ContentService {
      */
     static async findUnique(props: FindUniqueContentProps): Promise<FindUniqueContentResponse> {
         try {
-            const data = selectContentSchema.parse(props);
+            const { where, include, omit, select } = selectContentSchema.parse(props);
 
-            const content: ContentComplete | null = await PrismaInstance.content.findUnique(data);
+            const content: ContentComplete | null = await PrismaInstance.content.findUnique({
+                where,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
 
             return { content };
         } catch (error) {
-            console.error("ContentService.findUnique -> " + (error as Error).message);
+            console.error("ContentService -> FindUnique -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("ContentService -> FindUnique -> Invalid Zod params -> " + error.message);
@@ -201,13 +267,33 @@ export class ContentService {
      */
     static async findMany(props: FindManyContentProps): Promise<FindManyContentResponse> {
         try {
-            const data = selectManyContentSchema.parse(props);
+            const {
+                cursor,
+                distinct,
+                include,
+                omit,
+                orderBy,
+                select,
+                skip = 0,
+                take = 10,
+                where,
+            } = selectManyContentSchema.parse(props);
 
-            const contentList: ContentComplete[] = await PrismaInstance.content.findMany(data);
+            const contentList: ContentComplete[] = await PrismaInstance.content.findMany({
+                ...(cursor && { cursor }),
+                ...(distinct && { distinct }),
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(orderBy && { orderBy }),
+                ...(select && { select }),
+                ...(skip && { skip }),
+                ...(take && { take }),
+                ...(where && { where }),
+            });
 
             return { contentList };
         } catch (error) {
-            console.error("ContentService.findMany -> " + (error as Error).message);
+            console.error("ContentService -> FindMany -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("ContentService -> FindMany -> Invalid Zod params -> " + error.message);
@@ -225,13 +311,19 @@ export class ContentService {
      */
     static async count(props: CountContentProps): Promise<CountContentResponse> {
         try {
-            const data = countContentSchema.parse(props);
+            const { cursor, orderBy, select, skip = 0, take = 10, where } = countContentSchema.parse(props);
 
-            const contentAmount: ContentCount = await PrismaInstance.content.count(data);
-
+            const contentAmount: ContentCount = await PrismaInstance.content.count({
+                ...(cursor && { cursor }),
+                ...(orderBy && { orderBy }),
+                ...(select && { select }),
+                ...(skip && { skip }),
+                ...(take && { take }),
+                ...(where && { where }),
+            });
             return { contentAmount };
         } catch (error) {
-            console.error("ContentService.count -> " + (error as Error).message);
+            console.error("ContentService -> Count -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("ContentService -> Count -> Invalid Zod params -> " + error.message);

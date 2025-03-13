@@ -11,13 +11,19 @@
 import PrismaInstance from "@lib/prisma";
 import { Prisma } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
-import { Session, SessionSchema } from "@services/schemas";
 import {
-    SessionCreateInputSchema,
-    SessionUpdateInputSchema,
+    Session,
+    SessionCreateArgsSchema,
+    SessionDeleteArgsSchema,
+    SessionFindManyArgsSchema,
+    SessionFindUniqueArgsSchema,
+    SessionOrderByWithRelationInputSchema,
+    SessionSchema,
+    SessionUpdateArgsSchema,
+    SessionUpsertArgsSchema,
     SessionWhereInputSchema,
-    SessionWhereUniqueInputSchema,
-} from "@services/schemas/inputTypeSchemas";
+    SessionWhereUniqueInputSchema
+} from "@services/schemas";
 import { SessionIncludeSchema } from "@services/schemas/inputTypeSchemas/SessionIncludeSchema";
 import { z, ZodError, ZodType } from "zod";
 
@@ -33,34 +39,43 @@ export type SessionCount = number;
 
 // ============== Schema Types ============== //
 
-const createSessionSchema: ZodType<Prisma.SessionCreateArgs> = z.strictObject({
-    data: SessionCreateInputSchema,
-});
+const createSessionSchema: ZodType<Prisma.SessionCreateArgs> = SessionCreateArgsSchema;
 
-const updateSessionSchema: ZodType<Prisma.SessionUpdateArgs> = z.strictObject({
-    where: SessionWhereUniqueInputSchema,
-    data: SessionUpdateInputSchema,
-});
+const upsertSessionSchema: ZodType<Prisma.SessionUpsertArgs> = SessionUpsertArgsSchema;
 
-const deleteSessionSchema: ZodType<Prisma.SessionDeleteArgs> = z.strictObject({
-    where: SessionWhereUniqueInputSchema,
-});
+const updateSessionSchema: ZodType<Prisma.SessionUpdateArgs> = SessionUpdateArgsSchema;
 
-const selectSessionSchema: ZodType<Prisma.SessionFindUniqueArgs> = z.strictObject({
-    where: SessionWhereUniqueInputSchema,
-});
+const deleteSessionSchema: ZodType<Prisma.SessionDeleteArgs> = SessionDeleteArgsSchema;
 
-const selectManySessionSchema: ZodType<Prisma.SessionFindManyArgs> = z.strictObject({
-    where: SessionWhereInputSchema,
-});
+const selectSessionSchema: ZodType<Prisma.SessionFindUniqueArgs> = SessionFindUniqueArgsSchema;
 
-const countSessionSchema: ZodType<Prisma.SessionCountArgs> = z.strictObject({
-    where: SessionWhereInputSchema,
+const selectManySessionSchema: ZodType<Prisma.SessionFindManyArgs> = SessionFindManyArgsSchema;
+
+/**
+ * Définition du schéma pour SessionCountArgs
+ * 
+ * Ce schéma correspond au type Prisma.SessionCountArgs qui est défini comme:
+ * Omit<SessionFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+ *   select?: SessionCountAggregateInputType | true
+ * }
+ */
+const countSessionSchema: ZodType<Prisma.SessionCountArgs> = z.object({
+    where: z.lazy(() => SessionWhereInputSchema).optional(),
+    orderBy: z.union([
+        z.lazy(() => SessionOrderByWithRelationInputSchema),
+        z.array(z.lazy(() => SessionOrderByWithRelationInputSchema))
+    ]).optional(),
+    cursor: z.lazy(() => SessionWhereUniqueInputSchema).optional(),
+    take: z.number().optional(),
+    skip: z.number().optional(),
+    select: z.union([z.literal(true), z.record(z.boolean())]).optional()
 });
 
 // ============== CRUD Props Types ============== //
 
 export type CreateSessionProps = z.infer<typeof createSessionSchema>;
+
+export type UpsertSessionProps = z.infer<typeof upsertSessionSchema>;
 
 export type UpdateSessionProps = z.infer<typeof updateSessionSchema>;
 
@@ -77,6 +92,8 @@ export type CountSessionProps = z.infer<typeof countSessionSchema>;
 export type ResponseFormat<Key extends string, Response> = { [key in Key]: Response } | { error: string };
 
 export type CreateSessionResponse = ResponseFormat<"session", SessionModel>;
+
+export type UpsertSessionResponse = ResponseFormat<"session", SessionModel>;
 
 export type UpdateSessionResponse = ResponseFormat<"session", SessionModel>;
 
@@ -101,13 +118,18 @@ export class SessionService {
      */
     static async create(props: CreateSessionProps): Promise<CreateSessionResponse> {
         try {
-            const data = createSessionSchema.parse(props);
+            const { data, include, omit, select } = createSessionSchema.parse(props);
 
-            const session: Session = await PrismaInstance.session.create(data);
+            const session: Session = await PrismaInstance.session.create({
+                data,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
 
             return { session };
         } catch (error) {
-            console.error("SessionService.create -> " + (error as Error).message);
+            console.error("SessionService -> Create -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("SessionService -> Create -> Invalid Zod params -> " + error.message);
@@ -120,6 +142,34 @@ export class SessionService {
         }
     }
 
+    static async upsert(props: UpsertSessionProps): Promise<UpsertSessionResponse> {
+        try {
+            const { create, update, where, include, omit, select } = upsertSessionSchema.parse(props);
+
+            const session: Session = await PrismaInstance.session.upsert({
+                create,
+                update,
+                where,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
+
+            return { session };
+        } catch (error) {
+            console.error("SessionService -> Upsert -> " + (error as Error).message);
+            if (process.env.NODE_ENV === "development") {
+                if (error instanceof ZodError)
+                    throw new Error("SessionService -> Upsert -> Invalid Zod params -> " + error.message);
+                if (error instanceof PrismaClientKnownRequestError)
+                    throw new Error("SessionService -> Upsert -> Prisma error -> " + error.message);
+                throw new Error("SessionService -> Upsert -> " + (error as Error).message);
+            }
+            // TODO: add logging
+            return { error: "Unable to upsert session..." };
+        }
+    }
+
     /**
      * Met à jour un(e) session
      * @param props ID du/de la session et nouvelles données
@@ -127,13 +177,19 @@ export class SessionService {
      */
     static async update(props: UpdateSessionProps): Promise<UpdateSessionResponse> {
         try {
-            const data = updateSessionSchema.parse(props);
+            const { data, where, include, omit, select } = updateSessionSchema.parse(props);
 
-            const session: Session = await PrismaInstance.session.update(data);
+            const session: Session = await PrismaInstance.session.update({
+                data,
+                where,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
 
             return { session };
         } catch (error) {
-            console.error("SessionService.update -> " + (error as Error).message);
+            console.error("SessionService -> Update -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("SessionService -> Update -> Invalid Zod params -> " + error.message);
@@ -153,13 +209,18 @@ export class SessionService {
      */
     static async delete(props: DeleteSessionProps): Promise<DeleteSessionResponse> {
         try {
-            const data = deleteSessionSchema.parse(props);
+            const { where, include, omit, select } = deleteSessionSchema.parse(props);
 
-            const session: Session = await PrismaInstance.session.delete(data);
+            const session: Session = await PrismaInstance.session.delete({
+                where,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
 
             return { session };
         } catch (error) {
-            console.error("SessionService.delete -> " + (error as Error).message);
+            console.error("SessionService -> Delete -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("SessionService -> Delete -> Invalid Zod params -> " + error.message);
@@ -177,13 +238,18 @@ export class SessionService {
      */
     static async findUnique(props: FindUniqueSessionProps): Promise<FindUniqueSessionResponse> {
         try {
-            const data = selectSessionSchema.parse(props);
+            const { where, include, omit, select } = selectSessionSchema.parse(props);
 
-            const session: SessionComplete | null = await PrismaInstance.session.findUnique(data);
+            const session: SessionComplete | null = await PrismaInstance.session.findUnique({
+                where,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
 
             return { session };
         } catch (error) {
-            console.error("SessionService.findUnique -> " + (error as Error).message);
+            console.error("SessionService -> FindUnique -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("SessionService -> FindUnique -> Invalid Zod params -> " + error.message);
@@ -201,13 +267,33 @@ export class SessionService {
      */
     static async findMany(props: FindManySessionProps): Promise<FindManySessionResponse> {
         try {
-            const data = selectManySessionSchema.parse(props);
+            const {
+                cursor,
+                distinct,
+                include,
+                omit,
+                orderBy,
+                select,
+                skip = 0,
+                take = 10,
+                where,
+            } = selectManySessionSchema.parse(props);
 
-            const sessionList: SessionComplete[] = await PrismaInstance.session.findMany(data);
+            const sessionList: SessionComplete[] = await PrismaInstance.session.findMany({
+                ...(cursor && { cursor }),
+                ...(distinct && { distinct }),
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(orderBy && { orderBy }),
+                ...(select && { select }),
+                ...(skip && { skip }),
+                ...(take && { take }),
+                ...(where && { where }),
+            });
 
             return { sessionList };
         } catch (error) {
-            console.error("SessionService.findMany -> " + (error as Error).message);
+            console.error("SessionService -> FindMany -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("SessionService -> FindMany -> Invalid Zod params -> " + error.message);
@@ -225,13 +311,19 @@ export class SessionService {
      */
     static async count(props: CountSessionProps): Promise<CountSessionResponse> {
         try {
-            const data = countSessionSchema.parse(props);
+            const { cursor, orderBy, select, skip = 0, take = 10, where } = countSessionSchema.parse(props);
 
-            const sessionAmount: SessionCount = await PrismaInstance.session.count(data);
-
+            const sessionAmount: SessionCount = await PrismaInstance.session.count({
+                ...(cursor && { cursor }),
+                ...(orderBy && { orderBy }),
+                ...(select && { select }),
+                ...(skip && { skip }),
+                ...(take && { take }),
+                ...(where && { where }),
+            });
             return { sessionAmount };
         } catch (error) {
-            console.error("SessionService.count -> " + (error as Error).message);
+            console.error("SessionService -> Count -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("SessionService -> Count -> Invalid Zod params -> " + error.message);

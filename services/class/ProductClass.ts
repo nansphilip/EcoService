@@ -1,10 +1,10 @@
 /**
  * Classe de service pour les opérations CRUD sur les products
- *
+ * 
  * Ce fichier centralise toute la logique d'accès aux données pour les products.
  * Il utilise les schémas Zod générés par zod-prisma-types pour la validation des données.
  * Chaque méthode retourne soit les données demandées, soit une erreur formatée.
- *
+ * 
  * Les types sont définis pour correspondre aux opérations Prisma (create, update, delete, etc.)
  * et suivent une nomenclature cohérente avec l'API Prisma.
  */
@@ -50,13 +50,6 @@ const deleteProductSchema: ZodType<Prisma.ProductDeleteArgs> = ProductDeleteArgs
 const selectProductSchema: ZodType<Prisma.ProductFindUniqueArgs> = ProductFindUniqueArgsSchema;
 
 const selectManyProductSchema: ZodType<Prisma.ProductFindManyArgs> = ProductFindManyArgsSchema;
-
-// const countProductSchema: ZodType<Prisma.ProductCountArgs> =ProductFindManyArgsSchema.omit({
-//     select: true,
-//     include: true,
-//     distinct: true,
-//     omit: true,
-// }).extend(ProductCountOutputTypeArgsSchema);
 
 /**
  * Définition du schéma pour ProductCountArgs
@@ -342,4 +335,4 @@ export class ProductService {
             return { error: "Unable to count products..." };
         }
     }
-}
+} 

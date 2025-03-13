@@ -11,13 +11,19 @@
 import PrismaInstance from "@lib/prisma";
 import { Prisma } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
-import { DoItYourself, DoItYourselfSchema } from "@services/schemas";
 import {
-    DoItYourselfCreateInputSchema,
-    DoItYourselfUpdateInputSchema,
+    DoItYourself,
+    DoItYourselfCreateArgsSchema,
+    DoItYourselfDeleteArgsSchema,
+    DoItYourselfFindManyArgsSchema,
+    DoItYourselfFindUniqueArgsSchema,
+    DoItYourselfOrderByWithRelationInputSchema,
+    DoItYourselfSchema,
+    DoItYourselfUpdateArgsSchema,
+    DoItYourselfUpsertArgsSchema,
     DoItYourselfWhereInputSchema,
-    DoItYourselfWhereUniqueInputSchema,
-} from "@services/schemas/inputTypeSchemas";
+    DoItYourselfWhereUniqueInputSchema
+} from "@services/schemas";
 import { DoItYourselfIncludeSchema } from "@services/schemas/inputTypeSchemas/DoItYourselfIncludeSchema";
 import { z, ZodError, ZodType } from "zod";
 
@@ -33,34 +39,43 @@ export type DoItYourselfCount = number;
 
 // ============== Schema Types ============== //
 
-const createDoItYourselfSchema: ZodType<Prisma.DoItYourselfCreateArgs> = z.strictObject({
-    data: DoItYourselfCreateInputSchema,
-});
+const createDoItYourselfSchema: ZodType<Prisma.DoItYourselfCreateArgs> = DoItYourselfCreateArgsSchema;
 
-const updateDoItYourselfSchema: ZodType<Prisma.DoItYourselfUpdateArgs> = z.strictObject({
-    where: DoItYourselfWhereUniqueInputSchema,
-    data: DoItYourselfUpdateInputSchema,
-});
+const upsertDoItYourselfSchema: ZodType<Prisma.DoItYourselfUpsertArgs> = DoItYourselfUpsertArgsSchema;
 
-const deleteDoItYourselfSchema: ZodType<Prisma.DoItYourselfDeleteArgs> = z.strictObject({
-    where: DoItYourselfWhereUniqueInputSchema,
-});
+const updateDoItYourselfSchema: ZodType<Prisma.DoItYourselfUpdateArgs> = DoItYourselfUpdateArgsSchema;
 
-const selectDoItYourselfSchema: ZodType<Prisma.DoItYourselfFindUniqueArgs> = z.strictObject({
-    where: DoItYourselfWhereUniqueInputSchema,
-});
+const deleteDoItYourselfSchema: ZodType<Prisma.DoItYourselfDeleteArgs> = DoItYourselfDeleteArgsSchema;
 
-const selectManyDoItYourselfSchema: ZodType<Prisma.DoItYourselfFindManyArgs> = z.strictObject({
-    where: DoItYourselfWhereInputSchema,
-});
+const selectDoItYourselfSchema: ZodType<Prisma.DoItYourselfFindUniqueArgs> = DoItYourselfFindUniqueArgsSchema;
 
-const countDoItYourselfSchema: ZodType<Prisma.DoItYourselfCountArgs> = z.strictObject({
-    where: DoItYourselfWhereInputSchema,
+const selectManyDoItYourselfSchema: ZodType<Prisma.DoItYourselfFindManyArgs> = DoItYourselfFindManyArgsSchema;
+
+/**
+ * Définition du schéma pour DoItYourselfCountArgs
+ * 
+ * Ce schéma correspond au type Prisma.DoItYourselfCountArgs qui est défini comme:
+ * Omit<DoItYourselfFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+ *   select?: DoItYourselfCountAggregateInputType | true
+ * }
+ */
+const countDoItYourselfSchema: ZodType<Prisma.DoItYourselfCountArgs> = z.object({
+    where: z.lazy(() => DoItYourselfWhereInputSchema).optional(),
+    orderBy: z.union([
+        z.lazy(() => DoItYourselfOrderByWithRelationInputSchema),
+        z.array(z.lazy(() => DoItYourselfOrderByWithRelationInputSchema))
+    ]).optional(),
+    cursor: z.lazy(() => DoItYourselfWhereUniqueInputSchema).optional(),
+    take: z.number().optional(),
+    skip: z.number().optional(),
+    select: z.union([z.literal(true), z.record(z.boolean())]).optional()
 });
 
 // ============== CRUD Props Types ============== //
 
 export type CreateDoItYourselfProps = z.infer<typeof createDoItYourselfSchema>;
+
+export type UpsertDoItYourselfProps = z.infer<typeof upsertDoItYourselfSchema>;
 
 export type UpdateDoItYourselfProps = z.infer<typeof updateDoItYourselfSchema>;
 
@@ -77,6 +92,8 @@ export type CountDoItYourselfProps = z.infer<typeof countDoItYourselfSchema>;
 export type ResponseFormat<Key extends string, Response> = { [key in Key]: Response } | { error: string };
 
 export type CreateDoItYourselfResponse = ResponseFormat<"doItYourself", DoItYourselfModel>;
+
+export type UpsertDoItYourselfResponse = ResponseFormat<"doItYourself", DoItYourselfModel>;
 
 export type UpdateDoItYourselfResponse = ResponseFormat<"doItYourself", DoItYourselfModel>;
 
@@ -101,13 +118,18 @@ export class DoItYourselfService {
      */
     static async create(props: CreateDoItYourselfProps): Promise<CreateDoItYourselfResponse> {
         try {
-            const data = createDoItYourselfSchema.parse(props);
+            const { data, include, omit, select } = createDoItYourselfSchema.parse(props);
 
-            const doItYourself: DoItYourself = await PrismaInstance.doItYourself.create(data);
+            const doItYourself: DoItYourself = await PrismaInstance.doItYourself.create({
+                data,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
 
             return { doItYourself };
         } catch (error) {
-            console.error("DoItYourselfService.create -> " + (error as Error).message);
+            console.error("DoItYourselfService -> Create -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("DoItYourselfService -> Create -> Invalid Zod params -> " + error.message);
@@ -120,6 +142,34 @@ export class DoItYourselfService {
         }
     }
 
+    static async upsert(props: UpsertDoItYourselfProps): Promise<UpsertDoItYourselfResponse> {
+        try {
+            const { create, update, where, include, omit, select } = upsertDoItYourselfSchema.parse(props);
+
+            const doItYourself: DoItYourself = await PrismaInstance.doItYourself.upsert({
+                create,
+                update,
+                where,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
+
+            return { doItYourself };
+        } catch (error) {
+            console.error("DoItYourselfService -> Upsert -> " + (error as Error).message);
+            if (process.env.NODE_ENV === "development") {
+                if (error instanceof ZodError)
+                    throw new Error("DoItYourselfService -> Upsert -> Invalid Zod params -> " + error.message);
+                if (error instanceof PrismaClientKnownRequestError)
+                    throw new Error("DoItYourselfService -> Upsert -> Prisma error -> " + error.message);
+                throw new Error("DoItYourselfService -> Upsert -> " + (error as Error).message);
+            }
+            // TODO: add logging
+            return { error: "Unable to upsert doItYourself..." };
+        }
+    }
+
     /**
      * Met à jour un(e) doItYourself
      * @param props ID du/de la doItYourself et nouvelles données
@@ -127,13 +177,19 @@ export class DoItYourselfService {
      */
     static async update(props: UpdateDoItYourselfProps): Promise<UpdateDoItYourselfResponse> {
         try {
-            const data = updateDoItYourselfSchema.parse(props);
+            const { data, where, include, omit, select } = updateDoItYourselfSchema.parse(props);
 
-            const doItYourself: DoItYourself = await PrismaInstance.doItYourself.update(data);
+            const doItYourself: DoItYourself = await PrismaInstance.doItYourself.update({
+                data,
+                where,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
 
             return { doItYourself };
         } catch (error) {
-            console.error("DoItYourselfService.update -> " + (error as Error).message);
+            console.error("DoItYourselfService -> Update -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("DoItYourselfService -> Update -> Invalid Zod params -> " + error.message);
@@ -153,13 +209,18 @@ export class DoItYourselfService {
      */
     static async delete(props: DeleteDoItYourselfProps): Promise<DeleteDoItYourselfResponse> {
         try {
-            const data = deleteDoItYourselfSchema.parse(props);
+            const { where, include, omit, select } = deleteDoItYourselfSchema.parse(props);
 
-            const doItYourself: DoItYourself = await PrismaInstance.doItYourself.delete(data);
+            const doItYourself: DoItYourself = await PrismaInstance.doItYourself.delete({
+                where,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
 
             return { doItYourself };
         } catch (error) {
-            console.error("DoItYourselfService.delete -> " + (error as Error).message);
+            console.error("DoItYourselfService -> Delete -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("DoItYourselfService -> Delete -> Invalid Zod params -> " + error.message);
@@ -177,13 +238,18 @@ export class DoItYourselfService {
      */
     static async findUnique(props: FindUniqueDoItYourselfProps): Promise<FindUniqueDoItYourselfResponse> {
         try {
-            const data = selectDoItYourselfSchema.parse(props);
+            const { where, include, omit, select } = selectDoItYourselfSchema.parse(props);
 
-            const doItYourself: DoItYourselfComplete | null = await PrismaInstance.doItYourself.findUnique(data);
+            const doItYourself: DoItYourselfComplete | null = await PrismaInstance.doItYourself.findUnique({
+                where,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
 
             return { doItYourself };
         } catch (error) {
-            console.error("DoItYourselfService.findUnique -> " + (error as Error).message);
+            console.error("DoItYourselfService -> FindUnique -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("DoItYourselfService -> FindUnique -> Invalid Zod params -> " + error.message);
@@ -201,13 +267,33 @@ export class DoItYourselfService {
      */
     static async findMany(props: FindManyDoItYourselfProps): Promise<FindManyDoItYourselfResponse> {
         try {
-            const data = selectManyDoItYourselfSchema.parse(props);
+            const {
+                cursor,
+                distinct,
+                include,
+                omit,
+                orderBy,
+                select,
+                skip = 0,
+                take = 10,
+                where,
+            } = selectManyDoItYourselfSchema.parse(props);
 
-            const doItYourselfList: DoItYourselfComplete[] = await PrismaInstance.doItYourself.findMany(data);
+            const doItYourselfList: DoItYourselfComplete[] = await PrismaInstance.doItYourself.findMany({
+                ...(cursor && { cursor }),
+                ...(distinct && { distinct }),
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(orderBy && { orderBy }),
+                ...(select && { select }),
+                ...(skip && { skip }),
+                ...(take && { take }),
+                ...(where && { where }),
+            });
 
             return { doItYourselfList };
         } catch (error) {
-            console.error("DoItYourselfService.findMany -> " + (error as Error).message);
+            console.error("DoItYourselfService -> FindMany -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("DoItYourselfService -> FindMany -> Invalid Zod params -> " + error.message);
@@ -225,13 +311,19 @@ export class DoItYourselfService {
      */
     static async count(props: CountDoItYourselfProps): Promise<CountDoItYourselfResponse> {
         try {
-            const data = countDoItYourselfSchema.parse(props);
+            const { cursor, orderBy, select, skip = 0, take = 10, where } = countDoItYourselfSchema.parse(props);
 
-            const doItYourselfAmount: DoItYourselfCount = await PrismaInstance.doItYourself.count(data);
-
+            const doItYourselfAmount: DoItYourselfCount = await PrismaInstance.doItYourself.count({
+                ...(cursor && { cursor }),
+                ...(orderBy && { orderBy }),
+                ...(select && { select }),
+                ...(skip && { skip }),
+                ...(take && { take }),
+                ...(where && { where }),
+            });
             return { doItYourselfAmount };
         } catch (error) {
-            console.error("DoItYourselfService.count -> " + (error as Error).message);
+            console.error("DoItYourselfService -> Count -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("DoItYourselfService -> Count -> Invalid Zod params -> " + error.message);

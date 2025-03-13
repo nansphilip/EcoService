@@ -11,13 +11,19 @@
 import PrismaInstance from "@lib/prisma";
 import { Prisma } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
-import { Quantity, QuantitySchema } from "@services/schemas";
 import {
-    QuantityCreateInputSchema,
-    QuantityUpdateInputSchema,
+    Quantity,
+    QuantityCreateArgsSchema,
+    QuantityDeleteArgsSchema,
+    QuantityFindManyArgsSchema,
+    QuantityFindUniqueArgsSchema,
+    QuantityOrderByWithRelationInputSchema,
+    QuantitySchema,
+    QuantityUpdateArgsSchema,
+    QuantityUpsertArgsSchema,
     QuantityWhereInputSchema,
-    QuantityWhereUniqueInputSchema,
-} from "@services/schemas/inputTypeSchemas";
+    QuantityWhereUniqueInputSchema
+} from "@services/schemas";
 import { QuantityIncludeSchema } from "@services/schemas/inputTypeSchemas/QuantityIncludeSchema";
 import { z, ZodError, ZodType } from "zod";
 
@@ -33,34 +39,43 @@ export type QuantityCount = number;
 
 // ============== Schema Types ============== //
 
-const createQuantitySchema: ZodType<Prisma.QuantityCreateArgs> = z.strictObject({
-    data: QuantityCreateInputSchema,
-});
+const createQuantitySchema: ZodType<Prisma.QuantityCreateArgs> = QuantityCreateArgsSchema;
 
-const updateQuantitySchema: ZodType<Prisma.QuantityUpdateArgs> = z.strictObject({
-    where: QuantityWhereUniqueInputSchema,
-    data: QuantityUpdateInputSchema,
-});
+const upsertQuantitySchema: ZodType<Prisma.QuantityUpsertArgs> = QuantityUpsertArgsSchema;
 
-const deleteQuantitySchema: ZodType<Prisma.QuantityDeleteArgs> = z.strictObject({
-    where: QuantityWhereUniqueInputSchema,
-});
+const updateQuantitySchema: ZodType<Prisma.QuantityUpdateArgs> = QuantityUpdateArgsSchema;
 
-const selectQuantitySchema: ZodType<Prisma.QuantityFindUniqueArgs> = z.strictObject({
-    where: QuantityWhereUniqueInputSchema,
-});
+const deleteQuantitySchema: ZodType<Prisma.QuantityDeleteArgs> = QuantityDeleteArgsSchema;
 
-const selectManyQuantitySchema: ZodType<Prisma.QuantityFindManyArgs> = z.strictObject({
-    where: QuantityWhereInputSchema,
-});
+const selectQuantitySchema: ZodType<Prisma.QuantityFindUniqueArgs> = QuantityFindUniqueArgsSchema;
 
-const countQuantitySchema: ZodType<Prisma.QuantityCountArgs> = z.strictObject({
-    where: QuantityWhereInputSchema,
+const selectManyQuantitySchema: ZodType<Prisma.QuantityFindManyArgs> = QuantityFindManyArgsSchema;
+
+/**
+ * Définition du schéma pour QuantityCountArgs
+ * 
+ * Ce schéma correspond au type Prisma.QuantityCountArgs qui est défini comme:
+ * Omit<QuantityFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+ *   select?: QuantityCountAggregateInputType | true
+ * }
+ */
+const countQuantitySchema: ZodType<Prisma.QuantityCountArgs> = z.object({
+    where: z.lazy(() => QuantityWhereInputSchema).optional(),
+    orderBy: z.union([
+        z.lazy(() => QuantityOrderByWithRelationInputSchema),
+        z.array(z.lazy(() => QuantityOrderByWithRelationInputSchema))
+    ]).optional(),
+    cursor: z.lazy(() => QuantityWhereUniqueInputSchema).optional(),
+    take: z.number().optional(),
+    skip: z.number().optional(),
+    select: z.union([z.literal(true), z.record(z.boolean())]).optional()
 });
 
 // ============== CRUD Props Types ============== //
 
 export type CreateQuantityProps = z.infer<typeof createQuantitySchema>;
+
+export type UpsertQuantityProps = z.infer<typeof upsertQuantitySchema>;
 
 export type UpdateQuantityProps = z.infer<typeof updateQuantitySchema>;
 
@@ -77,6 +92,8 @@ export type CountQuantityProps = z.infer<typeof countQuantitySchema>;
 export type ResponseFormat<Key extends string, Response> = { [key in Key]: Response } | { error: string };
 
 export type CreateQuantityResponse = ResponseFormat<"quantity", QuantityModel>;
+
+export type UpsertQuantityResponse = ResponseFormat<"quantity", QuantityModel>;
 
 export type UpdateQuantityResponse = ResponseFormat<"quantity", QuantityModel>;
 
@@ -101,13 +118,18 @@ export class QuantityService {
      */
     static async create(props: CreateQuantityProps): Promise<CreateQuantityResponse> {
         try {
-            const data = createQuantitySchema.parse(props);
+            const { data, include, omit, select } = createQuantitySchema.parse(props);
 
-            const quantity: Quantity = await PrismaInstance.quantity.create(data);
+            const quantity: Quantity = await PrismaInstance.quantity.create({
+                data,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
 
             return { quantity };
         } catch (error) {
-            console.error("QuantityService.create -> " + (error as Error).message);
+            console.error("QuantityService -> Create -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("QuantityService -> Create -> Invalid Zod params -> " + error.message);
@@ -120,6 +142,34 @@ export class QuantityService {
         }
     }
 
+    static async upsert(props: UpsertQuantityProps): Promise<UpsertQuantityResponse> {
+        try {
+            const { create, update, where, include, omit, select } = upsertQuantitySchema.parse(props);
+
+            const quantity: Quantity = await PrismaInstance.quantity.upsert({
+                create,
+                update,
+                where,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
+
+            return { quantity };
+        } catch (error) {
+            console.error("QuantityService -> Upsert -> " + (error as Error).message);
+            if (process.env.NODE_ENV === "development") {
+                if (error instanceof ZodError)
+                    throw new Error("QuantityService -> Upsert -> Invalid Zod params -> " + error.message);
+                if (error instanceof PrismaClientKnownRequestError)
+                    throw new Error("QuantityService -> Upsert -> Prisma error -> " + error.message);
+                throw new Error("QuantityService -> Upsert -> " + (error as Error).message);
+            }
+            // TODO: add logging
+            return { error: "Unable to upsert quantity..." };
+        }
+    }
+
     /**
      * Met à jour un(e) quantity
      * @param props ID du/de la quantity et nouvelles données
@@ -127,13 +177,19 @@ export class QuantityService {
      */
     static async update(props: UpdateQuantityProps): Promise<UpdateQuantityResponse> {
         try {
-            const data = updateQuantitySchema.parse(props);
+            const { data, where, include, omit, select } = updateQuantitySchema.parse(props);
 
-            const quantity: Quantity = await PrismaInstance.quantity.update(data);
+            const quantity: Quantity = await PrismaInstance.quantity.update({
+                data,
+                where,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
 
             return { quantity };
         } catch (error) {
-            console.error("QuantityService.update -> " + (error as Error).message);
+            console.error("QuantityService -> Update -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("QuantityService -> Update -> Invalid Zod params -> " + error.message);
@@ -153,13 +209,18 @@ export class QuantityService {
      */
     static async delete(props: DeleteQuantityProps): Promise<DeleteQuantityResponse> {
         try {
-            const data = deleteQuantitySchema.parse(props);
+            const { where, include, omit, select } = deleteQuantitySchema.parse(props);
 
-            const quantity: Quantity = await PrismaInstance.quantity.delete(data);
+            const quantity: Quantity = await PrismaInstance.quantity.delete({
+                where,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
 
             return { quantity };
         } catch (error) {
-            console.error("QuantityService.delete -> " + (error as Error).message);
+            console.error("QuantityService -> Delete -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("QuantityService -> Delete -> Invalid Zod params -> " + error.message);
@@ -177,13 +238,18 @@ export class QuantityService {
      */
     static async findUnique(props: FindUniqueQuantityProps): Promise<FindUniqueQuantityResponse> {
         try {
-            const data = selectQuantitySchema.parse(props);
+            const { where, include, omit, select } = selectQuantitySchema.parse(props);
 
-            const quantity: QuantityComplete | null = await PrismaInstance.quantity.findUnique(data);
+            const quantity: QuantityComplete | null = await PrismaInstance.quantity.findUnique({
+                where,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
 
             return { quantity };
         } catch (error) {
-            console.error("QuantityService.findUnique -> " + (error as Error).message);
+            console.error("QuantityService -> FindUnique -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("QuantityService -> FindUnique -> Invalid Zod params -> " + error.message);
@@ -201,13 +267,33 @@ export class QuantityService {
      */
     static async findMany(props: FindManyQuantityProps): Promise<FindManyQuantityResponse> {
         try {
-            const data = selectManyQuantitySchema.parse(props);
+            const {
+                cursor,
+                distinct,
+                include,
+                omit,
+                orderBy,
+                select,
+                skip = 0,
+                take = 10,
+                where,
+            } = selectManyQuantitySchema.parse(props);
 
-            const quantityList: QuantityComplete[] = await PrismaInstance.quantity.findMany(data);
+            const quantityList: QuantityComplete[] = await PrismaInstance.quantity.findMany({
+                ...(cursor && { cursor }),
+                ...(distinct && { distinct }),
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(orderBy && { orderBy }),
+                ...(select && { select }),
+                ...(skip && { skip }),
+                ...(take && { take }),
+                ...(where && { where }),
+            });
 
             return { quantityList };
         } catch (error) {
-            console.error("QuantityService.findMany -> " + (error as Error).message);
+            console.error("QuantityService -> FindMany -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("QuantityService -> FindMany -> Invalid Zod params -> " + error.message);
@@ -225,13 +311,19 @@ export class QuantityService {
      */
     static async count(props: CountQuantityProps): Promise<CountQuantityResponse> {
         try {
-            const data = countQuantitySchema.parse(props);
+            const { cursor, orderBy, select, skip = 0, take = 10, where } = countQuantitySchema.parse(props);
 
-            const quantityAmount: QuantityCount = await PrismaInstance.quantity.count(data);
-
+            const quantityAmount: QuantityCount = await PrismaInstance.quantity.count({
+                ...(cursor && { cursor }),
+                ...(orderBy && { orderBy }),
+                ...(select && { select }),
+                ...(skip && { skip }),
+                ...(take && { take }),
+                ...(where && { where }),
+            });
             return { quantityAmount };
         } catch (error) {
-            console.error("QuantityService.count -> " + (error as Error).message);
+            console.error("QuantityService -> Count -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("QuantityService -> Count -> Invalid Zod params -> " + error.message);

@@ -11,13 +11,19 @@
 import PrismaInstance from "@lib/prisma";
 import { Prisma } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
-import { Account, AccountSchema } from "@services/schemas";
 import {
-    AccountCreateInputSchema,
-    AccountUpdateInputSchema,
+    Account,
+    AccountCreateArgsSchema,
+    AccountDeleteArgsSchema,
+    AccountFindManyArgsSchema,
+    AccountFindUniqueArgsSchema,
+    AccountOrderByWithRelationInputSchema,
+    AccountSchema,
+    AccountUpdateArgsSchema,
+    AccountUpsertArgsSchema,
     AccountWhereInputSchema,
-    AccountWhereUniqueInputSchema,
-} from "@services/schemas/inputTypeSchemas";
+    AccountWhereUniqueInputSchema
+} from "@services/schemas";
 import { AccountIncludeSchema } from "@services/schemas/inputTypeSchemas/AccountIncludeSchema";
 import { z, ZodError, ZodType } from "zod";
 
@@ -33,34 +39,43 @@ export type AccountCount = number;
 
 // ============== Schema Types ============== //
 
-const createAccountSchema: ZodType<Prisma.AccountCreateArgs> = z.strictObject({
-    data: AccountCreateInputSchema,
-});
+const createAccountSchema: ZodType<Prisma.AccountCreateArgs> = AccountCreateArgsSchema;
 
-const updateAccountSchema: ZodType<Prisma.AccountUpdateArgs> = z.strictObject({
-    where: AccountWhereUniqueInputSchema,
-    data: AccountUpdateInputSchema,
-});
+const upsertAccountSchema: ZodType<Prisma.AccountUpsertArgs> = AccountUpsertArgsSchema;
 
-const deleteAccountSchema: ZodType<Prisma.AccountDeleteArgs> = z.strictObject({
-    where: AccountWhereUniqueInputSchema,
-});
+const updateAccountSchema: ZodType<Prisma.AccountUpdateArgs> = AccountUpdateArgsSchema;
 
-const selectAccountSchema: ZodType<Prisma.AccountFindUniqueArgs> = z.strictObject({
-    where: AccountWhereUniqueInputSchema,
-});
+const deleteAccountSchema: ZodType<Prisma.AccountDeleteArgs> = AccountDeleteArgsSchema;
 
-const selectManyAccountSchema: ZodType<Prisma.AccountFindManyArgs> = z.strictObject({
-    where: AccountWhereInputSchema,
-});
+const selectAccountSchema: ZodType<Prisma.AccountFindUniqueArgs> = AccountFindUniqueArgsSchema;
 
-const countAccountSchema: ZodType<Prisma.AccountCountArgs> = z.strictObject({
-    where: AccountWhereInputSchema,
+const selectManyAccountSchema: ZodType<Prisma.AccountFindManyArgs> = AccountFindManyArgsSchema;
+
+/**
+ * Définition du schéma pour AccountCountArgs
+ * 
+ * Ce schéma correspond au type Prisma.AccountCountArgs qui est défini comme:
+ * Omit<AccountFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+ *   select?: AccountCountAggregateInputType | true
+ * }
+ */
+const countAccountSchema: ZodType<Prisma.AccountCountArgs> = z.object({
+    where: z.lazy(() => AccountWhereInputSchema).optional(),
+    orderBy: z.union([
+        z.lazy(() => AccountOrderByWithRelationInputSchema),
+        z.array(z.lazy(() => AccountOrderByWithRelationInputSchema))
+    ]).optional(),
+    cursor: z.lazy(() => AccountWhereUniqueInputSchema).optional(),
+    take: z.number().optional(),
+    skip: z.number().optional(),
+    select: z.union([z.literal(true), z.record(z.boolean())]).optional()
 });
 
 // ============== CRUD Props Types ============== //
 
 export type CreateAccountProps = z.infer<typeof createAccountSchema>;
+
+export type UpsertAccountProps = z.infer<typeof upsertAccountSchema>;
 
 export type UpdateAccountProps = z.infer<typeof updateAccountSchema>;
 
@@ -77,6 +92,8 @@ export type CountAccountProps = z.infer<typeof countAccountSchema>;
 export type ResponseFormat<Key extends string, Response> = { [key in Key]: Response } | { error: string };
 
 export type CreateAccountResponse = ResponseFormat<"account", AccountModel>;
+
+export type UpsertAccountResponse = ResponseFormat<"account", AccountModel>;
 
 export type UpdateAccountResponse = ResponseFormat<"account", AccountModel>;
 
@@ -101,13 +118,18 @@ export class AccountService {
      */
     static async create(props: CreateAccountProps): Promise<CreateAccountResponse> {
         try {
-            const data = createAccountSchema.parse(props);
+            const { data, include, omit, select } = createAccountSchema.parse(props);
 
-            const account: Account = await PrismaInstance.account.create(data);
+            const account: Account = await PrismaInstance.account.create({
+                data,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
 
             return { account };
         } catch (error) {
-            console.error("AccountService.create -> " + (error as Error).message);
+            console.error("AccountService -> Create -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("AccountService -> Create -> Invalid Zod params -> " + error.message);
@@ -120,6 +142,34 @@ export class AccountService {
         }
     }
 
+    static async upsert(props: UpsertAccountProps): Promise<UpsertAccountResponse> {
+        try {
+            const { create, update, where, include, omit, select } = upsertAccountSchema.parse(props);
+
+            const account: Account = await PrismaInstance.account.upsert({
+                create,
+                update,
+                where,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
+
+            return { account };
+        } catch (error) {
+            console.error("AccountService -> Upsert -> " + (error as Error).message);
+            if (process.env.NODE_ENV === "development") {
+                if (error instanceof ZodError)
+                    throw new Error("AccountService -> Upsert -> Invalid Zod params -> " + error.message);
+                if (error instanceof PrismaClientKnownRequestError)
+                    throw new Error("AccountService -> Upsert -> Prisma error -> " + error.message);
+                throw new Error("AccountService -> Upsert -> " + (error as Error).message);
+            }
+            // TODO: add logging
+            return { error: "Unable to upsert account..." };
+        }
+    }
+
     /**
      * Met à jour un(e) account
      * @param props ID du/de la account et nouvelles données
@@ -127,13 +177,19 @@ export class AccountService {
      */
     static async update(props: UpdateAccountProps): Promise<UpdateAccountResponse> {
         try {
-            const data = updateAccountSchema.parse(props);
+            const { data, where, include, omit, select } = updateAccountSchema.parse(props);
 
-            const account: Account = await PrismaInstance.account.update(data);
+            const account: Account = await PrismaInstance.account.update({
+                data,
+                where,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
 
             return { account };
         } catch (error) {
-            console.error("AccountService.update -> " + (error as Error).message);
+            console.error("AccountService -> Update -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("AccountService -> Update -> Invalid Zod params -> " + error.message);
@@ -153,13 +209,18 @@ export class AccountService {
      */
     static async delete(props: DeleteAccountProps): Promise<DeleteAccountResponse> {
         try {
-            const data = deleteAccountSchema.parse(props);
+            const { where, include, omit, select } = deleteAccountSchema.parse(props);
 
-            const account: Account = await PrismaInstance.account.delete(data);
+            const account: Account = await PrismaInstance.account.delete({
+                where,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
 
             return { account };
         } catch (error) {
-            console.error("AccountService.delete -> " + (error as Error).message);
+            console.error("AccountService -> Delete -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("AccountService -> Delete -> Invalid Zod params -> " + error.message);
@@ -177,13 +238,18 @@ export class AccountService {
      */
     static async findUnique(props: FindUniqueAccountProps): Promise<FindUniqueAccountResponse> {
         try {
-            const data = selectAccountSchema.parse(props);
+            const { where, include, omit, select } = selectAccountSchema.parse(props);
 
-            const account: AccountComplete | null = await PrismaInstance.account.findUnique(data);
+            const account: AccountComplete | null = await PrismaInstance.account.findUnique({
+                where,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
 
             return { account };
         } catch (error) {
-            console.error("AccountService.findUnique -> " + (error as Error).message);
+            console.error("AccountService -> FindUnique -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("AccountService -> FindUnique -> Invalid Zod params -> " + error.message);
@@ -201,13 +267,33 @@ export class AccountService {
      */
     static async findMany(props: FindManyAccountProps): Promise<FindManyAccountResponse> {
         try {
-            const data = selectManyAccountSchema.parse(props);
+            const {
+                cursor,
+                distinct,
+                include,
+                omit,
+                orderBy,
+                select,
+                skip = 0,
+                take = 10,
+                where,
+            } = selectManyAccountSchema.parse(props);
 
-            const accountList: AccountComplete[] = await PrismaInstance.account.findMany(data);
+            const accountList: AccountComplete[] = await PrismaInstance.account.findMany({
+                ...(cursor && { cursor }),
+                ...(distinct && { distinct }),
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(orderBy && { orderBy }),
+                ...(select && { select }),
+                ...(skip && { skip }),
+                ...(take && { take }),
+                ...(where && { where }),
+            });
 
             return { accountList };
         } catch (error) {
-            console.error("AccountService.findMany -> " + (error as Error).message);
+            console.error("AccountService -> FindMany -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("AccountService -> FindMany -> Invalid Zod params -> " + error.message);
@@ -225,13 +311,19 @@ export class AccountService {
      */
     static async count(props: CountAccountProps): Promise<CountAccountResponse> {
         try {
-            const data = countAccountSchema.parse(props);
+            const { cursor, orderBy, select, skip = 0, take = 10, where } = countAccountSchema.parse(props);
 
-            const accountAmount: AccountCount = await PrismaInstance.account.count(data);
-
+            const accountAmount: AccountCount = await PrismaInstance.account.count({
+                ...(cursor && { cursor }),
+                ...(orderBy && { orderBy }),
+                ...(select && { select }),
+                ...(skip && { skip }),
+                ...(take && { take }),
+                ...(where && { where }),
+            });
             return { accountAmount };
         } catch (error) {
-            console.error("AccountService.count -> " + (error as Error).message);
+            console.error("AccountService -> Count -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("AccountService -> Count -> Invalid Zod params -> " + error.message);

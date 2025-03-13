@@ -11,13 +11,19 @@
 import PrismaInstance from "@lib/prisma";
 import { Prisma } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
-import { User, UserSchema } from "@services/schemas";
 import {
-    UserCreateInputSchema,
-    UserUpdateInputSchema,
+    User,
+    UserCreateArgsSchema,
+    UserDeleteArgsSchema,
+    UserFindManyArgsSchema,
+    UserFindUniqueArgsSchema,
+    UserOrderByWithRelationInputSchema,
+    UserSchema,
+    UserUpdateArgsSchema,
+    UserUpsertArgsSchema,
     UserWhereInputSchema,
-    UserWhereUniqueInputSchema,
-} from "@services/schemas/inputTypeSchemas";
+    UserWhereUniqueInputSchema
+} from "@services/schemas";
 import { UserIncludeSchema } from "@services/schemas/inputTypeSchemas/UserIncludeSchema";
 import { z, ZodError, ZodType } from "zod";
 
@@ -33,34 +39,43 @@ export type UserCount = number;
 
 // ============== Schema Types ============== //
 
-const createUserSchema: ZodType<Prisma.UserCreateArgs> = z.strictObject({
-    data: UserCreateInputSchema,
-});
+const createUserSchema: ZodType<Prisma.UserCreateArgs> = UserCreateArgsSchema;
 
-const updateUserSchema: ZodType<Prisma.UserUpdateArgs> = z.strictObject({
-    where: UserWhereUniqueInputSchema,
-    data: UserUpdateInputSchema,
-});
+const upsertUserSchema: ZodType<Prisma.UserUpsertArgs> = UserUpsertArgsSchema;
 
-const deleteUserSchema: ZodType<Prisma.UserDeleteArgs> = z.strictObject({
-    where: UserWhereUniqueInputSchema,
-});
+const updateUserSchema: ZodType<Prisma.UserUpdateArgs> = UserUpdateArgsSchema;
 
-const selectUserSchema: ZodType<Prisma.UserFindUniqueArgs> = z.strictObject({
-    where: UserWhereUniqueInputSchema,
-});
+const deleteUserSchema: ZodType<Prisma.UserDeleteArgs> = UserDeleteArgsSchema;
 
-const selectManyUserSchema: ZodType<Prisma.UserFindManyArgs> = z.strictObject({
-    where: UserWhereInputSchema,
-});
+const selectUserSchema: ZodType<Prisma.UserFindUniqueArgs> = UserFindUniqueArgsSchema;
 
-const countUserSchema: ZodType<Prisma.UserCountArgs> = z.strictObject({
-    where: UserWhereInputSchema,
+const selectManyUserSchema: ZodType<Prisma.UserFindManyArgs> = UserFindManyArgsSchema;
+
+/**
+ * Définition du schéma pour UserCountArgs
+ * 
+ * Ce schéma correspond au type Prisma.UserCountArgs qui est défini comme:
+ * Omit<UserFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+ *   select?: UserCountAggregateInputType | true
+ * }
+ */
+const countUserSchema: ZodType<Prisma.UserCountArgs> = z.object({
+    where: z.lazy(() => UserWhereInputSchema).optional(),
+    orderBy: z.union([
+        z.lazy(() => UserOrderByWithRelationInputSchema),
+        z.array(z.lazy(() => UserOrderByWithRelationInputSchema))
+    ]).optional(),
+    cursor: z.lazy(() => UserWhereUniqueInputSchema).optional(),
+    take: z.number().optional(),
+    skip: z.number().optional(),
+    select: z.union([z.literal(true), z.record(z.boolean())]).optional()
 });
 
 // ============== CRUD Props Types ============== //
 
 export type CreateUserProps = z.infer<typeof createUserSchema>;
+
+export type UpsertUserProps = z.infer<typeof upsertUserSchema>;
 
 export type UpdateUserProps = z.infer<typeof updateUserSchema>;
 
@@ -77,6 +92,8 @@ export type CountUserProps = z.infer<typeof countUserSchema>;
 export type ResponseFormat<Key extends string, Response> = { [key in Key]: Response } | { error: string };
 
 export type CreateUserResponse = ResponseFormat<"user", UserModel>;
+
+export type UpsertUserResponse = ResponseFormat<"user", UserModel>;
 
 export type UpdateUserResponse = ResponseFormat<"user", UserModel>;
 
@@ -101,13 +118,18 @@ export class UserService {
      */
     static async create(props: CreateUserProps): Promise<CreateUserResponse> {
         try {
-            const data = createUserSchema.parse(props);
+            const { data, include, omit, select } = createUserSchema.parse(props);
 
-            const user: User = await PrismaInstance.user.create(data);
+            const user: User = await PrismaInstance.user.create({
+                data,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
 
             return { user };
         } catch (error) {
-            console.error("UserService.create -> " + (error as Error).message);
+            console.error("UserService -> Create -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("UserService -> Create -> Invalid Zod params -> " + error.message);
@@ -120,6 +142,34 @@ export class UserService {
         }
     }
 
+    static async upsert(props: UpsertUserProps): Promise<UpsertUserResponse> {
+        try {
+            const { create, update, where, include, omit, select } = upsertUserSchema.parse(props);
+
+            const user: User = await PrismaInstance.user.upsert({
+                create,
+                update,
+                where,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
+
+            return { user };
+        } catch (error) {
+            console.error("UserService -> Upsert -> " + (error as Error).message);
+            if (process.env.NODE_ENV === "development") {
+                if (error instanceof ZodError)
+                    throw new Error("UserService -> Upsert -> Invalid Zod params -> " + error.message);
+                if (error instanceof PrismaClientKnownRequestError)
+                    throw new Error("UserService -> Upsert -> Prisma error -> " + error.message);
+                throw new Error("UserService -> Upsert -> " + (error as Error).message);
+            }
+            // TODO: add logging
+            return { error: "Unable to upsert user..." };
+        }
+    }
+
     /**
      * Met à jour un(e) user
      * @param props ID du/de la user et nouvelles données
@@ -127,13 +177,19 @@ export class UserService {
      */
     static async update(props: UpdateUserProps): Promise<UpdateUserResponse> {
         try {
-            const data = updateUserSchema.parse(props);
+            const { data, where, include, omit, select } = updateUserSchema.parse(props);
 
-            const user: User = await PrismaInstance.user.update(data);
+            const user: User = await PrismaInstance.user.update({
+                data,
+                where,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
 
             return { user };
         } catch (error) {
-            console.error("UserService.update -> " + (error as Error).message);
+            console.error("UserService -> Update -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("UserService -> Update -> Invalid Zod params -> " + error.message);
@@ -153,13 +209,18 @@ export class UserService {
      */
     static async delete(props: DeleteUserProps): Promise<DeleteUserResponse> {
         try {
-            const data = deleteUserSchema.parse(props);
+            const { where, include, omit, select } = deleteUserSchema.parse(props);
 
-            const user: User = await PrismaInstance.user.delete(data);
+            const user: User = await PrismaInstance.user.delete({
+                where,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
 
             return { user };
         } catch (error) {
-            console.error("UserService.delete -> " + (error as Error).message);
+            console.error("UserService -> Delete -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("UserService -> Delete -> Invalid Zod params -> " + error.message);
@@ -177,13 +238,18 @@ export class UserService {
      */
     static async findUnique(props: FindUniqueUserProps): Promise<FindUniqueUserResponse> {
         try {
-            const data = selectUserSchema.parse(props);
+            const { where, include, omit, select } = selectUserSchema.parse(props);
 
-            const user: UserComplete | null = await PrismaInstance.user.findUnique(data);
+            const user: UserComplete | null = await PrismaInstance.user.findUnique({
+                where,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
 
             return { user };
         } catch (error) {
-            console.error("UserService.findUnique -> " + (error as Error).message);
+            console.error("UserService -> FindUnique -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("UserService -> FindUnique -> Invalid Zod params -> " + error.message);
@@ -201,13 +267,33 @@ export class UserService {
      */
     static async findMany(props: FindManyUserProps): Promise<FindManyUserResponse> {
         try {
-            const data = selectManyUserSchema.parse(props);
+            const {
+                cursor,
+                distinct,
+                include,
+                omit,
+                orderBy,
+                select,
+                skip = 0,
+                take = 10,
+                where,
+            } = selectManyUserSchema.parse(props);
 
-            const userList: UserComplete[] = await PrismaInstance.user.findMany(data);
+            const userList: UserComplete[] = await PrismaInstance.user.findMany({
+                ...(cursor && { cursor }),
+                ...(distinct && { distinct }),
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(orderBy && { orderBy }),
+                ...(select && { select }),
+                ...(skip && { skip }),
+                ...(take && { take }),
+                ...(where && { where }),
+            });
 
             return { userList };
         } catch (error) {
-            console.error("UserService.findMany -> " + (error as Error).message);
+            console.error("UserService -> FindMany -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("UserService -> FindMany -> Invalid Zod params -> " + error.message);
@@ -225,13 +311,19 @@ export class UserService {
      */
     static async count(props: CountUserProps): Promise<CountUserResponse> {
         try {
-            const data = countUserSchema.parse(props);
+            const { cursor, orderBy, select, skip = 0, take = 10, where } = countUserSchema.parse(props);
 
-            const userAmount: UserCount = await PrismaInstance.user.count(data);
-
+            const userAmount: UserCount = await PrismaInstance.user.count({
+                ...(cursor && { cursor }),
+                ...(orderBy && { orderBy }),
+                ...(select && { select }),
+                ...(skip && { skip }),
+                ...(take && { take }),
+                ...(where && { where }),
+            });
             return { userAmount };
         } catch (error) {
-            console.error("UserService.count -> " + (error as Error).message);
+            console.error("UserService -> Count -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("UserService -> Count -> Invalid Zod params -> " + error.message);
