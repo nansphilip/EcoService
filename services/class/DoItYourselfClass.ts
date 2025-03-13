@@ -22,7 +22,8 @@ import {
     DoItYourselfUpdateArgsSchema,
     DoItYourselfUpsertArgsSchema,
     DoItYourselfWhereInputSchema,
-    DoItYourselfWhereUniqueInputSchema
+    DoItYourselfWhereUniqueInputSchema,
+    DoItYourselfWithRelationsSchema
 } from "@services/schemas";
 import { DoItYourselfIncludeSchema } from "@services/schemas/inputTypeSchemas/DoItYourselfIncludeSchema";
 import { z, ZodError, ZodType } from "zod";
@@ -31,9 +32,9 @@ import { z, ZodError, ZodType } from "zod";
 
 export type DoItYourselfModel = z.infer<typeof DoItYourselfSchema>;
 
-export type DoItYourselfRelations = z.infer<typeof DoItYourselfIncludeSchema>;
+export type DoItYourselfRelationsOptional = z.infer<typeof DoItYourselfSchema> & z.infer<typeof DoItYourselfIncludeSchema>;
 
-export type DoItYourselfComplete = z.infer<typeof DoItYourselfSchema> & z.infer<typeof DoItYourselfIncludeSchema>;
+export type DoItYourselfRelationsComplete = z.infer<typeof DoItYourselfWithRelationsSchema>;
 
 export type DoItYourselfCount = number;
 
@@ -89,21 +90,24 @@ export type CountDoItYourselfProps = z.infer<typeof countDoItYourselfSchema>;
 
 // ============== CRUD Response Types ============== //
 
-export type ResponseFormat<Key extends string, Response> = { [key in Key]: Response } | { error: string };
+export type ResponseFormat<Response> = {
+    data?: Response;
+    error?: string
+};
 
-export type CreateDoItYourselfResponse = ResponseFormat<"doItYourself", DoItYourselfModel>;
+export type CreateDoItYourselfResponse = ResponseFormat<DoItYourselfModel>;
 
-export type UpsertDoItYourselfResponse = ResponseFormat<"doItYourself", DoItYourselfModel>;
+export type UpsertDoItYourselfResponse = ResponseFormat<DoItYourselfModel>;
 
-export type UpdateDoItYourselfResponse = ResponseFormat<"doItYourself", DoItYourselfModel>;
+export type UpdateDoItYourselfResponse = ResponseFormat<DoItYourselfModel>;
 
-export type DeleteDoItYourselfResponse = ResponseFormat<"doItYourself", DoItYourselfModel>;
+export type DeleteDoItYourselfResponse = ResponseFormat<DoItYourselfModel>;
 
-export type FindUniqueDoItYourselfResponse = ResponseFormat<"doItYourself", DoItYourselfComplete | null>;
+export type FindUniqueDoItYourselfResponse = ResponseFormat<DoItYourselfRelationsOptional | null>;
 
-export type FindManyDoItYourselfResponse = ResponseFormat<"doItYourselfList", DoItYourselfComplete[]>;
+export type FindManyDoItYourselfResponse = ResponseFormat<DoItYourselfRelationsOptional[]>;
 
-export type CountDoItYourselfResponse = ResponseFormat<"doItYourselfAmount", DoItYourselfCount>;
+export type CountDoItYourselfResponse = ResponseFormat<DoItYourselfCount>;
 
 // ============== Services ============== //
 
@@ -127,7 +131,7 @@ export class DoItYourselfService {
                 ...(select && { select }),
             });
 
-            return { doItYourself };
+            return { data: doItYourself };
         } catch (error) {
             console.error("DoItYourselfService -> Create -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -155,7 +159,7 @@ export class DoItYourselfService {
                 ...(select && { select }),
             });
 
-            return { doItYourself };
+            return { data: doItYourself };
         } catch (error) {
             console.error("DoItYourselfService -> Upsert -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -187,7 +191,7 @@ export class DoItYourselfService {
                 ...(select && { select }),
             });
 
-            return { doItYourself };
+            return { data: doItYourself };
         } catch (error) {
             console.error("DoItYourselfService -> Update -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -218,7 +222,7 @@ export class DoItYourselfService {
                 ...(select && { select }),
             });
 
-            return { doItYourself };
+            return { data: doItYourself };
         } catch (error) {
             console.error("DoItYourselfService -> Delete -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -240,14 +244,14 @@ export class DoItYourselfService {
         try {
             const { where, include, omit, select } = selectDoItYourselfSchema.parse(props);
 
-            const doItYourself: DoItYourselfComplete | null = await PrismaInstance.doItYourself.findUnique({
+            const doItYourself: DoItYourselfRelationsOptional | null = await PrismaInstance.doItYourself.findUnique({
                 where,
                 ...(include && { include }),
                 ...(omit && { omit }),
                 ...(select && { select }),
             });
 
-            return { doItYourself };
+            return { data: doItYourself };
         } catch (error) {
             console.error("DoItYourselfService -> FindUnique -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -279,7 +283,7 @@ export class DoItYourselfService {
                 where,
             } = selectManyDoItYourselfSchema.parse(props);
 
-            const doItYourselfList: DoItYourselfComplete[] = await PrismaInstance.doItYourself.findMany({
+            const doItYourselfList: DoItYourselfRelationsOptional[] = await PrismaInstance.doItYourself.findMany({
                 ...(cursor && { cursor }),
                 ...(distinct && { distinct }),
                 ...(include && { include }),
@@ -291,7 +295,7 @@ export class DoItYourselfService {
                 ...(where && { where }),
             });
 
-            return { doItYourselfList };
+            return { data: doItYourselfList };
         } catch (error) {
             console.error("DoItYourselfService -> FindMany -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -321,7 +325,7 @@ export class DoItYourselfService {
                 ...(take && { take }),
                 ...(where && { where }),
             });
-            return { doItYourselfAmount };
+            return { data: doItYourselfAmount };
         } catch (error) {
             console.error("DoItYourselfService -> Count -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {

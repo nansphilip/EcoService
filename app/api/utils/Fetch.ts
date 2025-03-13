@@ -1,9 +1,5 @@
 import { Routes } from "@api/Routes";
 
-/**
- * Props for the Fetch function
- * @template Key - The route key from the Routes type
- */
 export type FetchProps<Key extends keyof Routes> = {
     /**
      * The API route to fetch data from
@@ -52,10 +48,10 @@ export type DataResponse<Key extends keyof Routes> = Extract<ResponseType<Key>, 
  *
  * @template Key - The route key from the Routes type
  * @param props - The fetch configuration
- * @returns A promise that resolves to the data property of the response
- * @throws Error if the request fails or returns an error
+ * @returns A promise that resolves to the response from the API
+ * @throws Error if the request fails
  */
-export const Fetch = async <Key extends keyof Routes>(props: FetchProps<Key>): Promise<DataResponse<Key>["data"]> => {
+export const Fetch = async <Key extends keyof Routes>(props: FetchProps<Key>): Promise<ResponseType<Key>> => {
     const { route, params, signal, client = false } = props;
 
     // Server requieres a baseUrl, but client doesn't
@@ -84,6 +80,6 @@ export const Fetch = async <Key extends keyof Routes>(props: FetchProps<Key>): P
         throw new Error(errorResponse.error ?? "Something went wrong...");
     }
 
-    // Return the data
-    return (responseData as DataResponse<Key>).data;
+    // Return the data with proper typing
+    return responseData;
 };

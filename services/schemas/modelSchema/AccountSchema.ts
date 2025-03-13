@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { UserWithRelationsSchema } from './UserSchema'
+import type { UserWithRelations } from './UserSchema'
 
 /////////////////////////////////////////
 // ACCOUNT SCHEMA
@@ -24,5 +26,19 @@ export const AccountSchema = z.object({
 })
 
 export type Account = z.infer<typeof AccountSchema>
+
+/////////////////////////////////////////
+// ACCOUNT RELATION SCHEMA
+/////////////////////////////////////////
+
+export type AccountRelations = {
+  User: UserWithRelations;
+};
+
+export type AccountWithRelations = z.infer<typeof AccountSchema> & AccountRelations
+
+export const AccountWithRelationsSchema: z.ZodType<AccountWithRelations> = AccountSchema.merge(z.object({
+  User: z.lazy(() => UserWithRelationsSchema),
+}))
 
 export default AccountSchema;

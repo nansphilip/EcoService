@@ -28,6 +28,12 @@ function extractModelNames(): string[] {
     return modelNames;
 }
 
+// Fonction pour vérifier si un modèle a des relations
+function hasModelRelations(modelName: string): boolean {
+    const includePath = path.join(process.cwd(), `services/schemas/inputTypeSchemas/${modelName}IncludeSchema.ts`);
+    return fs.existsSync(includePath);
+}
+
 // Fonction pour obtenir le nom en minuscule d'un modèle
 function getLowerName(name: string): string {
     return name.charAt(0).toLowerCase() + name.slice(1);
@@ -135,12 +141,14 @@ function generateModel(modelName: string): void {
     
     const lowerName = getLowerName(modelName);
     const pluralName = getPluralName(modelName);
+    const hasRelations = hasModelRelations(modelName);
     
     // Remplacements pour les templates
     const replacements = {
         modelName,
         modelNameLower: lowerName,
-        namePlural: pluralName
+        namePlural: pluralName,
+        hasRelations
     };
     
     // Générer les fichiers de classe
@@ -201,7 +209,8 @@ function generateIndexFiles(modelNames: string[]): void {
     const models = modelNames.map(name => ({
         name,
         nameLower: getLowerName(name),
-        namePlural: getPluralName(getLowerName(name))
+        namePlural: getPluralName(getLowerName(name)),
+        hasRelations: hasModelRelations(name)
     }));
     
     // Générer le fichier index.ts pour services/class

@@ -10,65 +10,56 @@
  */
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import {
-    QuantityComplete,
     QuantityService,
-    FindUniqueQuantityProps
+    FindUniqueQuantityProps,
+    FindUniqueQuantityResponse
 } from "@services/class/QuantityClass";
 import { unstable_cache as cache } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 /**
- * Type de réponse pour l'API de quantity unique
- */
-export type QuantityUniqueApiResponse =
-    | { data: QuantityComplete | null; }
-    | { error: string; };
-
-/**
  * Récupère un(e) quantity mis(e) en cache par ID
  * @param stringParams Paramètres contenant l'ID du/de la quantity au format JSON
- * @returns Quantity ou null si non trouvé(e)
+ * @returns Réponse contenant le/la quantity ou une erreur
  */
 const getQuantityCached = cache(
-    async (stringParams: string): Promise<QuantityComplete | null> => {
+    async (stringParams: string): Promise<FindUniqueQuantityResponse> => {
         // Parse les paramètres en objet
         const params: FindUniqueQuantityProps = JSON.parse(stringParams);
         
         // Utilise le service pour récupérer le/la quantity
         const response = await QuantityService.findUnique(params);
         
-        // Vérifie si la réponse contient une erreur
-        if ('error' in response) {
-            console.error(response.error);
-            return null;
-        }
+        console.log("getQuantityUnique -> Revalidating quantity from database...");
         
-        return response.quantity;
+        return response;
     },
-    ["/quantitys/unique"],
+    ["/quantities/unique"],
     {
         revalidate: process.env.NODE_ENV === "development" ? 5 : 300,
-        tags: ["/quantitys/unique"],
+        tags: ["/quantities/unique"],
     },
 );
 
 /**
  * Gestionnaire de route GET pour récupérer un(e) seul(e) quantity par ID
  */
-export const GET = async (request: NextRequest): Promise<NextResponse<QuantityUniqueApiResponse>> => {
+export const GET = async (request: NextRequest): Promise<NextResponse<FindUniqueQuantityResponse>> => {
     try {
         const encodedParams = request.nextUrl.searchParams.get("params") ?? "{}";
         const stringParams = decodeURIComponent(encodedParams);
         
-        const quantity = await getQuantityCached(stringParams);
+        const response = await getQuantityCached(stringParams);
         
-        return NextResponse.json({ data: quantity }, { status: 200 });
+        return NextResponse.json(response, { status: 200 });
     } catch (error) {
         console.error("getQuantityCached -> " + (error as Error).message);
         if (process.env.NODE_ENV === "development") {
             if (error instanceof ZodError)
-                return NextResponse.json({ error: "getQuantityCached -> Invalid Zod params -> " + error.message });
+                return NextResponse.json({
+                    error: "getQuantityCached -> Invalid Zod params -> " + error.message
+                });
             if (error instanceof PrismaClientKnownRequestError)
                 return NextResponse.json({ error: "getQuantityCached -> Prisma error -> " + error.message });
             return NextResponse.json({ error: "getQuantityCached -> " + (error as Error).message });

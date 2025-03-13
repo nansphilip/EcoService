@@ -22,7 +22,8 @@ import {
     SessionUpdateArgsSchema,
     SessionUpsertArgsSchema,
     SessionWhereInputSchema,
-    SessionWhereUniqueInputSchema
+    SessionWhereUniqueInputSchema,
+    SessionWithRelationsSchema
 } from "@services/schemas";
 import { SessionIncludeSchema } from "@services/schemas/inputTypeSchemas/SessionIncludeSchema";
 import { z, ZodError, ZodType } from "zod";
@@ -31,9 +32,9 @@ import { z, ZodError, ZodType } from "zod";
 
 export type SessionModel = z.infer<typeof SessionSchema>;
 
-export type SessionRelations = z.infer<typeof SessionIncludeSchema>;
+export type SessionRelationsOptional = z.infer<typeof SessionSchema> & z.infer<typeof SessionIncludeSchema>;
 
-export type SessionComplete = z.infer<typeof SessionSchema> & z.infer<typeof SessionIncludeSchema>;
+export type SessionRelationsComplete = z.infer<typeof SessionWithRelationsSchema>;
 
 export type SessionCount = number;
 
@@ -89,21 +90,24 @@ export type CountSessionProps = z.infer<typeof countSessionSchema>;
 
 // ============== CRUD Response Types ============== //
 
-export type ResponseFormat<Key extends string, Response> = { [key in Key]: Response } | { error: string };
+export type ResponseFormat<Response> = {
+    data?: Response;
+    error?: string
+};
 
-export type CreateSessionResponse = ResponseFormat<"session", SessionModel>;
+export type CreateSessionResponse = ResponseFormat<SessionModel>;
 
-export type UpsertSessionResponse = ResponseFormat<"session", SessionModel>;
+export type UpsertSessionResponse = ResponseFormat<SessionModel>;
 
-export type UpdateSessionResponse = ResponseFormat<"session", SessionModel>;
+export type UpdateSessionResponse = ResponseFormat<SessionModel>;
 
-export type DeleteSessionResponse = ResponseFormat<"session", SessionModel>;
+export type DeleteSessionResponse = ResponseFormat<SessionModel>;
 
-export type FindUniqueSessionResponse = ResponseFormat<"session", SessionComplete | null>;
+export type FindUniqueSessionResponse = ResponseFormat<SessionRelationsOptional | null>;
 
-export type FindManySessionResponse = ResponseFormat<"sessionList", SessionComplete[]>;
+export type FindManySessionResponse = ResponseFormat<SessionRelationsOptional[]>;
 
-export type CountSessionResponse = ResponseFormat<"sessionAmount", SessionCount>;
+export type CountSessionResponse = ResponseFormat<SessionCount>;
 
 // ============== Services ============== //
 
@@ -127,7 +131,7 @@ export class SessionService {
                 ...(select && { select }),
             });
 
-            return { session };
+            return { data: session };
         } catch (error) {
             console.error("SessionService -> Create -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -155,7 +159,7 @@ export class SessionService {
                 ...(select && { select }),
             });
 
-            return { session };
+            return { data: session };
         } catch (error) {
             console.error("SessionService -> Upsert -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -187,7 +191,7 @@ export class SessionService {
                 ...(select && { select }),
             });
 
-            return { session };
+            return { data: session };
         } catch (error) {
             console.error("SessionService -> Update -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -218,7 +222,7 @@ export class SessionService {
                 ...(select && { select }),
             });
 
-            return { session };
+            return { data: session };
         } catch (error) {
             console.error("SessionService -> Delete -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -240,14 +244,14 @@ export class SessionService {
         try {
             const { where, include, omit, select } = selectSessionSchema.parse(props);
 
-            const session: SessionComplete | null = await PrismaInstance.session.findUnique({
+            const session: SessionRelationsOptional | null = await PrismaInstance.session.findUnique({
                 where,
                 ...(include && { include }),
                 ...(omit && { omit }),
                 ...(select && { select }),
             });
 
-            return { session };
+            return { data: session };
         } catch (error) {
             console.error("SessionService -> FindUnique -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -279,7 +283,7 @@ export class SessionService {
                 where,
             } = selectManySessionSchema.parse(props);
 
-            const sessionList: SessionComplete[] = await PrismaInstance.session.findMany({
+            const sessionList: SessionRelationsOptional[] = await PrismaInstance.session.findMany({
                 ...(cursor && { cursor }),
                 ...(distinct && { distinct }),
                 ...(include && { include }),
@@ -291,7 +295,7 @@ export class SessionService {
                 ...(where && { where }),
             });
 
-            return { sessionList };
+            return { data: sessionList };
         } catch (error) {
             console.error("SessionService -> FindMany -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -321,7 +325,7 @@ export class SessionService {
                 ...(take && { take }),
                 ...(where && { where }),
             });
-            return { sessionAmount };
+            return { data: sessionAmount };
         } catch (error) {
             console.error("SessionService -> Count -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {

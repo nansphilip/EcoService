@@ -10,65 +10,56 @@
  */
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import {
-    {{modelName}}Complete,
     {{modelName}}Service,
-    FindUnique{{modelName}}Props
+    FindUnique{{modelName}}Props,
+    FindUnique{{modelName}}Response
 } from "@services/class/{{modelName}}Class";
 import { unstable_cache as cache } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 /**
- * Type de réponse pour l'API de {{modelNameLower}} unique
- */
-export type {{modelName}}UniqueApiResponse =
-    | { data: {{modelName}}Complete | null; }
-    | { error: string; };
-
-/**
  * Récupère un(e) {{modelNameLower}} mis(e) en cache par ID
  * @param stringParams Paramètres contenant l'ID du/de la {{modelNameLower}} au format JSON
- * @returns {{modelName}} ou null si non trouvé(e)
+ * @returns Réponse contenant le/la {{modelNameLower}} ou une erreur
  */
 const get{{modelName}}Cached = cache(
-    async (stringParams: string): Promise<{{modelName}}Complete | null> => {
+    async (stringParams: string): Promise<FindUnique{{modelName}}Response> => {
         // Parse les paramètres en objet
         const params: FindUnique{{modelName}}Props = JSON.parse(stringParams);
         
         // Utilise le service pour récupérer le/la {{modelNameLower}}
         const response = await {{modelName}}Service.findUnique(params);
         
-        // Vérifie si la réponse contient une erreur
-        if ('error' in response) {
-            console.error(response.error);
-            return null;
-        }
+        console.log("get{{modelName}}Unique -> Revalidating {{modelNameLower}} from database...");
         
-        return response.{{modelNameLower}};
+        return response;
     },
-    ["/{{modelNameLower}}s/unique"],
+    ["/{{namePlural}}/unique"],
     {
         revalidate: process.env.NODE_ENV === "development" ? 5 : 300,
-        tags: ["/{{modelNameLower}}s/unique"],
+        tags: ["/{{namePlural}}/unique"],
     },
 );
 
 /**
  * Gestionnaire de route GET pour récupérer un(e) seul(e) {{modelNameLower}} par ID
  */
-export const GET = async (request: NextRequest): Promise<NextResponse<{{modelName}}UniqueApiResponse>> => {
+export const GET = async (request: NextRequest): Promise<NextResponse<FindUnique{{modelName}}Response>> => {
     try {
         const encodedParams = request.nextUrl.searchParams.get("params") ?? "{}";
         const stringParams = decodeURIComponent(encodedParams);
         
-        const {{modelNameLower}} = await get{{modelName}}Cached(stringParams);
+        const response = await get{{modelName}}Cached(stringParams);
         
-        return NextResponse.json({ data: {{modelNameLower}} }, { status: 200 });
+        return NextResponse.json(response, { status: 200 });
     } catch (error) {
         console.error("get{{modelName}}Cached -> " + (error as Error).message);
         if (process.env.NODE_ENV === "development") {
             if (error instanceof ZodError)
-                return NextResponse.json({ error: "get{{modelName}}Cached -> Invalid Zod params -> " + error.message });
+                return NextResponse.json({
+                    error: "get{{modelName}}Cached -> Invalid Zod params -> " + error.message
+                });
             if (error instanceof PrismaClientKnownRequestError)
                 return NextResponse.json({ error: "get{{modelName}}Cached -> Prisma error -> " + error.message });
             return NextResponse.json({ error: "get{{modelName}}Cached -> " + (error as Error).message });

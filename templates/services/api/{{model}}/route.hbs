@@ -10,68 +10,57 @@
  */
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import {
-    {{modelName}}Complete,
     {{modelName}}Service,
-    FindMany{{modelName}}Props
+    FindMany{{modelName}}Props,
+    FindMany{{modelName}}Response,
 } from "@services/class/{{modelName}}Class";
 import { unstable_cache as cache } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 /**
- * Type de réponse pour l'API de liste de {{modelNameLower}}s
- */
-export type {{modelName}}ListApiResponse =
-    | { data: {{modelName}}Complete[] | null; }
-    | { error: string; };
-
-/**
  * Récupère une liste de {{modelNameLower}}s mise en cache
  */
 const get{{modelName}}ListCached = cache(
-    async (stringParams: string): Promise<{{modelName}}Complete[] | null> => {
+    async (stringParams: string): Promise<FindMany{{modelName}}Response> => {
         // Parse les paramètres en objet
         const params: FindMany{{modelName}}Props = JSON.parse(stringParams);
-        
+
         // Utilise le service pour récupérer la liste des {{modelNameLower}}s
         const response = await {{modelName}}Service.findMany(params);
-        
-        // Vérifie si la réponse contient une erreur
-        if ('error' in response) {
-            console.error(response.error);
-            return null;
-        }
-        
+
         console.log("get{{modelName}}List -> Revalidating {{modelNameLower}}s list from database...");
-        
-        return response.{{modelNameLower}}List;
+
+        return response;
     },
-    ["{{modelNameLower}}s"],
+    ["{{namePlural}}"],
     {
         revalidate: process.env.NODE_ENV === "development" ? 5 : 300,
-        tags: ["{{modelNameLower}}s"],
+        tags: ["{{namePlural}}"],
     },
 );
 
 /**
  * Gestionnaire de route GET pour l'API de {{modelNameLower}}s
  */
-export const GET = async (request: NextRequest): Promise<NextResponse<{{modelName}}ListApiResponse>> => {
+export const GET = async (request: NextRequest): Promise<NextResponse<FindMany{{modelName}}Response>> => {
     try {
         // Récupère les paramètres et les décode
         const encodedParams = request.nextUrl.searchParams.get("params") ?? "{}";
         const stringParams = decodeURIComponent(encodedParams);
 
         // Récupère la liste des {{modelNameLower}}s
-        const {{modelNameLower}}List = await get{{modelName}}ListCached(stringParams);
+        const response = await get{{modelName}}ListCached(stringParams);
 
         // Retourne la liste des {{modelNameLower}}s
-        return NextResponse.json({ data: {{modelNameLower}}List }, { status: 200 });
+        return NextResponse.json(response, { status: 200 });
     } catch (error) {
         console.error("get{{modelName}}ListCached -> " + (error as Error).message);
         if (process.env.NODE_ENV === "development") {
             if (error instanceof ZodError)
-                return NextResponse.json({ error: "get{{modelName}}ListCached -> Invalid Zod params -> " + error.message });
+                return NextResponse.json({
+                    error: "get{{modelName}}ListCached -> Invalid Zod params -> " + error.message,
+                });
             if (error instanceof PrismaClientKnownRequestError)
                 return NextResponse.json({ error: "get{{modelName}}ListCached -> Prisma error -> " + error.message });
             return NextResponse.json({ error: "get{{modelName}}ListCached -> " + (error as Error).message });

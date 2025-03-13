@@ -22,7 +22,8 @@ import {
     CategoryUpdateArgsSchema,
     CategoryUpsertArgsSchema,
     CategoryWhereInputSchema,
-    CategoryWhereUniqueInputSchema
+    CategoryWhereUniqueInputSchema,
+    CategoryWithRelationsSchema
 } from "@services/schemas";
 import { CategoryIncludeSchema } from "@services/schemas/inputTypeSchemas/CategoryIncludeSchema";
 import { z, ZodError, ZodType } from "zod";
@@ -31,9 +32,9 @@ import { z, ZodError, ZodType } from "zod";
 
 export type CategoryModel = z.infer<typeof CategorySchema>;
 
-export type CategoryRelations = z.infer<typeof CategoryIncludeSchema>;
+export type CategoryRelationsOptional = z.infer<typeof CategorySchema> & z.infer<typeof CategoryIncludeSchema>;
 
-export type CategoryComplete = z.infer<typeof CategorySchema> & z.infer<typeof CategoryIncludeSchema>;
+export type CategoryRelationsComplete = z.infer<typeof CategoryWithRelationsSchema>;
 
 export type CategoryCount = number;
 
@@ -89,21 +90,24 @@ export type CountCategoryProps = z.infer<typeof countCategorySchema>;
 
 // ============== CRUD Response Types ============== //
 
-export type ResponseFormat<Key extends string, Response> = { [key in Key]: Response } | { error: string };
+export type ResponseFormat<Response> = {
+    data?: Response;
+    error?: string
+};
 
-export type CreateCategoryResponse = ResponseFormat<"category", CategoryModel>;
+export type CreateCategoryResponse = ResponseFormat<CategoryModel>;
 
-export type UpsertCategoryResponse = ResponseFormat<"category", CategoryModel>;
+export type UpsertCategoryResponse = ResponseFormat<CategoryModel>;
 
-export type UpdateCategoryResponse = ResponseFormat<"category", CategoryModel>;
+export type UpdateCategoryResponse = ResponseFormat<CategoryModel>;
 
-export type DeleteCategoryResponse = ResponseFormat<"category", CategoryModel>;
+export type DeleteCategoryResponse = ResponseFormat<CategoryModel>;
 
-export type FindUniqueCategoryResponse = ResponseFormat<"category", CategoryComplete | null>;
+export type FindUniqueCategoryResponse = ResponseFormat<CategoryRelationsOptional | null>;
 
-export type FindManyCategoryResponse = ResponseFormat<"categoryList", CategoryComplete[]>;
+export type FindManyCategoryResponse = ResponseFormat<CategoryRelationsOptional[]>;
 
-export type CountCategoryResponse = ResponseFormat<"categoryAmount", CategoryCount>;
+export type CountCategoryResponse = ResponseFormat<CategoryCount>;
 
 // ============== Services ============== //
 
@@ -127,7 +131,7 @@ export class CategoryService {
                 ...(select && { select }),
             });
 
-            return { category };
+            return { data: category };
         } catch (error) {
             console.error("CategoryService -> Create -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -155,7 +159,7 @@ export class CategoryService {
                 ...(select && { select }),
             });
 
-            return { category };
+            return { data: category };
         } catch (error) {
             console.error("CategoryService -> Upsert -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -187,7 +191,7 @@ export class CategoryService {
                 ...(select && { select }),
             });
 
-            return { category };
+            return { data: category };
         } catch (error) {
             console.error("CategoryService -> Update -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -218,7 +222,7 @@ export class CategoryService {
                 ...(select && { select }),
             });
 
-            return { category };
+            return { data: category };
         } catch (error) {
             console.error("CategoryService -> Delete -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -240,14 +244,14 @@ export class CategoryService {
         try {
             const { where, include, omit, select } = selectCategorySchema.parse(props);
 
-            const category: CategoryComplete | null = await PrismaInstance.category.findUnique({
+            const category: CategoryRelationsOptional | null = await PrismaInstance.category.findUnique({
                 where,
                 ...(include && { include }),
                 ...(omit && { omit }),
                 ...(select && { select }),
             });
 
-            return { category };
+            return { data: category };
         } catch (error) {
             console.error("CategoryService -> FindUnique -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -279,7 +283,7 @@ export class CategoryService {
                 where,
             } = selectManyCategorySchema.parse(props);
 
-            const categoryList: CategoryComplete[] = await PrismaInstance.category.findMany({
+            const categoryList: CategoryRelationsOptional[] = await PrismaInstance.category.findMany({
                 ...(cursor && { cursor }),
                 ...(distinct && { distinct }),
                 ...(include && { include }),
@@ -291,7 +295,7 @@ export class CategoryService {
                 ...(where && { where }),
             });
 
-            return { categoryList };
+            return { data: categoryList };
         } catch (error) {
             console.error("CategoryService -> FindMany -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -321,7 +325,7 @@ export class CategoryService {
                 ...(take && { take }),
                 ...(where && { where }),
             });
-            return { categoryAmount };
+            return { data: categoryAmount };
         } catch (error) {
             console.error("CategoryService -> Count -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {

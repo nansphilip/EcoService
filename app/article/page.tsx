@@ -2,10 +2,10 @@ import { Fetch } from "@app/api/utils/Fetch";
 import ImageRatio from "@comps/server/ImageRatio";
 import Link from "next/link";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default async function Page() {
-    const articleList = await Fetch({
+    const { data: articleList } = await Fetch({
         route: "/articles",
         params: {
             select: {
@@ -46,7 +46,7 @@ export default async function Page() {
                         className="group flex flex-col overflow-hidden rounded-xl border border-gray-300 bg-white shadow-md transition-shadow duration-300 hover:shadow-lg"
                     >
                         {/* Image */}
-                        {article.Content?.[0] && (
+                        {article.Content && article.Content[0] && (
                             <div className="h-48 overflow-hidden">
                                 <ImageRatio
                                     src={`/illustration/${article.Content[0].image}`}

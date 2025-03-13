@@ -10,41 +10,28 @@
  */
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import {
-    ProductComplete,
     ProductService,
-    FindManyProductProps
+    FindManyProductProps,
+    FindManyProductResponse,
 } from "@services/class/ProductClass";
 import { unstable_cache as cache } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 /**
- * Type de réponse pour l'API de liste de products
- */
-export type ProductListApiResponse =
-    | { data: ProductComplete[] | null; }
-    | { error: string; };
-
-/**
  * Récupère une liste de products mise en cache
  */
 const getProductListCached = cache(
-    async (stringParams: string): Promise<ProductComplete[] | null> => {
+    async (stringParams: string): Promise<FindManyProductResponse> => {
         // Parse les paramètres en objet
         const params: FindManyProductProps = JSON.parse(stringParams);
-        
+
         // Utilise le service pour récupérer la liste des products
         const response = await ProductService.findMany(params);
-        
-        // Vérifie si la réponse contient une erreur
-        if ('error' in response) {
-            console.error(response.error);
-            return null;
-        }
-        
+
         console.log("getProductList -> Revalidating products list from database...");
-        
-        return response.productList;
+
+        return response;
     },
     ["products"],
     {
@@ -56,22 +43,24 @@ const getProductListCached = cache(
 /**
  * Gestionnaire de route GET pour l'API de products
  */
-export const GET = async (request: NextRequest): Promise<NextResponse<ProductListApiResponse>> => {
+export const GET = async (request: NextRequest): Promise<NextResponse<FindManyProductResponse>> => {
     try {
         // Récupère les paramètres et les décode
         const encodedParams = request.nextUrl.searchParams.get("params") ?? "{}";
         const stringParams = decodeURIComponent(encodedParams);
 
         // Récupère la liste des products
-        const productList = await getProductListCached(stringParams);
+        const response = await getProductListCached(stringParams);
 
         // Retourne la liste des products
-        return NextResponse.json({ data: productList }, { status: 200 });
+        return NextResponse.json(response, { status: 200 });
     } catch (error) {
         console.error("getProductListCached -> " + (error as Error).message);
         if (process.env.NODE_ENV === "development") {
             if (error instanceof ZodError)
-                return NextResponse.json({ error: "getProductListCached -> Invalid Zod params -> " + error.message });
+                return NextResponse.json({
+                    error: "getProductListCached -> Invalid Zod params -> " + error.message,
+                });
             if (error instanceof PrismaClientKnownRequestError)
                 return NextResponse.json({ error: "getProductListCached -> Prisma error -> " + error.message });
             return NextResponse.json({ error: "getProductListCached -> " + (error as Error).message });

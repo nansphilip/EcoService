@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { UserWithRelationsSchema } from './UserSchema'
+import type { UserWithRelations } from './UserSchema'
 
 /////////////////////////////////////////
 // SESSION SCHEMA
@@ -19,5 +21,19 @@ export const SessionSchema = z.object({
 })
 
 export type Session = z.infer<typeof SessionSchema>
+
+/////////////////////////////////////////
+// SESSION RELATION SCHEMA
+/////////////////////////////////////////
+
+export type SessionRelations = {
+  User: UserWithRelations;
+};
+
+export type SessionWithRelations = z.infer<typeof SessionSchema> & SessionRelations
+
+export const SessionWithRelationsSchema: z.ZodType<SessionWithRelations> = SessionSchema.merge(z.object({
+  User: z.lazy(() => UserWithRelationsSchema),
+}))
 
 export default SessionSchema;

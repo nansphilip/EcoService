@@ -22,13 +22,12 @@ export type SearchKeywords = {
 });
 
 export default async function Header() {
-    const responseList = await FetchParallelized([
+    const data = await FetchParallelized([
         { route: "/products", params: { take: 100 } },
         { route: "/categories", params: { take: 100 } },
     ]);
 
-    const productList = responseList[0];
-    const categorieList = responseList[1];
+    const [productList, categorieList] = data;
 
     if (!productList || !categorieList) {
         return <div>Mmmm... It seems there is not data.</div>;

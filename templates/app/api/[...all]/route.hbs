@@ -7,13 +7,16 @@
  * Inspiré par l'approche de BetterAuth, ce système permet de centraliser la logique
  * de routage et de simplifier l'architecture des API.
  */
-import { NextRequest, NextResponse } from "next/server";
 import * as services from "@services/api";
+import { NextRequest, NextResponse } from "next/server";
+
+// Type pour les gestionnaires de route
+type RouteHandler = (request: NextRequest) => Promise<NextResponse>;
 
 /**
  * Fonction pour obtenir le gestionnaire de route approprié en fonction du chemin
  */
-function getRouteHandler(path: string[]): Function | null {
+function getRouteHandler(path: string[]): RouteHandler | null {
   // Si le chemin est vide, retourner null
   if (path.length === 0) return null;
 
@@ -26,7 +29,7 @@ function getRouteHandler(path: string[]): Function | null {
   
   // Si le chemin a un seul segment, retourner le gestionnaire principal (liste)
   if (path.length === 1) {
-    return (services as any)[`get${modelName}List`] || null;
+    return (services as Record<string, RouteHandler | undefined>)[`get${modelName}List`] || null;
   }
 
   // Si le chemin a deux segments, vérifier les sous-routes
@@ -34,11 +37,11 @@ function getRouteHandler(path: string[]): Function | null {
     const subRoute = path[1];
     
     if (subRoute === "unique") {
-      return (services as any)[`get${modelName}Unique`] || null;
+      return (services as Record<string, RouteHandler | undefined>)[`get${modelName}Unique`] || null;
     }
     
     if (subRoute === "count") {
-      return (services as any)[`get${modelName}Count`] || null;
+      return (services as Record<string, RouteHandler | undefined>)[`get${modelName}Count`] || null;
     }
   }
 

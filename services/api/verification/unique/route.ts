@@ -10,41 +10,30 @@
  */
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import {
-    VerificationComplete,
     VerificationService,
-    FindUniqueVerificationProps
+    FindUniqueVerificationProps,
+    FindUniqueVerificationResponse
 } from "@services/class/VerificationClass";
 import { unstable_cache as cache } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 /**
- * Type de réponse pour l'API de verification unique
- */
-export type VerificationUniqueApiResponse =
-    | { data: VerificationComplete | null; }
-    | { error: string; };
-
-/**
  * Récupère un(e) verification mis(e) en cache par ID
  * @param stringParams Paramètres contenant l'ID du/de la verification au format JSON
- * @returns Verification ou null si non trouvé(e)
+ * @returns Réponse contenant le/la verification ou une erreur
  */
 const getVerificationCached = cache(
-    async (stringParams: string): Promise<VerificationComplete | null> => {
+    async (stringParams: string): Promise<FindUniqueVerificationResponse> => {
         // Parse les paramètres en objet
         const params: FindUniqueVerificationProps = JSON.parse(stringParams);
         
         // Utilise le service pour récupérer le/la verification
         const response = await VerificationService.findUnique(params);
         
-        // Vérifie si la réponse contient une erreur
-        if ('error' in response) {
-            console.error(response.error);
-            return null;
-        }
+        console.log("getVerificationUnique -> Revalidating verification from database...");
         
-        return response.verification;
+        return response;
     },
     ["/verifications/unique"],
     {
@@ -56,19 +45,21 @@ const getVerificationCached = cache(
 /**
  * Gestionnaire de route GET pour récupérer un(e) seul(e) verification par ID
  */
-export const GET = async (request: NextRequest): Promise<NextResponse<VerificationUniqueApiResponse>> => {
+export const GET = async (request: NextRequest): Promise<NextResponse<FindUniqueVerificationResponse>> => {
     try {
         const encodedParams = request.nextUrl.searchParams.get("params") ?? "{}";
         const stringParams = decodeURIComponent(encodedParams);
         
-        const verification = await getVerificationCached(stringParams);
+        const response = await getVerificationCached(stringParams);
         
-        return NextResponse.json({ data: verification }, { status: 200 });
+        return NextResponse.json(response, { status: 200 });
     } catch (error) {
         console.error("getVerificationCached -> " + (error as Error).message);
         if (process.env.NODE_ENV === "development") {
             if (error instanceof ZodError)
-                return NextResponse.json({ error: "getVerificationCached -> Invalid Zod params -> " + error.message });
+                return NextResponse.json({
+                    error: "getVerificationCached -> Invalid Zod params -> " + error.message
+                });
             if (error instanceof PrismaClientKnownRequestError)
                 return NextResponse.json({ error: "getVerificationCached -> Prisma error -> " + error.message });
             return NextResponse.json({ error: "getVerificationCached -> " + (error as Error).message });

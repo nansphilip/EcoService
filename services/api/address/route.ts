@@ -10,68 +10,57 @@
  */
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import {
-    AddressComplete,
     AddressService,
-    FindManyAddressProps
+    FindManyAddressProps,
+    FindManyAddressResponse,
 } from "@services/class/AddressClass";
 import { unstable_cache as cache } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 /**
- * Type de réponse pour l'API de liste de addresss
- */
-export type AddressListApiResponse =
-    | { data: AddressComplete[] | null; }
-    | { error: string; };
-
-/**
  * Récupère une liste de addresss mise en cache
  */
 const getAddressListCached = cache(
-    async (stringParams: string): Promise<AddressComplete[] | null> => {
+    async (stringParams: string): Promise<FindManyAddressResponse> => {
         // Parse les paramètres en objet
         const params: FindManyAddressProps = JSON.parse(stringParams);
-        
+
         // Utilise le service pour récupérer la liste des addresss
         const response = await AddressService.findMany(params);
-        
-        // Vérifie si la réponse contient une erreur
-        if ('error' in response) {
-            console.error(response.error);
-            return null;
-        }
-        
+
         console.log("getAddressList -> Revalidating addresss list from database...");
-        
-        return response.addressList;
+
+        return response;
     },
-    ["addresss"],
+    ["addresses"],
     {
         revalidate: process.env.NODE_ENV === "development" ? 5 : 300,
-        tags: ["addresss"],
+        tags: ["addresses"],
     },
 );
 
 /**
  * Gestionnaire de route GET pour l'API de addresss
  */
-export const GET = async (request: NextRequest): Promise<NextResponse<AddressListApiResponse>> => {
+export const GET = async (request: NextRequest): Promise<NextResponse<FindManyAddressResponse>> => {
     try {
         // Récupère les paramètres et les décode
         const encodedParams = request.nextUrl.searchParams.get("params") ?? "{}";
         const stringParams = decodeURIComponent(encodedParams);
 
         // Récupère la liste des addresss
-        const addressList = await getAddressListCached(stringParams);
+        const response = await getAddressListCached(stringParams);
 
         // Retourne la liste des addresss
-        return NextResponse.json({ data: addressList }, { status: 200 });
+        return NextResponse.json(response, { status: 200 });
     } catch (error) {
         console.error("getAddressListCached -> " + (error as Error).message);
         if (process.env.NODE_ENV === "development") {
             if (error instanceof ZodError)
-                return NextResponse.json({ error: "getAddressListCached -> Invalid Zod params -> " + error.message });
+                return NextResponse.json({
+                    error: "getAddressListCached -> Invalid Zod params -> " + error.message,
+                });
             if (error instanceof PrismaClientKnownRequestError)
                 return NextResponse.json({ error: "getAddressListCached -> Prisma error -> " + error.message });
             return NextResponse.json({ error: "getAddressListCached -> " + (error as Error).message });

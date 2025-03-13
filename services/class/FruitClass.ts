@@ -24,16 +24,11 @@ import {
     FruitWhereInputSchema,
     FruitWhereUniqueInputSchema
 } from "@services/schemas";
-import { FruitIncludeSchema } from "@services/schemas/inputTypeSchemas/FruitIncludeSchema";
 import { z, ZodError, ZodType } from "zod";
 
 // ============== Types ============== //
 
 export type FruitModel = z.infer<typeof FruitSchema>;
-
-export type FruitRelations = z.infer<typeof FruitIncludeSchema>;
-
-export type FruitComplete = z.infer<typeof FruitSchema> & z.infer<typeof FruitIncludeSchema>;
 
 export type FruitCount = number;
 
@@ -89,21 +84,24 @@ export type CountFruitProps = z.infer<typeof countFruitSchema>;
 
 // ============== CRUD Response Types ============== //
 
-export type ResponseFormat<Key extends string, Response> = { [key in Key]: Response } | { error: string };
+export type ResponseFormat<Response> = {
+    data?: Response;
+    error?: string
+};
 
-export type CreateFruitResponse = ResponseFormat<"fruit", FruitModel>;
+export type CreateFruitResponse = ResponseFormat<FruitModel>;
 
-export type UpsertFruitResponse = ResponseFormat<"fruit", FruitModel>;
+export type UpsertFruitResponse = ResponseFormat<FruitModel>;
 
-export type UpdateFruitResponse = ResponseFormat<"fruit", FruitModel>;
+export type UpdateFruitResponse = ResponseFormat<FruitModel>;
 
-export type DeleteFruitResponse = ResponseFormat<"fruit", FruitModel>;
+export type DeleteFruitResponse = ResponseFormat<FruitModel>;
 
-export type FindUniqueFruitResponse = ResponseFormat<"fruit", FruitComplete | null>;
+export type FindUniqueFruitResponse = ResponseFormat<FruitModel | null>;
 
-export type FindManyFruitResponse = ResponseFormat<"fruitList", FruitComplete[]>;
+export type FindManyFruitResponse = ResponseFormat<FruitModel[]>;
 
-export type CountFruitResponse = ResponseFormat<"fruitAmount", FruitCount>;
+export type CountFruitResponse = ResponseFormat<FruitCount>;
 
 // ============== Services ============== //
 
@@ -118,16 +116,16 @@ export class FruitService {
      */
     static async create(props: CreateFruitProps): Promise<CreateFruitResponse> {
         try {
-            const { data, include, omit, select } = createFruitSchema.parse(props);
+            const { data, omit, select } = createFruitSchema.parse(props);
 
             const fruit: Fruit = await PrismaInstance.fruit.create({
                 data,
-                ...(include && { include }),
+                
                 ...(omit && { omit }),
                 ...(select && { select }),
             });
 
-            return { fruit };
+            return { data: fruit };
         } catch (error) {
             console.error("FruitService -> Create -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -144,18 +142,18 @@ export class FruitService {
 
     static async upsert(props: UpsertFruitProps): Promise<UpsertFruitResponse> {
         try {
-            const { create, update, where, include, omit, select } = upsertFruitSchema.parse(props);
+            const { create, update, where, omit, select } = upsertFruitSchema.parse(props);
 
             const fruit: Fruit = await PrismaInstance.fruit.upsert({
                 create,
                 update,
                 where,
-                ...(include && { include }),
+                
                 ...(omit && { omit }),
                 ...(select && { select }),
             });
 
-            return { fruit };
+            return { data: fruit };
         } catch (error) {
             console.error("FruitService -> Upsert -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -177,17 +175,17 @@ export class FruitService {
      */
     static async update(props: UpdateFruitProps): Promise<UpdateFruitResponse> {
         try {
-            const { data, where, include, omit, select } = updateFruitSchema.parse(props);
+            const { data, where, omit, select } = updateFruitSchema.parse(props);
 
             const fruit: Fruit = await PrismaInstance.fruit.update({
                 data,
                 where,
-                ...(include && { include }),
+                
                 ...(omit && { omit }),
                 ...(select && { select }),
             });
 
-            return { fruit };
+            return { data: fruit };
         } catch (error) {
             console.error("FruitService -> Update -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -209,16 +207,16 @@ export class FruitService {
      */
     static async delete(props: DeleteFruitProps): Promise<DeleteFruitResponse> {
         try {
-            const { where, include, omit, select } = deleteFruitSchema.parse(props);
+            const { where, omit, select } = deleteFruitSchema.parse(props);
 
             const fruit: Fruit = await PrismaInstance.fruit.delete({
                 where,
-                ...(include && { include }),
+                
                 ...(omit && { omit }),
                 ...(select && { select }),
             });
 
-            return { fruit };
+            return { data: fruit };
         } catch (error) {
             console.error("FruitService -> Delete -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -238,16 +236,16 @@ export class FruitService {
      */
     static async findUnique(props: FindUniqueFruitProps): Promise<FindUniqueFruitResponse> {
         try {
-            const { where, include, omit, select } = selectFruitSchema.parse(props);
+            const { where, omit, select } = selectFruitSchema.parse(props);
 
-            const fruit: FruitComplete | null = await PrismaInstance.fruit.findUnique({
+            const fruit: FruitModel | null = await PrismaInstance.fruit.findUnique({
                 where,
-                ...(include && { include }),
+                
                 ...(omit && { omit }),
                 ...(select && { select }),
             });
 
-            return { fruit };
+            return { data: fruit };
         } catch (error) {
             console.error("FruitService -> FindUnique -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -270,7 +268,7 @@ export class FruitService {
             const {
                 cursor,
                 distinct,
-                include,
+                
                 omit,
                 orderBy,
                 select,
@@ -279,10 +277,10 @@ export class FruitService {
                 where,
             } = selectManyFruitSchema.parse(props);
 
-            const fruitList: FruitComplete[] = await PrismaInstance.fruit.findMany({
+            const fruitList: FruitModel[] = await PrismaInstance.fruit.findMany({
                 ...(cursor && { cursor }),
                 ...(distinct && { distinct }),
-                ...(include && { include }),
+                
                 ...(omit && { omit }),
                 ...(orderBy && { orderBy }),
                 ...(select && { select }),
@@ -291,7 +289,7 @@ export class FruitService {
                 ...(where && { where }),
             });
 
-            return { fruitList };
+            return { data: fruitList };
         } catch (error) {
             console.error("FruitService -> FindMany -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -321,7 +319,7 @@ export class FruitService {
                 ...(take && { take }),
                 ...(where && { where }),
             });
-            return { fruitAmount };
+            return { data: fruitAmount };
         } catch (error) {
             console.error("FruitService -> Count -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {

@@ -10,41 +10,30 @@
  */
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import {
-    ArticleComplete,
     ArticleService,
-    FindUniqueArticleProps
+    FindUniqueArticleProps,
+    FindUniqueArticleResponse
 } from "@services/class/ArticleClass";
 import { unstable_cache as cache } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 /**
- * Type de réponse pour l'API de article unique
- */
-export type ArticleUniqueApiResponse =
-    | { data: ArticleComplete | null; }
-    | { error: string; };
-
-/**
  * Récupère un(e) article mis(e) en cache par ID
  * @param stringParams Paramètres contenant l'ID du/de la article au format JSON
- * @returns Article ou null si non trouvé(e)
+ * @returns Réponse contenant le/la article ou une erreur
  */
 const getArticleCached = cache(
-    async (stringParams: string): Promise<ArticleComplete | null> => {
+    async (stringParams: string): Promise<FindUniqueArticleResponse> => {
         // Parse les paramètres en objet
         const params: FindUniqueArticleProps = JSON.parse(stringParams);
         
         // Utilise le service pour récupérer le/la article
         const response = await ArticleService.findUnique(params);
         
-        // Vérifie si la réponse contient une erreur
-        if ('error' in response) {
-            console.error(response.error);
-            return null;
-        }
+        console.log("getArticleUnique -> Revalidating article from database...");
         
-        return response.article;
+        return response;
     },
     ["/articles/unique"],
     {
@@ -56,19 +45,21 @@ const getArticleCached = cache(
 /**
  * Gestionnaire de route GET pour récupérer un(e) seul(e) article par ID
  */
-export const GET = async (request: NextRequest): Promise<NextResponse<ArticleUniqueApiResponse>> => {
+export const GET = async (request: NextRequest): Promise<NextResponse<FindUniqueArticleResponse>> => {
     try {
         const encodedParams = request.nextUrl.searchParams.get("params") ?? "{}";
         const stringParams = decodeURIComponent(encodedParams);
         
-        const article = await getArticleCached(stringParams);
+        const response = await getArticleCached(stringParams);
         
-        return NextResponse.json({ data: article }, { status: 200 });
+        return NextResponse.json(response, { status: 200 });
     } catch (error) {
         console.error("getArticleCached -> " + (error as Error).message);
         if (process.env.NODE_ENV === "development") {
             if (error instanceof ZodError)
-                return NextResponse.json({ error: "getArticleCached -> Invalid Zod params -> " + error.message });
+                return NextResponse.json({
+                    error: "getArticleCached -> Invalid Zod params -> " + error.message
+                });
             if (error instanceof PrismaClientKnownRequestError)
                 return NextResponse.json({ error: "getArticleCached -> Prisma error -> " + error.message });
             return NextResponse.json({ error: "getArticleCached -> " + (error as Error).message });

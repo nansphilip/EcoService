@@ -1,79 +1,69 @@
 /**
  * API pour compter les contents avec mise en cache
  * 
- * Ce fichier définit un point d'API pour compter les contents avec filtrage.
- * Il utilise unstable_cache de Next.js pour mettre en cache les résultats.
+ * Ce fichier définit un point d'API pour compter les contents avec filtres.
+ * Il utilise unstable_cache de Next.js pour mettre en cache les résultats,
+ * ce qui améliore les performances en évitant des requêtes répétées à la base de données.
  * 
  * La fonction getContentCountCached parse les paramètres, appelle le service,
  * et gère les erreurs potentielles avant de retourner les données.
  */
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import {
-    ContentCount,
     ContentService,
-    CountContentProps
+    CountContentProps,
+    CountContentResponse
 } from "@services/class/ContentClass";
 import { unstable_cache as cache } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 /**
- * Type de réponse pour l'API de comptage de contents
- */
-export type ContentCountApiResponse =
-    | { data: ContentCount | null; }
-    | { error: string; };
-
-/**
- * Récupère un comptage de contents mis en cache
+ * Compte les contents avec mise en cache
+ * @param stringParams Paramètres de filtrage au format JSON
+ * @returns Réponse contenant le nombre de contents ou une erreur
  */
 const getContentCountCached = cache(
-    async (stringParams: string): Promise<ContentCount | null> => {
+    async (stringParams: string): Promise<CountContentResponse> => {
         // Parse les paramètres en objet
         const params: CountContentProps = JSON.parse(stringParams);
         
         // Utilise le service pour compter les contents
         const response = await ContentService.count(params);
         
-        // Vérifie si la réponse contient une erreur
-        if ('error' in response) {
-            console.error(response.error);
-            return null;
-        }
+        console.log("getContentCount -> Revalidating contents count from database...");
         
-        return response.contentAmount;
+        return response;
     },
-    ["contents"],
+    ["/contents/count"],
     {
         revalidate: process.env.NODE_ENV === "development" ? 5 : 300,
-        tags: ["contents"],
+        tags: ["/contents/count"],
     },
 );
 
 /**
- * Gestionnaire de route GET pour l'API de comptage de contents
+ * Gestionnaire de route GET pour compter les contents
  */
-export const GET = async (request: NextRequest): Promise<NextResponse<ContentCountApiResponse>> => {
+export const GET = async (request: NextRequest): Promise<NextResponse<CountContentResponse>> => {
     try {
-        // Récupère les paramètres et les décode
         const encodedParams = request.nextUrl.searchParams.get("params") ?? "{}";
         const stringParams = decodeURIComponent(encodedParams);
-
-        // Récupère le comptage des contents
-        const contentAmount = await getContentCountCached(stringParams);
-
-        // Retourne le comptage des contents
-        return NextResponse.json({ data: contentAmount }, { status: 200 });
+        
+        const response = await getContentCountCached(stringParams);
+        
+        return NextResponse.json(response, { status: 200 });
     } catch (error) {
         console.error("getContentCountCached -> " + (error as Error).message);
         if (process.env.NODE_ENV === "development") {
             if (error instanceof ZodError)
-                return NextResponse.json({ error: "getContentCountCached -> Invalid Zod params -> " + error.message });
+                return NextResponse.json({
+                    error: "getContentCountCached -> Invalid Zod params -> " + error.message
+                });
             if (error instanceof PrismaClientKnownRequestError)
                 return NextResponse.json({ error: "getContentCountCached -> Prisma error -> " + error.message });
             return NextResponse.json({ error: "getContentCountCached -> " + (error as Error).message });
         }
-        // TODO: add logging
         return NextResponse.json({ error: "Something went wrong..." }, { status: 500 });
     }
 }; 

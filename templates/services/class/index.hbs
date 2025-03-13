@@ -8,4 +8,8 @@
  */
 {{#each models}}
 export * from './{{this.name}}Class';
-{{/each}} 
+{{/each}}
+
+// Réexportation explicite du type ResponseFormat pour éviter les ambiguïtés
+import type { ResponseFormat as BaseResponseFormat } from './UserClass';
+export type { BaseResponseFormat as ResponseFormat }; 

@@ -10,41 +10,28 @@
  */
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import {
-    VerificationComplete,
     VerificationService,
-    FindManyVerificationProps
+    FindManyVerificationProps,
+    FindManyVerificationResponse,
 } from "@services/class/VerificationClass";
 import { unstable_cache as cache } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 /**
- * Type de réponse pour l'API de liste de verifications
- */
-export type VerificationListApiResponse =
-    | { data: VerificationComplete[] | null; }
-    | { error: string; };
-
-/**
  * Récupère une liste de verifications mise en cache
  */
 const getVerificationListCached = cache(
-    async (stringParams: string): Promise<VerificationComplete[] | null> => {
+    async (stringParams: string): Promise<FindManyVerificationResponse> => {
         // Parse les paramètres en objet
         const params: FindManyVerificationProps = JSON.parse(stringParams);
-        
+
         // Utilise le service pour récupérer la liste des verifications
         const response = await VerificationService.findMany(params);
-        
-        // Vérifie si la réponse contient une erreur
-        if ('error' in response) {
-            console.error(response.error);
-            return null;
-        }
-        
+
         console.log("getVerificationList -> Revalidating verifications list from database...");
-        
-        return response.verificationList;
+
+        return response;
     },
     ["verifications"],
     {
@@ -56,22 +43,24 @@ const getVerificationListCached = cache(
 /**
  * Gestionnaire de route GET pour l'API de verifications
  */
-export const GET = async (request: NextRequest): Promise<NextResponse<VerificationListApiResponse>> => {
+export const GET = async (request: NextRequest): Promise<NextResponse<FindManyVerificationResponse>> => {
     try {
         // Récupère les paramètres et les décode
         const encodedParams = request.nextUrl.searchParams.get("params") ?? "{}";
         const stringParams = decodeURIComponent(encodedParams);
 
         // Récupère la liste des verifications
-        const verificationList = await getVerificationListCached(stringParams);
+        const response = await getVerificationListCached(stringParams);
 
         // Retourne la liste des verifications
-        return NextResponse.json({ data: verificationList }, { status: 200 });
+        return NextResponse.json(response, { status: 200 });
     } catch (error) {
         console.error("getVerificationListCached -> " + (error as Error).message);
         if (process.env.NODE_ENV === "development") {
             if (error instanceof ZodError)
-                return NextResponse.json({ error: "getVerificationListCached -> Invalid Zod params -> " + error.message });
+                return NextResponse.json({
+                    error: "getVerificationListCached -> Invalid Zod params -> " + error.message,
+                });
             if (error instanceof PrismaClientKnownRequestError)
                 return NextResponse.json({ error: "getVerificationListCached -> Prisma error -> " + error.message });
             return NextResponse.json({ error: "getVerificationListCached -> " + (error as Error).message });

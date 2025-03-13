@@ -19,3 +19,7 @@ export * from './ProductClass';
 export * from './QuantityClass';
 export * from './OrderClass';
 export * from './FruitClass';
+
+// Réexportation explicite du type ResponseFormat pour éviter les ambiguïtés
+import type { ResponseFormat as BaseResponseFormat } from './UserClass';
+export type { BaseResponseFormat as ResponseFormat }; 

@@ -71,7 +71,7 @@ export const useFetch = <Key extends keyof Routes>(props: FetchHookProps<Key>) =
                 });
 
                 // Only update state if the request wasn't aborted
-                if (!signal.aborted) setData(response);
+                if (!signal.aborted) setData(response.data);
             } catch (error) {
                 // Only update error state if the request wasn't aborted
                 if (!signal.aborted) setError((error as Error).message);

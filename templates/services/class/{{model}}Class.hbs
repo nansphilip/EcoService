@@ -22,19 +22,24 @@ import {
     {{modelName}}UpdateArgsSchema,
     {{modelName}}UpsertArgsSchema,
     {{modelName}}WhereInputSchema,
-    {{modelName}}WhereUniqueInputSchema
+    {{modelName}}WhereUniqueInputSchema{{#if hasRelations}},
+    {{modelName}}WithRelationsSchema{{/if}}
 } from "@services/schemas";
+{{#if hasRelations}}
 import { {{modelName}}IncludeSchema } from "@services/schemas/inputTypeSchemas/{{modelName}}IncludeSchema";
+{{/if}}
 import { z, ZodError, ZodType } from "zod";
 
 // ============== Types ============== //
 
 export type {{modelName}}Model = z.infer<typeof {{modelName}}Schema>;
 
-export type {{modelName}}Relations = z.infer<typeof {{modelName}}IncludeSchema>;
+{{#if hasRelations}}
+export type {{modelName}}RelationsOptional = z.infer<typeof {{modelName}}Schema> & z.infer<typeof {{modelName}}IncludeSchema>;
 
-export type {{modelName}}Complete = z.infer<typeof {{modelName}}Schema> & z.infer<typeof {{modelName}}IncludeSchema>;
+export type {{modelName}}RelationsComplete = z.infer<typeof {{modelName}}WithRelationsSchema>;
 
+{{/if}}
 export type {{modelName}}Count = number;
 
 // ============== Schema Types ============== //
@@ -89,21 +94,30 @@ export type Count{{modelName}}Props = z.infer<typeof count{{modelName}}Schema>;
 
 // ============== CRUD Response Types ============== //
 
-export type ResponseFormat<Key extends string, Response> = { [key in Key]: Response } | { error: string };
+export type ResponseFormat<Response> = {
+    data?: Response;
+    error?: string
+};
 
-export type Create{{modelName}}Response = ResponseFormat<"{{modelNameLower}}", {{modelName}}Model>;
+export type Create{{modelName}}Response = ResponseFormat<{{modelName}}Model>;
 
-export type Upsert{{modelName}}Response = ResponseFormat<"{{modelNameLower}}", {{modelName}}Model>;
+export type Upsert{{modelName}}Response = ResponseFormat<{{modelName}}Model>;
 
-export type Update{{modelName}}Response = ResponseFormat<"{{modelNameLower}}", {{modelName}}Model>;
+export type Update{{modelName}}Response = ResponseFormat<{{modelName}}Model>;
 
-export type Delete{{modelName}}Response = ResponseFormat<"{{modelNameLower}}", {{modelName}}Model>;
+export type Delete{{modelName}}Response = ResponseFormat<{{modelName}}Model>;
 
-export type FindUnique{{modelName}}Response = ResponseFormat<"{{modelNameLower}}", {{modelName}}Complete | null>;
+{{#if hasRelations}}
+export type FindUnique{{modelName}}Response = ResponseFormat<{{modelName}}RelationsOptional | null>;
 
-export type FindMany{{modelName}}Response = ResponseFormat<"{{modelNameLower}}List", {{modelName}}Complete[]>;
+export type FindMany{{modelName}}Response = ResponseFormat<{{modelName}}RelationsOptional[]>;
+{{else}}
+export type FindUnique{{modelName}}Response = ResponseFormat<{{modelName}}Model | null>;
 
-export type Count{{modelName}}Response = ResponseFormat<"{{modelNameLower}}Amount", {{modelName}}Count>;
+export type FindMany{{modelName}}Response = ResponseFormat<{{modelName}}Model[]>;
+{{/if}}
+
+export type Count{{modelName}}Response = ResponseFormat<{{modelName}}Count>;
 
 // ============== Services ============== //
 
@@ -118,16 +132,16 @@ export class {{modelName}}Service {
      */
     static async create(props: Create{{modelName}}Props): Promise<Create{{modelName}}Response> {
         try {
-            const { data, include, omit, select } = create{{modelName}}Schema.parse(props);
+            const { data{{#if hasRelations}}, include{{/if}}, omit, select } = create{{modelName}}Schema.parse(props);
 
             const {{modelNameLower}}: {{modelName}} = await PrismaInstance.{{modelNameLower}}.create({
                 data,
-                ...(include && { include }),
+                {{#if hasRelations}}...(include && { include }),{{/if}}
                 ...(omit && { omit }),
                 ...(select && { select }),
             });
 
-            return { {{modelNameLower}} };
+            return { data: {{modelNameLower}} };
         } catch (error) {
             console.error("{{modelName}}Service -> Create -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -144,18 +158,18 @@ export class {{modelName}}Service {
 
     static async upsert(props: Upsert{{modelName}}Props): Promise<Upsert{{modelName}}Response> {
         try {
-            const { create, update, where, include, omit, select } = upsert{{modelName}}Schema.parse(props);
+            const { create, update, where{{#if hasRelations}}, include{{/if}}, omit, select } = upsert{{modelName}}Schema.parse(props);
 
             const {{modelNameLower}}: {{modelName}} = await PrismaInstance.{{modelNameLower}}.upsert({
                 create,
                 update,
                 where,
-                ...(include && { include }),
+                {{#if hasRelations}}...(include && { include }),{{/if}}
                 ...(omit && { omit }),
                 ...(select && { select }),
             });
 
-            return { {{modelNameLower}} };
+            return { data: {{modelNameLower}} };
         } catch (error) {
             console.error("{{modelName}}Service -> Upsert -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -177,17 +191,17 @@ export class {{modelName}}Service {
      */
     static async update(props: Update{{modelName}}Props): Promise<Update{{modelName}}Response> {
         try {
-            const { data, where, include, omit, select } = update{{modelName}}Schema.parse(props);
+            const { data, where{{#if hasRelations}}, include{{/if}}, omit, select } = update{{modelName}}Schema.parse(props);
 
             const {{modelNameLower}}: {{modelName}} = await PrismaInstance.{{modelNameLower}}.update({
                 data,
                 where,
-                ...(include && { include }),
+                {{#if hasRelations}}...(include && { include }),{{/if}}
                 ...(omit && { omit }),
                 ...(select && { select }),
             });
 
-            return { {{modelNameLower}} };
+            return { data: {{modelNameLower}} };
         } catch (error) {
             console.error("{{modelName}}Service -> Update -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -209,16 +223,16 @@ export class {{modelName}}Service {
      */
     static async delete(props: Delete{{modelName}}Props): Promise<Delete{{modelName}}Response> {
         try {
-            const { where, include, omit, select } = delete{{modelName}}Schema.parse(props);
+            const { where{{#if hasRelations}}, include{{/if}}, omit, select } = delete{{modelName}}Schema.parse(props);
 
             const {{modelNameLower}}: {{modelName}} = await PrismaInstance.{{modelNameLower}}.delete({
                 where,
-                ...(include && { include }),
+                {{#if hasRelations}}...(include && { include }),{{/if}}
                 ...(omit && { omit }),
                 ...(select && { select }),
             });
 
-            return { {{modelNameLower}} };
+            return { data: {{modelNameLower}} };
         } catch (error) {
             console.error("{{modelName}}Service -> Delete -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -238,16 +252,20 @@ export class {{modelName}}Service {
      */
     static async findUnique(props: FindUnique{{modelName}}Props): Promise<FindUnique{{modelName}}Response> {
         try {
-            const { where, include, omit, select } = select{{modelName}}Schema.parse(props);
+            const { where{{#if hasRelations}}, include{{/if}}, omit, select } = select{{modelName}}Schema.parse(props);
 
-            const {{modelNameLower}}: {{modelName}}Complete | null = await PrismaInstance.{{modelNameLower}}.findUnique({
+            {{#if hasRelations}}
+            const {{modelNameLower}}: {{modelName}}RelationsOptional | null = await PrismaInstance.{{modelNameLower}}.findUnique({
+            {{else}}
+            const {{modelNameLower}}: {{modelName}}Model | null = await PrismaInstance.{{modelNameLower}}.findUnique({
+            {{/if}}
                 where,
-                ...(include && { include }),
+                {{#if hasRelations}}...(include && { include }),{{/if}}
                 ...(omit && { omit }),
                 ...(select && { select }),
             });
 
-            return { {{modelNameLower}} };
+            return { data: {{modelNameLower}} };
         } catch (error) {
             console.error("{{modelName}}Service -> FindUnique -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -270,7 +288,7 @@ export class {{modelName}}Service {
             const {
                 cursor,
                 distinct,
-                include,
+                {{#if hasRelations}}include,{{/if}}
                 omit,
                 orderBy,
                 select,
@@ -279,10 +297,14 @@ export class {{modelName}}Service {
                 where,
             } = selectMany{{modelName}}Schema.parse(props);
 
-            const {{modelNameLower}}List: {{modelName}}Complete[] = await PrismaInstance.{{modelNameLower}}.findMany({
+            {{#if hasRelations}}
+            const {{modelNameLower}}List: {{modelName}}RelationsOptional[] = await PrismaInstance.{{modelNameLower}}.findMany({
+            {{else}}
+            const {{modelNameLower}}List: {{modelName}}Model[] = await PrismaInstance.{{modelNameLower}}.findMany({
+            {{/if}}
                 ...(cursor && { cursor }),
                 ...(distinct && { distinct }),
-                ...(include && { include }),
+                {{#if hasRelations}}...(include && { include }),{{/if}}
                 ...(omit && { omit }),
                 ...(orderBy && { orderBy }),
                 ...(select && { select }),
@@ -291,7 +313,7 @@ export class {{modelName}}Service {
                 ...(where && { where }),
             });
 
-            return { {{modelNameLower}}List };
+            return { data: {{modelNameLower}}List };
         } catch (error) {
             console.error("{{modelName}}Service -> FindMany -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -321,7 +343,7 @@ export class {{modelName}}Service {
                 ...(take && { take }),
                 ...(where && { where }),
             });
-            return { {{modelNameLower}}Amount };
+            return { data: {{modelNameLower}}Amount };
         } catch (error) {
             console.error("{{modelName}}Service -> Count -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {

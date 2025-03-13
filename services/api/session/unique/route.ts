@@ -10,41 +10,30 @@
  */
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import {
-    SessionComplete,
     SessionService,
-    FindUniqueSessionProps
+    FindUniqueSessionProps,
+    FindUniqueSessionResponse
 } from "@services/class/SessionClass";
 import { unstable_cache as cache } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 /**
- * Type de réponse pour l'API de session unique
- */
-export type SessionUniqueApiResponse =
-    | { data: SessionComplete | null; }
-    | { error: string; };
-
-/**
  * Récupère un(e) session mis(e) en cache par ID
  * @param stringParams Paramètres contenant l'ID du/de la session au format JSON
- * @returns Session ou null si non trouvé(e)
+ * @returns Réponse contenant le/la session ou une erreur
  */
 const getSessionCached = cache(
-    async (stringParams: string): Promise<SessionComplete | null> => {
+    async (stringParams: string): Promise<FindUniqueSessionResponse> => {
         // Parse les paramètres en objet
         const params: FindUniqueSessionProps = JSON.parse(stringParams);
         
         // Utilise le service pour récupérer le/la session
         const response = await SessionService.findUnique(params);
         
-        // Vérifie si la réponse contient une erreur
-        if ('error' in response) {
-            console.error(response.error);
-            return null;
-        }
+        console.log("getSessionUnique -> Revalidating session from database...");
         
-        return response.session;
+        return response;
     },
     ["/sessions/unique"],
     {
@@ -56,19 +45,21 @@ const getSessionCached = cache(
 /**
  * Gestionnaire de route GET pour récupérer un(e) seul(e) session par ID
  */
-export const GET = async (request: NextRequest): Promise<NextResponse<SessionUniqueApiResponse>> => {
+export const GET = async (request: NextRequest): Promise<NextResponse<FindUniqueSessionResponse>> => {
     try {
         const encodedParams = request.nextUrl.searchParams.get("params") ?? "{}";
         const stringParams = decodeURIComponent(encodedParams);
         
-        const session = await getSessionCached(stringParams);
+        const response = await getSessionCached(stringParams);
         
-        return NextResponse.json({ data: session }, { status: 200 });
+        return NextResponse.json(response, { status: 200 });
     } catch (error) {
         console.error("getSessionCached -> " + (error as Error).message);
         if (process.env.NODE_ENV === "development") {
             if (error instanceof ZodError)
-                return NextResponse.json({ error: "getSessionCached -> Invalid Zod params -> " + error.message });
+                return NextResponse.json({
+                    error: "getSessionCached -> Invalid Zod params -> " + error.message
+                });
             if (error instanceof PrismaClientKnownRequestError)
                 return NextResponse.json({ error: "getSessionCached -> Prisma error -> " + error.message });
             return NextResponse.json({ error: "getSessionCached -> " + (error as Error).message });

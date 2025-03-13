@@ -22,7 +22,8 @@ import {
     OrderUpdateArgsSchema,
     OrderUpsertArgsSchema,
     OrderWhereInputSchema,
-    OrderWhereUniqueInputSchema
+    OrderWhereUniqueInputSchema,
+    OrderWithRelationsSchema
 } from "@services/schemas";
 import { OrderIncludeSchema } from "@services/schemas/inputTypeSchemas/OrderIncludeSchema";
 import { z, ZodError, ZodType } from "zod";
@@ -31,9 +32,9 @@ import { z, ZodError, ZodType } from "zod";
 
 export type OrderModel = z.infer<typeof OrderSchema>;
 
-export type OrderRelations = z.infer<typeof OrderIncludeSchema>;
+export type OrderRelationsOptional = z.infer<typeof OrderSchema> & z.infer<typeof OrderIncludeSchema>;
 
-export type OrderComplete = z.infer<typeof OrderSchema> & z.infer<typeof OrderIncludeSchema>;
+export type OrderRelationsComplete = z.infer<typeof OrderWithRelationsSchema>;
 
 export type OrderCount = number;
 
@@ -89,21 +90,24 @@ export type CountOrderProps = z.infer<typeof countOrderSchema>;
 
 // ============== CRUD Response Types ============== //
 
-export type ResponseFormat<Key extends string, Response> = { [key in Key]: Response } | { error: string };
+export type ResponseFormat<Response> = {
+    data?: Response;
+    error?: string
+};
 
-export type CreateOrderResponse = ResponseFormat<"order", OrderModel>;
+export type CreateOrderResponse = ResponseFormat<OrderModel>;
 
-export type UpsertOrderResponse = ResponseFormat<"order", OrderModel>;
+export type UpsertOrderResponse = ResponseFormat<OrderModel>;
 
-export type UpdateOrderResponse = ResponseFormat<"order", OrderModel>;
+export type UpdateOrderResponse = ResponseFormat<OrderModel>;
 
-export type DeleteOrderResponse = ResponseFormat<"order", OrderModel>;
+export type DeleteOrderResponse = ResponseFormat<OrderModel>;
 
-export type FindUniqueOrderResponse = ResponseFormat<"order", OrderComplete | null>;
+export type FindUniqueOrderResponse = ResponseFormat<OrderRelationsOptional | null>;
 
-export type FindManyOrderResponse = ResponseFormat<"orderList", OrderComplete[]>;
+export type FindManyOrderResponse = ResponseFormat<OrderRelationsOptional[]>;
 
-export type CountOrderResponse = ResponseFormat<"orderAmount", OrderCount>;
+export type CountOrderResponse = ResponseFormat<OrderCount>;
 
 // ============== Services ============== //
 
@@ -127,7 +131,7 @@ export class OrderService {
                 ...(select && { select }),
             });
 
-            return { order };
+            return { data: order };
         } catch (error) {
             console.error("OrderService -> Create -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -155,7 +159,7 @@ export class OrderService {
                 ...(select && { select }),
             });
 
-            return { order };
+            return { data: order };
         } catch (error) {
             console.error("OrderService -> Upsert -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -187,7 +191,7 @@ export class OrderService {
                 ...(select && { select }),
             });
 
-            return { order };
+            return { data: order };
         } catch (error) {
             console.error("OrderService -> Update -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -218,7 +222,7 @@ export class OrderService {
                 ...(select && { select }),
             });
 
-            return { order };
+            return { data: order };
         } catch (error) {
             console.error("OrderService -> Delete -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -240,14 +244,14 @@ export class OrderService {
         try {
             const { where, include, omit, select } = selectOrderSchema.parse(props);
 
-            const order: OrderComplete | null = await PrismaInstance.order.findUnique({
+            const order: OrderRelationsOptional | null = await PrismaInstance.order.findUnique({
                 where,
                 ...(include && { include }),
                 ...(omit && { omit }),
                 ...(select && { select }),
             });
 
-            return { order };
+            return { data: order };
         } catch (error) {
             console.error("OrderService -> FindUnique -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -279,7 +283,7 @@ export class OrderService {
                 where,
             } = selectManyOrderSchema.parse(props);
 
-            const orderList: OrderComplete[] = await PrismaInstance.order.findMany({
+            const orderList: OrderRelationsOptional[] = await PrismaInstance.order.findMany({
                 ...(cursor && { cursor }),
                 ...(distinct && { distinct }),
                 ...(include && { include }),
@@ -291,7 +295,7 @@ export class OrderService {
                 ...(where && { where }),
             });
 
-            return { orderList };
+            return { data: orderList };
         } catch (error) {
             console.error("OrderService -> FindMany -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -321,7 +325,7 @@ export class OrderService {
                 ...(take && { take }),
                 ...(where && { where }),
             });
-            return { orderAmount };
+            return { data: orderAmount };
         } catch (error) {
             console.error("OrderService -> Count -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {

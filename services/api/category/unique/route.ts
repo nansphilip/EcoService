@@ -10,65 +10,56 @@
  */
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import {
-    CategoryComplete,
     CategoryService,
-    FindUniqueCategoryProps
+    FindUniqueCategoryProps,
+    FindUniqueCategoryResponse
 } from "@services/class/CategoryClass";
 import { unstable_cache as cache } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 /**
- * Type de réponse pour l'API de category unique
- */
-export type CategoryUniqueApiResponse =
-    | { data: CategoryComplete | null; }
-    | { error: string; };
-
-/**
  * Récupère un(e) category mis(e) en cache par ID
  * @param stringParams Paramètres contenant l'ID du/de la category au format JSON
- * @returns Category ou null si non trouvé(e)
+ * @returns Réponse contenant le/la category ou une erreur
  */
 const getCategoryCached = cache(
-    async (stringParams: string): Promise<CategoryComplete | null> => {
+    async (stringParams: string): Promise<FindUniqueCategoryResponse> => {
         // Parse les paramètres en objet
         const params: FindUniqueCategoryProps = JSON.parse(stringParams);
         
         // Utilise le service pour récupérer le/la category
         const response = await CategoryService.findUnique(params);
         
-        // Vérifie si la réponse contient une erreur
-        if ('error' in response) {
-            console.error(response.error);
-            return null;
-        }
+        console.log("getCategoryUnique -> Revalidating category from database...");
         
-        return response.category;
+        return response;
     },
-    ["/categorys/unique"],
+    ["/categories/unique"],
     {
         revalidate: process.env.NODE_ENV === "development" ? 5 : 300,
-        tags: ["/categorys/unique"],
+        tags: ["/categories/unique"],
     },
 );
 
 /**
  * Gestionnaire de route GET pour récupérer un(e) seul(e) category par ID
  */
-export const GET = async (request: NextRequest): Promise<NextResponse<CategoryUniqueApiResponse>> => {
+export const GET = async (request: NextRequest): Promise<NextResponse<FindUniqueCategoryResponse>> => {
     try {
         const encodedParams = request.nextUrl.searchParams.get("params") ?? "{}";
         const stringParams = decodeURIComponent(encodedParams);
         
-        const category = await getCategoryCached(stringParams);
+        const response = await getCategoryCached(stringParams);
         
-        return NextResponse.json({ data: category }, { status: 200 });
+        return NextResponse.json(response, { status: 200 });
     } catch (error) {
         console.error("getCategoryCached -> " + (error as Error).message);
         if (process.env.NODE_ENV === "development") {
             if (error instanceof ZodError)
-                return NextResponse.json({ error: "getCategoryCached -> Invalid Zod params -> " + error.message });
+                return NextResponse.json({
+                    error: "getCategoryCached -> Invalid Zod params -> " + error.message
+                });
             if (error instanceof PrismaClientKnownRequestError)
                 return NextResponse.json({ error: "getCategoryCached -> Prisma error -> " + error.message });
             return NextResponse.json({ error: "getCategoryCached -> " + (error as Error).message });

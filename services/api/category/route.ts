@@ -10,68 +10,57 @@
  */
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import {
-    CategoryComplete,
     CategoryService,
-    FindManyCategoryProps
+    FindManyCategoryProps,
+    FindManyCategoryResponse,
 } from "@services/class/CategoryClass";
 import { unstable_cache as cache } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 /**
- * Type de réponse pour l'API de liste de categorys
- */
-export type CategoryListApiResponse =
-    | { data: CategoryComplete[] | null; }
-    | { error: string; };
-
-/**
  * Récupère une liste de categorys mise en cache
  */
 const getCategoryListCached = cache(
-    async (stringParams: string): Promise<CategoryComplete[] | null> => {
+    async (stringParams: string): Promise<FindManyCategoryResponse> => {
         // Parse les paramètres en objet
         const params: FindManyCategoryProps = JSON.parse(stringParams);
-        
+
         // Utilise le service pour récupérer la liste des categorys
         const response = await CategoryService.findMany(params);
-        
-        // Vérifie si la réponse contient une erreur
-        if ('error' in response) {
-            console.error(response.error);
-            return null;
-        }
-        
+
         console.log("getCategoryList -> Revalidating categorys list from database...");
-        
-        return response.categoryList;
+
+        return response;
     },
-    ["categorys"],
+    ["categories"],
     {
         revalidate: process.env.NODE_ENV === "development" ? 5 : 300,
-        tags: ["categorys"],
+        tags: ["categories"],
     },
 );
 
 /**
  * Gestionnaire de route GET pour l'API de categorys
  */
-export const GET = async (request: NextRequest): Promise<NextResponse<CategoryListApiResponse>> => {
+export const GET = async (request: NextRequest): Promise<NextResponse<FindManyCategoryResponse>> => {
     try {
         // Récupère les paramètres et les décode
         const encodedParams = request.nextUrl.searchParams.get("params") ?? "{}";
         const stringParams = decodeURIComponent(encodedParams);
 
         // Récupère la liste des categorys
-        const categoryList = await getCategoryListCached(stringParams);
+        const response = await getCategoryListCached(stringParams);
 
         // Retourne la liste des categorys
-        return NextResponse.json({ data: categoryList }, { status: 200 });
+        return NextResponse.json(response, { status: 200 });
     } catch (error) {
         console.error("getCategoryListCached -> " + (error as Error).message);
         if (process.env.NODE_ENV === "development") {
             if (error instanceof ZodError)
-                return NextResponse.json({ error: "getCategoryListCached -> Invalid Zod params -> " + error.message });
+                return NextResponse.json({
+                    error: "getCategoryListCached -> Invalid Zod params -> " + error.message,
+                });
             if (error instanceof PrismaClientKnownRequestError)
                 return NextResponse.json({ error: "getCategoryListCached -> Prisma error -> " + error.message });
             return NextResponse.json({ error: "getCategoryListCached -> " + (error as Error).message });

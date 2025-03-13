@@ -1,79 +1,69 @@
 /**
  * API pour compter les categorys avec mise en cache
  * 
- * Ce fichier définit un point d'API pour compter les categorys avec filtrage.
- * Il utilise unstable_cache de Next.js pour mettre en cache les résultats.
+ * Ce fichier définit un point d'API pour compter les categorys avec filtres.
+ * Il utilise unstable_cache de Next.js pour mettre en cache les résultats,
+ * ce qui améliore les performances en évitant des requêtes répétées à la base de données.
  * 
  * La fonction getCategoryCountCached parse les paramètres, appelle le service,
  * et gère les erreurs potentielles avant de retourner les données.
  */
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import {
-    CategoryCount,
     CategoryService,
-    CountCategoryProps
+    CountCategoryProps,
+    CountCategoryResponse
 } from "@services/class/CategoryClass";
 import { unstable_cache as cache } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 /**
- * Type de réponse pour l'API de comptage de categorys
- */
-export type CategoryCountApiResponse =
-    | { data: CategoryCount | null; }
-    | { error: string; };
-
-/**
- * Récupère un comptage de categorys mis en cache
+ * Compte les categorys avec mise en cache
+ * @param stringParams Paramètres de filtrage au format JSON
+ * @returns Réponse contenant le nombre de categorys ou une erreur
  */
 const getCategoryCountCached = cache(
-    async (stringParams: string): Promise<CategoryCount | null> => {
+    async (stringParams: string): Promise<CountCategoryResponse> => {
         // Parse les paramètres en objet
         const params: CountCategoryProps = JSON.parse(stringParams);
         
         // Utilise le service pour compter les categorys
         const response = await CategoryService.count(params);
         
-        // Vérifie si la réponse contient une erreur
-        if ('error' in response) {
-            console.error(response.error);
-            return null;
-        }
+        console.log("getCategoryCount -> Revalidating categorys count from database...");
         
-        return response.categoryAmount;
+        return response;
     },
-    ["categorys"],
+    ["/categories/count"],
     {
         revalidate: process.env.NODE_ENV === "development" ? 5 : 300,
-        tags: ["categorys"],
+        tags: ["/categories/count"],
     },
 );
 
 /**
- * Gestionnaire de route GET pour l'API de comptage de categorys
+ * Gestionnaire de route GET pour compter les categorys
  */
-export const GET = async (request: NextRequest): Promise<NextResponse<CategoryCountApiResponse>> => {
+export const GET = async (request: NextRequest): Promise<NextResponse<CountCategoryResponse>> => {
     try {
-        // Récupère les paramètres et les décode
         const encodedParams = request.nextUrl.searchParams.get("params") ?? "{}";
         const stringParams = decodeURIComponent(encodedParams);
-
-        // Récupère le comptage des categorys
-        const categoryAmount = await getCategoryCountCached(stringParams);
-
-        // Retourne le comptage des categorys
-        return NextResponse.json({ data: categoryAmount }, { status: 200 });
+        
+        const response = await getCategoryCountCached(stringParams);
+        
+        return NextResponse.json(response, { status: 200 });
     } catch (error) {
         console.error("getCategoryCountCached -> " + (error as Error).message);
         if (process.env.NODE_ENV === "development") {
             if (error instanceof ZodError)
-                return NextResponse.json({ error: "getCategoryCountCached -> Invalid Zod params -> " + error.message });
+                return NextResponse.json({
+                    error: "getCategoryCountCached -> Invalid Zod params -> " + error.message
+                });
             if (error instanceof PrismaClientKnownRequestError)
                 return NextResponse.json({ error: "getCategoryCountCached -> Prisma error -> " + error.message });
             return NextResponse.json({ error: "getCategoryCountCached -> " + (error as Error).message });
         }
-        // TODO: add logging
         return NextResponse.json({ error: "Something went wrong..." }, { status: 500 });
     }
 }; 

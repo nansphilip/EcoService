@@ -22,7 +22,8 @@ import {
     AddressUpdateArgsSchema,
     AddressUpsertArgsSchema,
     AddressWhereInputSchema,
-    AddressWhereUniqueInputSchema
+    AddressWhereUniqueInputSchema,
+    AddressWithRelationsSchema
 } from "@services/schemas";
 import { AddressIncludeSchema } from "@services/schemas/inputTypeSchemas/AddressIncludeSchema";
 import { z, ZodError, ZodType } from "zod";
@@ -31,9 +32,9 @@ import { z, ZodError, ZodType } from "zod";
 
 export type AddressModel = z.infer<typeof AddressSchema>;
 
-export type AddressRelations = z.infer<typeof AddressIncludeSchema>;
+export type AddressRelationsOptional = z.infer<typeof AddressSchema> & z.infer<typeof AddressIncludeSchema>;
 
-export type AddressComplete = z.infer<typeof AddressSchema> & z.infer<typeof AddressIncludeSchema>;
+export type AddressRelationsComplete = z.infer<typeof AddressWithRelationsSchema>;
 
 export type AddressCount = number;
 
@@ -89,21 +90,24 @@ export type CountAddressProps = z.infer<typeof countAddressSchema>;
 
 // ============== CRUD Response Types ============== //
 
-export type ResponseFormat<Key extends string, Response> = { [key in Key]: Response } | { error: string };
+export type ResponseFormat<Response> = {
+    data?: Response;
+    error?: string
+};
 
-export type CreateAddressResponse = ResponseFormat<"address", AddressModel>;
+export type CreateAddressResponse = ResponseFormat<AddressModel>;
 
-export type UpsertAddressResponse = ResponseFormat<"address", AddressModel>;
+export type UpsertAddressResponse = ResponseFormat<AddressModel>;
 
-export type UpdateAddressResponse = ResponseFormat<"address", AddressModel>;
+export type UpdateAddressResponse = ResponseFormat<AddressModel>;
 
-export type DeleteAddressResponse = ResponseFormat<"address", AddressModel>;
+export type DeleteAddressResponse = ResponseFormat<AddressModel>;
 
-export type FindUniqueAddressResponse = ResponseFormat<"address", AddressComplete | null>;
+export type FindUniqueAddressResponse = ResponseFormat<AddressRelationsOptional | null>;
 
-export type FindManyAddressResponse = ResponseFormat<"addressList", AddressComplete[]>;
+export type FindManyAddressResponse = ResponseFormat<AddressRelationsOptional[]>;
 
-export type CountAddressResponse = ResponseFormat<"addressAmount", AddressCount>;
+export type CountAddressResponse = ResponseFormat<AddressCount>;
 
 // ============== Services ============== //
 
@@ -127,7 +131,7 @@ export class AddressService {
                 ...(select && { select }),
             });
 
-            return { address };
+            return { data: address };
         } catch (error) {
             console.error("AddressService -> Create -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -155,7 +159,7 @@ export class AddressService {
                 ...(select && { select }),
             });
 
-            return { address };
+            return { data: address };
         } catch (error) {
             console.error("AddressService -> Upsert -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -187,7 +191,7 @@ export class AddressService {
                 ...(select && { select }),
             });
 
-            return { address };
+            return { data: address };
         } catch (error) {
             console.error("AddressService -> Update -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -218,7 +222,7 @@ export class AddressService {
                 ...(select && { select }),
             });
 
-            return { address };
+            return { data: address };
         } catch (error) {
             console.error("AddressService -> Delete -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -240,14 +244,14 @@ export class AddressService {
         try {
             const { where, include, omit, select } = selectAddressSchema.parse(props);
 
-            const address: AddressComplete | null = await PrismaInstance.address.findUnique({
+            const address: AddressRelationsOptional | null = await PrismaInstance.address.findUnique({
                 where,
                 ...(include && { include }),
                 ...(omit && { omit }),
                 ...(select && { select }),
             });
 
-            return { address };
+            return { data: address };
         } catch (error) {
             console.error("AddressService -> FindUnique -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -279,7 +283,7 @@ export class AddressService {
                 where,
             } = selectManyAddressSchema.parse(props);
 
-            const addressList: AddressComplete[] = await PrismaInstance.address.findMany({
+            const addressList: AddressRelationsOptional[] = await PrismaInstance.address.findMany({
                 ...(cursor && { cursor }),
                 ...(distinct && { distinct }),
                 ...(include && { include }),
@@ -291,7 +295,7 @@ export class AddressService {
                 ...(where && { where }),
             });
 
-            return { addressList };
+            return { data: addressList };
         } catch (error) {
             console.error("AddressService -> FindMany -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -321,7 +325,7 @@ export class AddressService {
                 ...(take && { take }),
                 ...(where && { where }),
             });
-            return { addressAmount };
+            return { data: addressAmount };
         } catch (error) {
             console.error("AddressService -> Count -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {

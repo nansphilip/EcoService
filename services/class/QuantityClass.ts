@@ -22,7 +22,8 @@ import {
     QuantityUpdateArgsSchema,
     QuantityUpsertArgsSchema,
     QuantityWhereInputSchema,
-    QuantityWhereUniqueInputSchema
+    QuantityWhereUniqueInputSchema,
+    QuantityWithRelationsSchema
 } from "@services/schemas";
 import { QuantityIncludeSchema } from "@services/schemas/inputTypeSchemas/QuantityIncludeSchema";
 import { z, ZodError, ZodType } from "zod";
@@ -31,9 +32,9 @@ import { z, ZodError, ZodType } from "zod";
 
 export type QuantityModel = z.infer<typeof QuantitySchema>;
 
-export type QuantityRelations = z.infer<typeof QuantityIncludeSchema>;
+export type QuantityRelationsOptional = z.infer<typeof QuantitySchema> & z.infer<typeof QuantityIncludeSchema>;
 
-export type QuantityComplete = z.infer<typeof QuantitySchema> & z.infer<typeof QuantityIncludeSchema>;
+export type QuantityRelationsComplete = z.infer<typeof QuantityWithRelationsSchema>;
 
 export type QuantityCount = number;
 
@@ -89,21 +90,24 @@ export type CountQuantityProps = z.infer<typeof countQuantitySchema>;
 
 // ============== CRUD Response Types ============== //
 
-export type ResponseFormat<Key extends string, Response> = { [key in Key]: Response } | { error: string };
+export type ResponseFormat<Response> = {
+    data?: Response;
+    error?: string
+};
 
-export type CreateQuantityResponse = ResponseFormat<"quantity", QuantityModel>;
+export type CreateQuantityResponse = ResponseFormat<QuantityModel>;
 
-export type UpsertQuantityResponse = ResponseFormat<"quantity", QuantityModel>;
+export type UpsertQuantityResponse = ResponseFormat<QuantityModel>;
 
-export type UpdateQuantityResponse = ResponseFormat<"quantity", QuantityModel>;
+export type UpdateQuantityResponse = ResponseFormat<QuantityModel>;
 
-export type DeleteQuantityResponse = ResponseFormat<"quantity", QuantityModel>;
+export type DeleteQuantityResponse = ResponseFormat<QuantityModel>;
 
-export type FindUniqueQuantityResponse = ResponseFormat<"quantity", QuantityComplete | null>;
+export type FindUniqueQuantityResponse = ResponseFormat<QuantityRelationsOptional | null>;
 
-export type FindManyQuantityResponse = ResponseFormat<"quantityList", QuantityComplete[]>;
+export type FindManyQuantityResponse = ResponseFormat<QuantityRelationsOptional[]>;
 
-export type CountQuantityResponse = ResponseFormat<"quantityAmount", QuantityCount>;
+export type CountQuantityResponse = ResponseFormat<QuantityCount>;
 
 // ============== Services ============== //
 
@@ -127,7 +131,7 @@ export class QuantityService {
                 ...(select && { select }),
             });
 
-            return { quantity };
+            return { data: quantity };
         } catch (error) {
             console.error("QuantityService -> Create -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -155,7 +159,7 @@ export class QuantityService {
                 ...(select && { select }),
             });
 
-            return { quantity };
+            return { data: quantity };
         } catch (error) {
             console.error("QuantityService -> Upsert -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -187,7 +191,7 @@ export class QuantityService {
                 ...(select && { select }),
             });
 
-            return { quantity };
+            return { data: quantity };
         } catch (error) {
             console.error("QuantityService -> Update -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -218,7 +222,7 @@ export class QuantityService {
                 ...(select && { select }),
             });
 
-            return { quantity };
+            return { data: quantity };
         } catch (error) {
             console.error("QuantityService -> Delete -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -240,14 +244,14 @@ export class QuantityService {
         try {
             const { where, include, omit, select } = selectQuantitySchema.parse(props);
 
-            const quantity: QuantityComplete | null = await PrismaInstance.quantity.findUnique({
+            const quantity: QuantityRelationsOptional | null = await PrismaInstance.quantity.findUnique({
                 where,
                 ...(include && { include }),
                 ...(omit && { omit }),
                 ...(select && { select }),
             });
 
-            return { quantity };
+            return { data: quantity };
         } catch (error) {
             console.error("QuantityService -> FindUnique -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -279,7 +283,7 @@ export class QuantityService {
                 where,
             } = selectManyQuantitySchema.parse(props);
 
-            const quantityList: QuantityComplete[] = await PrismaInstance.quantity.findMany({
+            const quantityList: QuantityRelationsOptional[] = await PrismaInstance.quantity.findMany({
                 ...(cursor && { cursor }),
                 ...(distinct && { distinct }),
                 ...(include && { include }),
@@ -291,7 +295,7 @@ export class QuantityService {
                 ...(where && { where }),
             });
 
-            return { quantityList };
+            return { data: quantityList };
         } catch (error) {
             console.error("QuantityService -> FindMany -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -321,7 +325,7 @@ export class QuantityService {
                 ...(take && { take }),
                 ...(where && { where }),
             });
-            return { quantityAmount };
+            return { data: quantityAmount };
         } catch (error) {
             console.error("QuantityService -> Count -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {

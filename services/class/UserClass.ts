@@ -22,7 +22,8 @@ import {
     UserUpdateArgsSchema,
     UserUpsertArgsSchema,
     UserWhereInputSchema,
-    UserWhereUniqueInputSchema
+    UserWhereUniqueInputSchema,
+    UserWithRelationsSchema
 } from "@services/schemas";
 import { UserIncludeSchema } from "@services/schemas/inputTypeSchemas/UserIncludeSchema";
 import { z, ZodError, ZodType } from "zod";
@@ -31,9 +32,9 @@ import { z, ZodError, ZodType } from "zod";
 
 export type UserModel = z.infer<typeof UserSchema>;
 
-export type UserRelations = z.infer<typeof UserIncludeSchema>;
+export type UserRelationsOptional = z.infer<typeof UserSchema> & z.infer<typeof UserIncludeSchema>;
 
-export type UserComplete = z.infer<typeof UserSchema> & z.infer<typeof UserIncludeSchema>;
+export type UserRelationsComplete = z.infer<typeof UserWithRelationsSchema>;
 
 export type UserCount = number;
 
@@ -89,21 +90,24 @@ export type CountUserProps = z.infer<typeof countUserSchema>;
 
 // ============== CRUD Response Types ============== //
 
-export type ResponseFormat<Key extends string, Response> = { [key in Key]: Response } | { error: string };
+export type ResponseFormat<Response> = {
+    data?: Response;
+    error?: string
+};
 
-export type CreateUserResponse = ResponseFormat<"user", UserModel>;
+export type CreateUserResponse = ResponseFormat<UserModel>;
 
-export type UpsertUserResponse = ResponseFormat<"user", UserModel>;
+export type UpsertUserResponse = ResponseFormat<UserModel>;
 
-export type UpdateUserResponse = ResponseFormat<"user", UserModel>;
+export type UpdateUserResponse = ResponseFormat<UserModel>;
 
-export type DeleteUserResponse = ResponseFormat<"user", UserModel>;
+export type DeleteUserResponse = ResponseFormat<UserModel>;
 
-export type FindUniqueUserResponse = ResponseFormat<"user", UserComplete | null>;
+export type FindUniqueUserResponse = ResponseFormat<UserRelationsOptional | null>;
 
-export type FindManyUserResponse = ResponseFormat<"userList", UserComplete[]>;
+export type FindManyUserResponse = ResponseFormat<UserRelationsOptional[]>;
 
-export type CountUserResponse = ResponseFormat<"userAmount", UserCount>;
+export type CountUserResponse = ResponseFormat<UserCount>;
 
 // ============== Services ============== //
 
@@ -127,7 +131,7 @@ export class UserService {
                 ...(select && { select }),
             });
 
-            return { user };
+            return { data: user };
         } catch (error) {
             console.error("UserService -> Create -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -155,7 +159,7 @@ export class UserService {
                 ...(select && { select }),
             });
 
-            return { user };
+            return { data: user };
         } catch (error) {
             console.error("UserService -> Upsert -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -187,7 +191,7 @@ export class UserService {
                 ...(select && { select }),
             });
 
-            return { user };
+            return { data: user };
         } catch (error) {
             console.error("UserService -> Update -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -218,7 +222,7 @@ export class UserService {
                 ...(select && { select }),
             });
 
-            return { user };
+            return { data: user };
         } catch (error) {
             console.error("UserService -> Delete -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -240,14 +244,14 @@ export class UserService {
         try {
             const { where, include, omit, select } = selectUserSchema.parse(props);
 
-            const user: UserComplete | null = await PrismaInstance.user.findUnique({
+            const user: UserRelationsOptional | null = await PrismaInstance.user.findUnique({
                 where,
                 ...(include && { include }),
                 ...(omit && { omit }),
                 ...(select && { select }),
             });
 
-            return { user };
+            return { data: user };
         } catch (error) {
             console.error("UserService -> FindUnique -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -279,7 +283,7 @@ export class UserService {
                 where,
             } = selectManyUserSchema.parse(props);
 
-            const userList: UserComplete[] = await PrismaInstance.user.findMany({
+            const userList: UserRelationsOptional[] = await PrismaInstance.user.findMany({
                 ...(cursor && { cursor }),
                 ...(distinct && { distinct }),
                 ...(include && { include }),
@@ -291,7 +295,7 @@ export class UserService {
                 ...(where && { where }),
             });
 
-            return { userList };
+            return { data: userList };
         } catch (error) {
             console.error("UserService -> FindMany -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -321,7 +325,7 @@ export class UserService {
                 ...(take && { take }),
                 ...(where && { where }),
             });
-            return { userAmount };
+            return { data: userAmount };
         } catch (error) {
             console.error("UserService -> Count -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {

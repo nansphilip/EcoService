@@ -22,7 +22,8 @@ import {
     AccountUpdateArgsSchema,
     AccountUpsertArgsSchema,
     AccountWhereInputSchema,
-    AccountWhereUniqueInputSchema
+    AccountWhereUniqueInputSchema,
+    AccountWithRelationsSchema
 } from "@services/schemas";
 import { AccountIncludeSchema } from "@services/schemas/inputTypeSchemas/AccountIncludeSchema";
 import { z, ZodError, ZodType } from "zod";
@@ -31,9 +32,9 @@ import { z, ZodError, ZodType } from "zod";
 
 export type AccountModel = z.infer<typeof AccountSchema>;
 
-export type AccountRelations = z.infer<typeof AccountIncludeSchema>;
+export type AccountRelationsOptional = z.infer<typeof AccountSchema> & z.infer<typeof AccountIncludeSchema>;
 
-export type AccountComplete = z.infer<typeof AccountSchema> & z.infer<typeof AccountIncludeSchema>;
+export type AccountRelationsComplete = z.infer<typeof AccountWithRelationsSchema>;
 
 export type AccountCount = number;
 
@@ -89,21 +90,24 @@ export type CountAccountProps = z.infer<typeof countAccountSchema>;
 
 // ============== CRUD Response Types ============== //
 
-export type ResponseFormat<Key extends string, Response> = { [key in Key]: Response } | { error: string };
+export type ResponseFormat<Response> = {
+    data?: Response;
+    error?: string
+};
 
-export type CreateAccountResponse = ResponseFormat<"account", AccountModel>;
+export type CreateAccountResponse = ResponseFormat<AccountModel>;
 
-export type UpsertAccountResponse = ResponseFormat<"account", AccountModel>;
+export type UpsertAccountResponse = ResponseFormat<AccountModel>;
 
-export type UpdateAccountResponse = ResponseFormat<"account", AccountModel>;
+export type UpdateAccountResponse = ResponseFormat<AccountModel>;
 
-export type DeleteAccountResponse = ResponseFormat<"account", AccountModel>;
+export type DeleteAccountResponse = ResponseFormat<AccountModel>;
 
-export type FindUniqueAccountResponse = ResponseFormat<"account", AccountComplete | null>;
+export type FindUniqueAccountResponse = ResponseFormat<AccountRelationsOptional | null>;
 
-export type FindManyAccountResponse = ResponseFormat<"accountList", AccountComplete[]>;
+export type FindManyAccountResponse = ResponseFormat<AccountRelationsOptional[]>;
 
-export type CountAccountResponse = ResponseFormat<"accountAmount", AccountCount>;
+export type CountAccountResponse = ResponseFormat<AccountCount>;
 
 // ============== Services ============== //
 
@@ -127,7 +131,7 @@ export class AccountService {
                 ...(select && { select }),
             });
 
-            return { account };
+            return { data: account };
         } catch (error) {
             console.error("AccountService -> Create -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -155,7 +159,7 @@ export class AccountService {
                 ...(select && { select }),
             });
 
-            return { account };
+            return { data: account };
         } catch (error) {
             console.error("AccountService -> Upsert -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -187,7 +191,7 @@ export class AccountService {
                 ...(select && { select }),
             });
 
-            return { account };
+            return { data: account };
         } catch (error) {
             console.error("AccountService -> Update -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -218,7 +222,7 @@ export class AccountService {
                 ...(select && { select }),
             });
 
-            return { account };
+            return { data: account };
         } catch (error) {
             console.error("AccountService -> Delete -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -240,14 +244,14 @@ export class AccountService {
         try {
             const { where, include, omit, select } = selectAccountSchema.parse(props);
 
-            const account: AccountComplete | null = await PrismaInstance.account.findUnique({
+            const account: AccountRelationsOptional | null = await PrismaInstance.account.findUnique({
                 where,
                 ...(include && { include }),
                 ...(omit && { omit }),
                 ...(select && { select }),
             });
 
-            return { account };
+            return { data: account };
         } catch (error) {
             console.error("AccountService -> FindUnique -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -279,7 +283,7 @@ export class AccountService {
                 where,
             } = selectManyAccountSchema.parse(props);
 
-            const accountList: AccountComplete[] = await PrismaInstance.account.findMany({
+            const accountList: AccountRelationsOptional[] = await PrismaInstance.account.findMany({
                 ...(cursor && { cursor }),
                 ...(distinct && { distinct }),
                 ...(include && { include }),
@@ -291,7 +295,7 @@ export class AccountService {
                 ...(where && { where }),
             });
 
-            return { accountList };
+            return { data: accountList };
         } catch (error) {
             console.error("AccountService -> FindMany -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -321,7 +325,7 @@ export class AccountService {
                 ...(take && { take }),
                 ...(where && { where }),
             });
-            return { accountAmount };
+            return { data: accountAmount };
         } catch (error) {
             console.error("AccountService -> Count -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {

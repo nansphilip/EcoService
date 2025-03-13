@@ -22,7 +22,8 @@ import {
     ArticleUpdateArgsSchema,
     ArticleUpsertArgsSchema,
     ArticleWhereInputSchema,
-    ArticleWhereUniqueInputSchema
+    ArticleWhereUniqueInputSchema,
+    ArticleWithRelationsSchema
 } from "@services/schemas";
 import { ArticleIncludeSchema } from "@services/schemas/inputTypeSchemas/ArticleIncludeSchema";
 import { z, ZodError, ZodType } from "zod";
@@ -31,9 +32,9 @@ import { z, ZodError, ZodType } from "zod";
 
 export type ArticleModel = z.infer<typeof ArticleSchema>;
 
-export type ArticleRelations = z.infer<typeof ArticleIncludeSchema>;
+export type ArticleRelationsOptional = z.infer<typeof ArticleSchema> & z.infer<typeof ArticleIncludeSchema>;
 
-export type ArticleComplete = z.infer<typeof ArticleSchema> & z.infer<typeof ArticleIncludeSchema>;
+export type ArticleRelationsComplete = z.infer<typeof ArticleWithRelationsSchema>;
 
 export type ArticleCount = number;
 
@@ -89,21 +90,24 @@ export type CountArticleProps = z.infer<typeof countArticleSchema>;
 
 // ============== CRUD Response Types ============== //
 
-export type ResponseFormat<Key extends string, Response> = { [key in Key]: Response } | { error: string };
+export type ResponseFormat<Response> = {
+    data?: Response;
+    error?: string
+};
 
-export type CreateArticleResponse = ResponseFormat<"article", ArticleModel>;
+export type CreateArticleResponse = ResponseFormat<ArticleModel>;
 
-export type UpsertArticleResponse = ResponseFormat<"article", ArticleModel>;
+export type UpsertArticleResponse = ResponseFormat<ArticleModel>;
 
-export type UpdateArticleResponse = ResponseFormat<"article", ArticleModel>;
+export type UpdateArticleResponse = ResponseFormat<ArticleModel>;
 
-export type DeleteArticleResponse = ResponseFormat<"article", ArticleModel>;
+export type DeleteArticleResponse = ResponseFormat<ArticleModel>;
 
-export type FindUniqueArticleResponse = ResponseFormat<"article", ArticleComplete | null>;
+export type FindUniqueArticleResponse = ResponseFormat<ArticleRelationsOptional | null>;
 
-export type FindManyArticleResponse = ResponseFormat<"articleList", ArticleComplete[]>;
+export type FindManyArticleResponse = ResponseFormat<ArticleRelationsOptional[]>;
 
-export type CountArticleResponse = ResponseFormat<"articleAmount", ArticleCount>;
+export type CountArticleResponse = ResponseFormat<ArticleCount>;
 
 // ============== Services ============== //
 
@@ -127,7 +131,7 @@ export class ArticleService {
                 ...(select && { select }),
             });
 
-            return { article };
+            return { data: article };
         } catch (error) {
             console.error("ArticleService -> Create -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -155,7 +159,7 @@ export class ArticleService {
                 ...(select && { select }),
             });
 
-            return { article };
+            return { data: article };
         } catch (error) {
             console.error("ArticleService -> Upsert -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -187,7 +191,7 @@ export class ArticleService {
                 ...(select && { select }),
             });
 
-            return { article };
+            return { data: article };
         } catch (error) {
             console.error("ArticleService -> Update -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -218,7 +222,7 @@ export class ArticleService {
                 ...(select && { select }),
             });
 
-            return { article };
+            return { data: article };
         } catch (error) {
             console.error("ArticleService -> Delete -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -240,14 +244,14 @@ export class ArticleService {
         try {
             const { where, include, omit, select } = selectArticleSchema.parse(props);
 
-            const article: ArticleComplete | null = await PrismaInstance.article.findUnique({
+            const article: ArticleRelationsOptional | null = await PrismaInstance.article.findUnique({
                 where,
                 ...(include && { include }),
                 ...(omit && { omit }),
                 ...(select && { select }),
             });
 
-            return { article };
+            return { data: article };
         } catch (error) {
             console.error("ArticleService -> FindUnique -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -279,7 +283,7 @@ export class ArticleService {
                 where,
             } = selectManyArticleSchema.parse(props);
 
-            const articleList: ArticleComplete[] = await PrismaInstance.article.findMany({
+            const articleList: ArticleRelationsOptional[] = await PrismaInstance.article.findMany({
                 ...(cursor && { cursor }),
                 ...(distinct && { distinct }),
                 ...(include && { include }),
@@ -291,7 +295,7 @@ export class ArticleService {
                 ...(where && { where }),
             });
 
-            return { articleList };
+            return { data: articleList };
         } catch (error) {
             console.error("ArticleService -> FindMany -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -321,7 +325,7 @@ export class ArticleService {
                 ...(take && { take }),
                 ...(where && { where }),
             });
-            return { articleAmount };
+            return { data: articleAmount };
         } catch (error) {
             console.error("ArticleService -> Count -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {

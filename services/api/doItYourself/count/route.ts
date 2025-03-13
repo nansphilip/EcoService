@@ -1,79 +1,69 @@
 /**
  * API pour compter les doItYourselfs avec mise en cache
  * 
- * Ce fichier définit un point d'API pour compter les doItYourselfs avec filtrage.
- * Il utilise unstable_cache de Next.js pour mettre en cache les résultats.
+ * Ce fichier définit un point d'API pour compter les doItYourselfs avec filtres.
+ * Il utilise unstable_cache de Next.js pour mettre en cache les résultats,
+ * ce qui améliore les performances en évitant des requêtes répétées à la base de données.
  * 
  * La fonction getDoItYourselfCountCached parse les paramètres, appelle le service,
  * et gère les erreurs potentielles avant de retourner les données.
  */
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import {
-    DoItYourselfCount,
     DoItYourselfService,
-    CountDoItYourselfProps
+    CountDoItYourselfProps,
+    CountDoItYourselfResponse
 } from "@services/class/DoItYourselfClass";
 import { unstable_cache as cache } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 /**
- * Type de réponse pour l'API de comptage de doItYourselfs
- */
-export type DoItYourselfCountApiResponse =
-    | { data: DoItYourselfCount | null; }
-    | { error: string; };
-
-/**
- * Récupère un comptage de doItYourselfs mis en cache
+ * Compte les doItYourselfs avec mise en cache
+ * @param stringParams Paramètres de filtrage au format JSON
+ * @returns Réponse contenant le nombre de doItYourselfs ou une erreur
  */
 const getDoItYourselfCountCached = cache(
-    async (stringParams: string): Promise<DoItYourselfCount | null> => {
+    async (stringParams: string): Promise<CountDoItYourselfResponse> => {
         // Parse les paramètres en objet
         const params: CountDoItYourselfProps = JSON.parse(stringParams);
         
         // Utilise le service pour compter les doItYourselfs
         const response = await DoItYourselfService.count(params);
         
-        // Vérifie si la réponse contient une erreur
-        if ('error' in response) {
-            console.error(response.error);
-            return null;
-        }
+        console.log("getDoItYourselfCount -> Revalidating doItYourselfs count from database...");
         
-        return response.doItYourselfAmount;
+        return response;
     },
-    ["doItYourselfs"],
+    ["/doItYourselves/count"],
     {
         revalidate: process.env.NODE_ENV === "development" ? 5 : 300,
-        tags: ["doItYourselfs"],
+        tags: ["/doItYourselves/count"],
     },
 );
 
 /**
- * Gestionnaire de route GET pour l'API de comptage de doItYourselfs
+ * Gestionnaire de route GET pour compter les doItYourselfs
  */
-export const GET = async (request: NextRequest): Promise<NextResponse<DoItYourselfCountApiResponse>> => {
+export const GET = async (request: NextRequest): Promise<NextResponse<CountDoItYourselfResponse>> => {
     try {
-        // Récupère les paramètres et les décode
         const encodedParams = request.nextUrl.searchParams.get("params") ?? "{}";
         const stringParams = decodeURIComponent(encodedParams);
-
-        // Récupère le comptage des doItYourselfs
-        const doItYourselfAmount = await getDoItYourselfCountCached(stringParams);
-
-        // Retourne le comptage des doItYourselfs
-        return NextResponse.json({ data: doItYourselfAmount }, { status: 200 });
+        
+        const response = await getDoItYourselfCountCached(stringParams);
+        
+        return NextResponse.json(response, { status: 200 });
     } catch (error) {
         console.error("getDoItYourselfCountCached -> " + (error as Error).message);
         if (process.env.NODE_ENV === "development") {
             if (error instanceof ZodError)
-                return NextResponse.json({ error: "getDoItYourselfCountCached -> Invalid Zod params -> " + error.message });
+                return NextResponse.json({
+                    error: "getDoItYourselfCountCached -> Invalid Zod params -> " + error.message
+                });
             if (error instanceof PrismaClientKnownRequestError)
                 return NextResponse.json({ error: "getDoItYourselfCountCached -> Prisma error -> " + error.message });
             return NextResponse.json({ error: "getDoItYourselfCountCached -> " + (error as Error).message });
         }
-        // TODO: add logging
         return NextResponse.json({ error: "Something went wrong..." }, { status: 500 });
     }
 }; 

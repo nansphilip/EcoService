@@ -10,65 +10,56 @@
  */
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import {
-    DoItYourselfComplete,
     DoItYourselfService,
-    FindUniqueDoItYourselfProps
+    FindUniqueDoItYourselfProps,
+    FindUniqueDoItYourselfResponse
 } from "@services/class/DoItYourselfClass";
 import { unstable_cache as cache } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 /**
- * Type de réponse pour l'API de doItYourself unique
- */
-export type DoItYourselfUniqueApiResponse =
-    | { data: DoItYourselfComplete | null; }
-    | { error: string; };
-
-/**
  * Récupère un(e) doItYourself mis(e) en cache par ID
  * @param stringParams Paramètres contenant l'ID du/de la doItYourself au format JSON
- * @returns DoItYourself ou null si non trouvé(e)
+ * @returns Réponse contenant le/la doItYourself ou une erreur
  */
 const getDoItYourselfCached = cache(
-    async (stringParams: string): Promise<DoItYourselfComplete | null> => {
+    async (stringParams: string): Promise<FindUniqueDoItYourselfResponse> => {
         // Parse les paramètres en objet
         const params: FindUniqueDoItYourselfProps = JSON.parse(stringParams);
         
         // Utilise le service pour récupérer le/la doItYourself
         const response = await DoItYourselfService.findUnique(params);
         
-        // Vérifie si la réponse contient une erreur
-        if ('error' in response) {
-            console.error(response.error);
-            return null;
-        }
+        console.log("getDoItYourselfUnique -> Revalidating doItYourself from database...");
         
-        return response.doItYourself;
+        return response;
     },
-    ["/doItYourselfs/unique"],
+    ["/doItYourselves/unique"],
     {
         revalidate: process.env.NODE_ENV === "development" ? 5 : 300,
-        tags: ["/doItYourselfs/unique"],
+        tags: ["/doItYourselves/unique"],
     },
 );
 
 /**
  * Gestionnaire de route GET pour récupérer un(e) seul(e) doItYourself par ID
  */
-export const GET = async (request: NextRequest): Promise<NextResponse<DoItYourselfUniqueApiResponse>> => {
+export const GET = async (request: NextRequest): Promise<NextResponse<FindUniqueDoItYourselfResponse>> => {
     try {
         const encodedParams = request.nextUrl.searchParams.get("params") ?? "{}";
         const stringParams = decodeURIComponent(encodedParams);
         
-        const doItYourself = await getDoItYourselfCached(stringParams);
+        const response = await getDoItYourselfCached(stringParams);
         
-        return NextResponse.json({ data: doItYourself }, { status: 200 });
+        return NextResponse.json(response, { status: 200 });
     } catch (error) {
         console.error("getDoItYourselfCached -> " + (error as Error).message);
         if (process.env.NODE_ENV === "development") {
             if (error instanceof ZodError)
-                return NextResponse.json({ error: "getDoItYourselfCached -> Invalid Zod params -> " + error.message });
+                return NextResponse.json({
+                    error: "getDoItYourselfCached -> Invalid Zod params -> " + error.message
+                });
             if (error instanceof PrismaClientKnownRequestError)
                 return NextResponse.json({ error: "getDoItYourselfCached -> Prisma error -> " + error.message });
             return NextResponse.json({ error: "getDoItYourselfCached -> " + (error as Error).message });

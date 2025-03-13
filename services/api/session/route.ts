@@ -10,41 +10,28 @@
  */
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import {
-    SessionComplete,
     SessionService,
-    FindManySessionProps
+    FindManySessionProps,
+    FindManySessionResponse,
 } from "@services/class/SessionClass";
 import { unstable_cache as cache } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 /**
- * Type de réponse pour l'API de liste de sessions
- */
-export type SessionListApiResponse =
-    | { data: SessionComplete[] | null; }
-    | { error: string; };
-
-/**
  * Récupère une liste de sessions mise en cache
  */
 const getSessionListCached = cache(
-    async (stringParams: string): Promise<SessionComplete[] | null> => {
+    async (stringParams: string): Promise<FindManySessionResponse> => {
         // Parse les paramètres en objet
         const params: FindManySessionProps = JSON.parse(stringParams);
-        
+
         // Utilise le service pour récupérer la liste des sessions
         const response = await SessionService.findMany(params);
-        
-        // Vérifie si la réponse contient une erreur
-        if ('error' in response) {
-            console.error(response.error);
-            return null;
-        }
-        
+
         console.log("getSessionList -> Revalidating sessions list from database...");
-        
-        return response.sessionList;
+
+        return response;
     },
     ["sessions"],
     {
@@ -56,22 +43,24 @@ const getSessionListCached = cache(
 /**
  * Gestionnaire de route GET pour l'API de sessions
  */
-export const GET = async (request: NextRequest): Promise<NextResponse<SessionListApiResponse>> => {
+export const GET = async (request: NextRequest): Promise<NextResponse<FindManySessionResponse>> => {
     try {
         // Récupère les paramètres et les décode
         const encodedParams = request.nextUrl.searchParams.get("params") ?? "{}";
         const stringParams = decodeURIComponent(encodedParams);
 
         // Récupère la liste des sessions
-        const sessionList = await getSessionListCached(stringParams);
+        const response = await getSessionListCached(stringParams);
 
         // Retourne la liste des sessions
-        return NextResponse.json({ data: sessionList }, { status: 200 });
+        return NextResponse.json(response, { status: 200 });
     } catch (error) {
         console.error("getSessionListCached -> " + (error as Error).message);
         if (process.env.NODE_ENV === "development") {
             if (error instanceof ZodError)
-                return NextResponse.json({ error: "getSessionListCached -> Invalid Zod params -> " + error.message });
+                return NextResponse.json({
+                    error: "getSessionListCached -> Invalid Zod params -> " + error.message,
+                });
             if (error instanceof PrismaClientKnownRequestError)
                 return NextResponse.json({ error: "getSessionListCached -> Prisma error -> " + error.message });
             return NextResponse.json({ error: "getSessionListCached -> " + (error as Error).message });

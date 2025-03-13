@@ -24,16 +24,11 @@ import {
     VerificationWhereInputSchema,
     VerificationWhereUniqueInputSchema
 } from "@services/schemas";
-import { VerificationIncludeSchema } from "@services/schemas/inputTypeSchemas/VerificationIncludeSchema";
 import { z, ZodError, ZodType } from "zod";
 
 // ============== Types ============== //
 
 export type VerificationModel = z.infer<typeof VerificationSchema>;
-
-export type VerificationRelations = z.infer<typeof VerificationIncludeSchema>;
-
-export type VerificationComplete = z.infer<typeof VerificationSchema> & z.infer<typeof VerificationIncludeSchema>;
 
 export type VerificationCount = number;
 
@@ -89,21 +84,24 @@ export type CountVerificationProps = z.infer<typeof countVerificationSchema>;
 
 // ============== CRUD Response Types ============== //
 
-export type ResponseFormat<Key extends string, Response> = { [key in Key]: Response } | { error: string };
+export type ResponseFormat<Response> = {
+    data?: Response;
+    error?: string
+};
 
-export type CreateVerificationResponse = ResponseFormat<"verification", VerificationModel>;
+export type CreateVerificationResponse = ResponseFormat<VerificationModel>;
 
-export type UpsertVerificationResponse = ResponseFormat<"verification", VerificationModel>;
+export type UpsertVerificationResponse = ResponseFormat<VerificationModel>;
 
-export type UpdateVerificationResponse = ResponseFormat<"verification", VerificationModel>;
+export type UpdateVerificationResponse = ResponseFormat<VerificationModel>;
 
-export type DeleteVerificationResponse = ResponseFormat<"verification", VerificationModel>;
+export type DeleteVerificationResponse = ResponseFormat<VerificationModel>;
 
-export type FindUniqueVerificationResponse = ResponseFormat<"verification", VerificationComplete | null>;
+export type FindUniqueVerificationResponse = ResponseFormat<VerificationModel | null>;
 
-export type FindManyVerificationResponse = ResponseFormat<"verificationList", VerificationComplete[]>;
+export type FindManyVerificationResponse = ResponseFormat<VerificationModel[]>;
 
-export type CountVerificationResponse = ResponseFormat<"verificationAmount", VerificationCount>;
+export type CountVerificationResponse = ResponseFormat<VerificationCount>;
 
 // ============== Services ============== //
 
@@ -118,16 +116,16 @@ export class VerificationService {
      */
     static async create(props: CreateVerificationProps): Promise<CreateVerificationResponse> {
         try {
-            const { data, include, omit, select } = createVerificationSchema.parse(props);
+            const { data, omit, select } = createVerificationSchema.parse(props);
 
             const verification: Verification = await PrismaInstance.verification.create({
                 data,
-                ...(include && { include }),
+                
                 ...(omit && { omit }),
                 ...(select && { select }),
             });
 
-            return { verification };
+            return { data: verification };
         } catch (error) {
             console.error("VerificationService -> Create -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -144,18 +142,18 @@ export class VerificationService {
 
     static async upsert(props: UpsertVerificationProps): Promise<UpsertVerificationResponse> {
         try {
-            const { create, update, where, include, omit, select } = upsertVerificationSchema.parse(props);
+            const { create, update, where, omit, select } = upsertVerificationSchema.parse(props);
 
             const verification: Verification = await PrismaInstance.verification.upsert({
                 create,
                 update,
                 where,
-                ...(include && { include }),
+                
                 ...(omit && { omit }),
                 ...(select && { select }),
             });
 
-            return { verification };
+            return { data: verification };
         } catch (error) {
             console.error("VerificationService -> Upsert -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -177,17 +175,17 @@ export class VerificationService {
      */
     static async update(props: UpdateVerificationProps): Promise<UpdateVerificationResponse> {
         try {
-            const { data, where, include, omit, select } = updateVerificationSchema.parse(props);
+            const { data, where, omit, select } = updateVerificationSchema.parse(props);
 
             const verification: Verification = await PrismaInstance.verification.update({
                 data,
                 where,
-                ...(include && { include }),
+                
                 ...(omit && { omit }),
                 ...(select && { select }),
             });
 
-            return { verification };
+            return { data: verification };
         } catch (error) {
             console.error("VerificationService -> Update -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -209,16 +207,16 @@ export class VerificationService {
      */
     static async delete(props: DeleteVerificationProps): Promise<DeleteVerificationResponse> {
         try {
-            const { where, include, omit, select } = deleteVerificationSchema.parse(props);
+            const { where, omit, select } = deleteVerificationSchema.parse(props);
 
             const verification: Verification = await PrismaInstance.verification.delete({
                 where,
-                ...(include && { include }),
+                
                 ...(omit && { omit }),
                 ...(select && { select }),
             });
 
-            return { verification };
+            return { data: verification };
         } catch (error) {
             console.error("VerificationService -> Delete -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -238,16 +236,16 @@ export class VerificationService {
      */
     static async findUnique(props: FindUniqueVerificationProps): Promise<FindUniqueVerificationResponse> {
         try {
-            const { where, include, omit, select } = selectVerificationSchema.parse(props);
+            const { where, omit, select } = selectVerificationSchema.parse(props);
 
-            const verification: VerificationComplete | null = await PrismaInstance.verification.findUnique({
+            const verification: VerificationModel | null = await PrismaInstance.verification.findUnique({
                 where,
-                ...(include && { include }),
+                
                 ...(omit && { omit }),
                 ...(select && { select }),
             });
 
-            return { verification };
+            return { data: verification };
         } catch (error) {
             console.error("VerificationService -> FindUnique -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -270,7 +268,7 @@ export class VerificationService {
             const {
                 cursor,
                 distinct,
-                include,
+                
                 omit,
                 orderBy,
                 select,
@@ -279,10 +277,10 @@ export class VerificationService {
                 where,
             } = selectManyVerificationSchema.parse(props);
 
-            const verificationList: VerificationComplete[] = await PrismaInstance.verification.findMany({
+            const verificationList: VerificationModel[] = await PrismaInstance.verification.findMany({
                 ...(cursor && { cursor }),
                 ...(distinct && { distinct }),
-                ...(include && { include }),
+                
                 ...(omit && { omit }),
                 ...(orderBy && { orderBy }),
                 ...(select && { select }),
@@ -291,7 +289,7 @@ export class VerificationService {
                 ...(where && { where }),
             });
 
-            return { verificationList };
+            return { data: verificationList };
         } catch (error) {
             console.error("VerificationService -> FindMany -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -321,7 +319,7 @@ export class VerificationService {
                 ...(take && { take }),
                 ...(where && { where }),
             });
-            return { verificationAmount };
+            return { data: verificationAmount };
         } catch (error) {
             console.error("VerificationService -> Count -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {

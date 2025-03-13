@@ -10,41 +10,30 @@
  */
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import {
-    FruitComplete,
     FruitService,
-    FindUniqueFruitProps
+    FindUniqueFruitProps,
+    FindUniqueFruitResponse
 } from "@services/class/FruitClass";
 import { unstable_cache as cache } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 /**
- * Type de réponse pour l'API de fruit unique
- */
-export type FruitUniqueApiResponse =
-    | { data: FruitComplete | null; }
-    | { error: string; };
-
-/**
  * Récupère un(e) fruit mis(e) en cache par ID
  * @param stringParams Paramètres contenant l'ID du/de la fruit au format JSON
- * @returns Fruit ou null si non trouvé(e)
+ * @returns Réponse contenant le/la fruit ou une erreur
  */
 const getFruitCached = cache(
-    async (stringParams: string): Promise<FruitComplete | null> => {
+    async (stringParams: string): Promise<FindUniqueFruitResponse> => {
         // Parse les paramètres en objet
         const params: FindUniqueFruitProps = JSON.parse(stringParams);
         
         // Utilise le service pour récupérer le/la fruit
         const response = await FruitService.findUnique(params);
         
-        // Vérifie si la réponse contient une erreur
-        if ('error' in response) {
-            console.error(response.error);
-            return null;
-        }
+        console.log("getFruitUnique -> Revalidating fruit from database...");
         
-        return response.fruit;
+        return response;
     },
     ["/fruits/unique"],
     {
@@ -56,19 +45,21 @@ const getFruitCached = cache(
 /**
  * Gestionnaire de route GET pour récupérer un(e) seul(e) fruit par ID
  */
-export const GET = async (request: NextRequest): Promise<NextResponse<FruitUniqueApiResponse>> => {
+export const GET = async (request: NextRequest): Promise<NextResponse<FindUniqueFruitResponse>> => {
     try {
         const encodedParams = request.nextUrl.searchParams.get("params") ?? "{}";
         const stringParams = decodeURIComponent(encodedParams);
         
-        const fruit = await getFruitCached(stringParams);
+        const response = await getFruitCached(stringParams);
         
-        return NextResponse.json({ data: fruit }, { status: 200 });
+        return NextResponse.json(response, { status: 200 });
     } catch (error) {
         console.error("getFruitCached -> " + (error as Error).message);
         if (process.env.NODE_ENV === "development") {
             if (error instanceof ZodError)
-                return NextResponse.json({ error: "getFruitCached -> Invalid Zod params -> " + error.message });
+                return NextResponse.json({
+                    error: "getFruitCached -> Invalid Zod params -> " + error.message
+                });
             if (error instanceof PrismaClientKnownRequestError)
                 return NextResponse.json({ error: "getFruitCached -> Prisma error -> " + error.message });
             return NextResponse.json({ error: "getFruitCached -> " + (error as Error).message });

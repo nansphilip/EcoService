@@ -22,7 +22,8 @@ import {
     ContentUpdateArgsSchema,
     ContentUpsertArgsSchema,
     ContentWhereInputSchema,
-    ContentWhereUniqueInputSchema
+    ContentWhereUniqueInputSchema,
+    ContentWithRelationsSchema
 } from "@services/schemas";
 import { ContentIncludeSchema } from "@services/schemas/inputTypeSchemas/ContentIncludeSchema";
 import { z, ZodError, ZodType } from "zod";
@@ -31,9 +32,9 @@ import { z, ZodError, ZodType } from "zod";
 
 export type ContentModel = z.infer<typeof ContentSchema>;
 
-export type ContentRelations = z.infer<typeof ContentIncludeSchema>;
+export type ContentRelationsOptional = z.infer<typeof ContentSchema> & z.infer<typeof ContentIncludeSchema>;
 
-export type ContentComplete = z.infer<typeof ContentSchema> & z.infer<typeof ContentIncludeSchema>;
+export type ContentRelationsComplete = z.infer<typeof ContentWithRelationsSchema>;
 
 export type ContentCount = number;
 
@@ -89,21 +90,24 @@ export type CountContentProps = z.infer<typeof countContentSchema>;
 
 // ============== CRUD Response Types ============== //
 
-export type ResponseFormat<Key extends string, Response> = { [key in Key]: Response } | { error: string };
+export type ResponseFormat<Response> = {
+    data?: Response;
+    error?: string
+};
 
-export type CreateContentResponse = ResponseFormat<"content", ContentModel>;
+export type CreateContentResponse = ResponseFormat<ContentModel>;
 
-export type UpsertContentResponse = ResponseFormat<"content", ContentModel>;
+export type UpsertContentResponse = ResponseFormat<ContentModel>;
 
-export type UpdateContentResponse = ResponseFormat<"content", ContentModel>;
+export type UpdateContentResponse = ResponseFormat<ContentModel>;
 
-export type DeleteContentResponse = ResponseFormat<"content", ContentModel>;
+export type DeleteContentResponse = ResponseFormat<ContentModel>;
 
-export type FindUniqueContentResponse = ResponseFormat<"content", ContentComplete | null>;
+export type FindUniqueContentResponse = ResponseFormat<ContentRelationsOptional | null>;
 
-export type FindManyContentResponse = ResponseFormat<"contentList", ContentComplete[]>;
+export type FindManyContentResponse = ResponseFormat<ContentRelationsOptional[]>;
 
-export type CountContentResponse = ResponseFormat<"contentAmount", ContentCount>;
+export type CountContentResponse = ResponseFormat<ContentCount>;
 
 // ============== Services ============== //
 
@@ -127,7 +131,7 @@ export class ContentService {
                 ...(select && { select }),
             });
 
-            return { content };
+            return { data: content };
         } catch (error) {
             console.error("ContentService -> Create -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -155,7 +159,7 @@ export class ContentService {
                 ...(select && { select }),
             });
 
-            return { content };
+            return { data: content };
         } catch (error) {
             console.error("ContentService -> Upsert -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -187,7 +191,7 @@ export class ContentService {
                 ...(select && { select }),
             });
 
-            return { content };
+            return { data: content };
         } catch (error) {
             console.error("ContentService -> Update -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -218,7 +222,7 @@ export class ContentService {
                 ...(select && { select }),
             });
 
-            return { content };
+            return { data: content };
         } catch (error) {
             console.error("ContentService -> Delete -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -240,14 +244,14 @@ export class ContentService {
         try {
             const { where, include, omit, select } = selectContentSchema.parse(props);
 
-            const content: ContentComplete | null = await PrismaInstance.content.findUnique({
+            const content: ContentRelationsOptional | null = await PrismaInstance.content.findUnique({
                 where,
                 ...(include && { include }),
                 ...(omit && { omit }),
                 ...(select && { select }),
             });
 
-            return { content };
+            return { data: content };
         } catch (error) {
             console.error("ContentService -> FindUnique -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -279,7 +283,7 @@ export class ContentService {
                 where,
             } = selectManyContentSchema.parse(props);
 
-            const contentList: ContentComplete[] = await PrismaInstance.content.findMany({
+            const contentList: ContentRelationsOptional[] = await PrismaInstance.content.findMany({
                 ...(cursor && { cursor }),
                 ...(distinct && { distinct }),
                 ...(include && { include }),
@@ -291,7 +295,7 @@ export class ContentService {
                 ...(where && { where }),
             });
 
-            return { contentList };
+            return { data: contentList };
         } catch (error) {
             console.error("ContentService -> FindMany -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -321,7 +325,7 @@ export class ContentService {
                 ...(take && { take }),
                 ...(where && { where }),
             });
-            return { contentAmount };
+            return { data: contentAmount };
         } catch (error) {
             console.error("ContentService -> Count -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {

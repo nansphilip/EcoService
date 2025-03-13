@@ -22,7 +22,8 @@ import {
     ProductUpdateArgsSchema,
     ProductUpsertArgsSchema,
     ProductWhereInputSchema,
-    ProductWhereUniqueInputSchema
+    ProductWhereUniqueInputSchema,
+    ProductWithRelationsSchema
 } from "@services/schemas";
 import { ProductIncludeSchema } from "@services/schemas/inputTypeSchemas/ProductIncludeSchema";
 import { z, ZodError, ZodType } from "zod";
@@ -31,9 +32,9 @@ import { z, ZodError, ZodType } from "zod";
 
 export type ProductModel = z.infer<typeof ProductSchema>;
 
-export type ProductRelations = z.infer<typeof ProductIncludeSchema>;
+export type ProductRelationsOptional = z.infer<typeof ProductSchema> & z.infer<typeof ProductIncludeSchema>;
 
-export type ProductComplete = z.infer<typeof ProductSchema> & z.infer<typeof ProductIncludeSchema>;
+export type ProductRelationsComplete = z.infer<typeof ProductWithRelationsSchema>;
 
 export type ProductCount = number;
 
@@ -89,21 +90,24 @@ export type CountProductProps = z.infer<typeof countProductSchema>;
 
 // ============== CRUD Response Types ============== //
 
-export type ResponseFormat<Key extends string, Response> = { [key in Key]: Response } | { error: string };
+export type ResponseFormat<Response> = {
+    data?: Response;
+    error?: string
+};
 
-export type CreateProductResponse = ResponseFormat<"product", ProductModel>;
+export type CreateProductResponse = ResponseFormat<ProductModel>;
 
-export type UpsertProductResponse = ResponseFormat<"product", ProductModel>;
+export type UpsertProductResponse = ResponseFormat<ProductModel>;
 
-export type UpdateProductResponse = ResponseFormat<"product", ProductModel>;
+export type UpdateProductResponse = ResponseFormat<ProductModel>;
 
-export type DeleteProductResponse = ResponseFormat<"product", ProductModel>;
+export type DeleteProductResponse = ResponseFormat<ProductModel>;
 
-export type FindUniqueProductResponse = ResponseFormat<"product", ProductComplete | null>;
+export type FindUniqueProductResponse = ResponseFormat<ProductRelationsOptional | null>;
 
-export type FindManyProductResponse = ResponseFormat<"productList", ProductComplete[]>;
+export type FindManyProductResponse = ResponseFormat<ProductRelationsOptional[]>;
 
-export type CountProductResponse = ResponseFormat<"productAmount", ProductCount>;
+export type CountProductResponse = ResponseFormat<ProductCount>;
 
 // ============== Services ============== //
 
@@ -127,7 +131,7 @@ export class ProductService {
                 ...(select && { select }),
             });
 
-            return { product };
+            return { data: product };
         } catch (error) {
             console.error("ProductService -> Create -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -155,7 +159,7 @@ export class ProductService {
                 ...(select && { select }),
             });
 
-            return { product };
+            return { data: product };
         } catch (error) {
             console.error("ProductService -> Upsert -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -187,7 +191,7 @@ export class ProductService {
                 ...(select && { select }),
             });
 
-            return { product };
+            return { data: product };
         } catch (error) {
             console.error("ProductService -> Update -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -218,7 +222,7 @@ export class ProductService {
                 ...(select && { select }),
             });
 
-            return { product };
+            return { data: product };
         } catch (error) {
             console.error("ProductService -> Delete -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -240,14 +244,14 @@ export class ProductService {
         try {
             const { where, include, omit, select } = selectProductSchema.parse(props);
 
-            const product: ProductComplete | null = await PrismaInstance.product.findUnique({
+            const product: ProductRelationsOptional | null = await PrismaInstance.product.findUnique({
                 where,
                 ...(include && { include }),
                 ...(omit && { omit }),
                 ...(select && { select }),
             });
 
-            return { product };
+            return { data: product };
         } catch (error) {
             console.error("ProductService -> FindUnique -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -279,7 +283,7 @@ export class ProductService {
                 where,
             } = selectManyProductSchema.parse(props);
 
-            const productList: ProductComplete[] = await PrismaInstance.product.findMany({
+            const productList: ProductRelationsOptional[] = await PrismaInstance.product.findMany({
                 ...(cursor && { cursor }),
                 ...(distinct && { distinct }),
                 ...(include && { include }),
@@ -291,7 +295,7 @@ export class ProductService {
                 ...(where && { where }),
             });
 
-            return { productList };
+            return { data: productList };
         } catch (error) {
             console.error("ProductService -> FindMany -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -321,7 +325,7 @@ export class ProductService {
                 ...(take && { take }),
                 ...(where && { where }),
             });
-            return { productAmount };
+            return { data: productAmount };
         } catch (error) {
             console.error("ProductService -> Count -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
