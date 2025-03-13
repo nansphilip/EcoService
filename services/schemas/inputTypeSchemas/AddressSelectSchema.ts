@@ -1,0 +1,18 @@
+import { z } from 'zod';
+import type { Prisma } from '@prisma/client';
+import { UserArgsSchema } from "../outputTypeSchemas/UserArgsSchema"
+
+export const AddressSelectSchema: z.ZodType<Prisma.AddressSelect> = z.object({
+  id: z.boolean().optional(),
+  address: z.boolean().optional(),
+  postal: z.boolean().optional(),
+  city: z.boolean().optional(),
+  country: z.boolean().optional(),
+  isDefault: z.boolean().optional(),
+  userId: z.boolean().optional(),
+  createdAt: z.boolean().optional(),
+  updatedAt: z.boolean().optional(),
+  User: z.union([z.boolean(),z.lazy(() => UserArgsSchema)]).optional(),
+}).strict()
+
+export default AddressSelectSchema;
