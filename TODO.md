@@ -11,6 +11,7 @@ Complete auth and user management
 - Logging error
 - index.ts files for imports
 - Testing for classes
+- Split generator.ts and fixtures.ts
 
 - ESlint Tailwind
 - Prettier

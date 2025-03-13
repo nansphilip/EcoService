@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 import { SendEmail } from "./plunk";
 import PrismaInstance from "@lib/prisma";
 import { customSession } from "better-auth/plugins";
-import { SelectUser } from "@actions/database/User";
+import { UserService } from "@services/class";
 
 const baseUrl = process.env.BASE_URL;
 
@@ -59,7 +59,7 @@ export const auth = betterAuth({
     },
     plugins: [
         customSession(async ({ session, user }) => {
-            const userData = await SelectUser({ where: { id: user.id } });
+            const { user: userData } = await UserService.findUnique({ where: { id: user.id } });
             if (!userData) {
                 throw new Error("User not found");
             }

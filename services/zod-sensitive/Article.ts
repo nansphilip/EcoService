@@ -1,10 +1,9 @@
-import { SelectArticleAmountProps, SelectArticleListProps, SelectArticleProps } from "@actions/types/Article";
-import { articleIdSchema } from "@actions/zod/Article";
+import { CountArticleProps, FindManyArticleProps, FindUniqueArticleProps } from "@class/ArticleClass";
 import { strictObject, z, ZodType } from "zod";
 
-export const selectArticleUniqueSchema: ZodType<SelectArticleProps> = strictObject({
+export const selectArticleUniqueSchema: ZodType<FindUniqueArticleProps> = strictObject({
     where: strictObject({
-        id: articleIdSchema,
+        id: z.string().nanoid(),
         // TODO: choose allowed filters for select request
         // WARNING: this schema protect request from frontend
     }),
@@ -28,7 +27,7 @@ export const selectArticleUniqueSchema: ZodType<SelectArticleProps> = strictObje
     }).optional(),
 });
 
-export const selectArticleListSchema: ZodType<SelectArticleListProps> = strictObject({
+export const selectArticleListSchema: ZodType<FindManyArticleProps> = strictObject({
     select: strictObject({
         // TODO: choose allowed filters for select request
         // WARNING: this schema protect request from frontend
@@ -60,7 +59,7 @@ export const selectArticleListSchema: ZodType<SelectArticleListProps> = strictOb
     }).optional(),
 });
 
-export const selectArticleAmountSchema: ZodType<SelectArticleAmountProps> = strictObject({
+export const selectArticleAmountSchema: ZodType<CountArticleProps> = strictObject({
     where: strictObject({
         // TODO: choose allowed filters for select request
         // WARNING: this schema protect request from frontend

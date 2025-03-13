@@ -1,7 +1,7 @@
 "use server";
 
-import { FileExists } from "@actions/(examples)/FileExists";
-import { ImageUploads } from "@actions/(examples)/ImageUploads";
+import { FileExists } from "../utils/FileExists";
+import { ImageUploads } from "../utils/ImageUploads";
 import PrismaInstance from "@lib/prisma";
 import { Fruit } from "@prisma/client";
 

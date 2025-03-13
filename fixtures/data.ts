@@ -1,13 +1,13 @@
-import { FruitType } from "@actions/(examples)/Fruit";
-import { AccountType } from "@actions/types/Account";
-import { UserType } from "@actions/types/User";
+import { AccountModel } from "@class/AccountClass";
+import { FruitModel } from "@class/FruitClass";
+import { UserModel } from "@class/UserClass";
 
 interface UserData {
-    name: UserType["name"];
-    email: UserType["email"];
-    emailVerified: UserType["emailVerified"];
-    role: UserType["role"];
-    password: AccountType["password"];
+    name: UserModel["name"];
+    email: UserModel["email"];
+    emailVerified: UserModel["emailVerified"];
+    role: UserModel["role"];
+    password: AccountModel["password"];
 }
 
 export const userData: UserData[] = [
@@ -46,9 +46,9 @@ export const userData: UserData[] = [
 ];
 
 interface FruitData {
-    name: FruitType["name"];
-    description: FruitType["description"];
-    image: FruitType["image"];
+    name: FruitModel["name"];
+    description: FruitModel["description"];
+    image: FruitModel["image"];
 }
 
 export const fruitData: FruitData[] = [

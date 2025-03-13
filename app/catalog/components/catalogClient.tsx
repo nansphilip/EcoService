@@ -1,6 +1,5 @@
 "use client";
 
-import { ProductType } from "@actions/types/Product";
 import { useFetch } from "@api/utils/FetchHook";
 import { useBasketStore } from "@comps/Basket/BasketStore";
 import ButtonClient from "@comps/client/Button";
@@ -14,6 +13,7 @@ import { MouseEvent, useContext, useEffect } from "react";
 import { CatalogContext } from "./contextProvider";
 import { useCatalogParams } from "./useCatalogParams";
 import { useCatalogStore } from "./useCatalogStore";
+import { ProductModel } from "@class/ProductClass";
 
 type CatalogClientProps = {
     className?: string;
@@ -76,7 +76,7 @@ export default function CatalogClient(props: CatalogClientProps) {
 }
 
 type ProductListProps = {
-    produitList: ProductType[] | null;
+    produitList: ProductModel[] | null;
     className?: string;
 };
 

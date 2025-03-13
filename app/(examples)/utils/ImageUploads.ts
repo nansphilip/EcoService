@@ -1,6 +1,6 @@
 "use server";
 
-import { ImageUploadsProps, ImageValidationProps, ImageValidationReturn } from "@actions/(examples)/Image";
+import { ImageUploadsProps, ImageValidationProps, ImageValidationReturn } from "../utils/Image";
 import { promises as fs } from "fs";
 import { FileExists } from "./FileExists";
 import { StringToSlug } from "./StringToSlug";

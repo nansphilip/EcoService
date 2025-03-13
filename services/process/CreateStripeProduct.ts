@@ -2,12 +2,12 @@
 
 import { GetSession } from "@lib/auth";
 import { Product } from "@prisma/client";
+import { ProductSchema } from "@services/schemas";
 import { unauthorized } from "next/navigation";
-import { productCommonSchema } from "@actions/zod/Product";
 
 export const CreateStripeProduct = async (props: Product) => {
     // Validate product type with zod
-    const product = productCommonSchema.parse(props);
+    const product = ProductSchema.parse(props);
 
     console.log("product", product);
 

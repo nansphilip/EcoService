@@ -11,13 +11,19 @@
 import PrismaInstance from "@lib/prisma";
 import { Prisma } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
-import { {{modelName}}, {{modelName}}Schema } from "@services/schemas";
 import {
-    {{modelName}}CreateInputSchema,
-    {{modelName}}UpdateInputSchema,
+    {{modelName}},
+    {{modelName}}CreateArgsSchema,
+    {{modelName}}DeleteArgsSchema,
+    {{modelName}}FindManyArgsSchema,
+    {{modelName}}FindUniqueArgsSchema,
+    {{modelName}}OrderByWithRelationInputSchema,
+    {{modelName}}Schema,
+    {{modelName}}UpdateArgsSchema,
+    {{modelName}}UpsertArgsSchema,
     {{modelName}}WhereInputSchema,
-    {{modelName}}WhereUniqueInputSchema,
-} from "@services/schemas/inputTypeSchemas";
+    {{modelName}}WhereUniqueInputSchema
+} from "@services/schemas";
 import { {{modelName}}IncludeSchema } from "@services/schemas/inputTypeSchemas/{{modelName}}IncludeSchema";
 import { z, ZodError, ZodType } from "zod";
 
@@ -33,34 +39,43 @@ export type {{modelName}}Count = number;
 
 // ============== Schema Types ============== //
 
-const create{{modelName}}Schema: ZodType<Prisma.{{modelName}}CreateArgs> = z.strictObject({
-    data: {{modelName}}CreateInputSchema,
-});
+const create{{modelName}}Schema: ZodType<Prisma.{{modelName}}CreateArgs> = {{modelName}}CreateArgsSchema;
 
-const update{{modelName}}Schema: ZodType<Prisma.{{modelName}}UpdateArgs> = z.strictObject({
-    where: {{modelName}}WhereUniqueInputSchema,
-    data: {{modelName}}UpdateInputSchema,
-});
+const upsert{{modelName}}Schema: ZodType<Prisma.{{modelName}}UpsertArgs> = {{modelName}}UpsertArgsSchema;
 
-const delete{{modelName}}Schema: ZodType<Prisma.{{modelName}}DeleteArgs> = z.strictObject({
-    where: {{modelName}}WhereUniqueInputSchema,
-});
+const update{{modelName}}Schema: ZodType<Prisma.{{modelName}}UpdateArgs> = {{modelName}}UpdateArgsSchema;
 
-const select{{modelName}}Schema: ZodType<Prisma.{{modelName}}FindUniqueArgs> = z.strictObject({
-    where: {{modelName}}WhereUniqueInputSchema,
-});
+const delete{{modelName}}Schema: ZodType<Prisma.{{modelName}}DeleteArgs> = {{modelName}}DeleteArgsSchema;
 
-const selectMany{{modelName}}Schema: ZodType<Prisma.{{modelName}}FindManyArgs> = z.strictObject({
-    where: {{modelName}}WhereInputSchema,
-});
+const select{{modelName}}Schema: ZodType<Prisma.{{modelName}}FindUniqueArgs> = {{modelName}}FindUniqueArgsSchema;
 
-const count{{modelName}}Schema: ZodType<Prisma.{{modelName}}CountArgs> = z.strictObject({
-    where: {{modelName}}WhereInputSchema,
+const selectMany{{modelName}}Schema: ZodType<Prisma.{{modelName}}FindManyArgs> = {{modelName}}FindManyArgsSchema;
+
+/**
+ * Définition du schéma pour {{modelName}}CountArgs
+ * 
+ * Ce schéma correspond au type Prisma.{{modelName}}CountArgs qui est défini comme:
+ * Omit<{{modelName}}FindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+ *   select?: {{modelName}}CountAggregateInputType | true
+ * }
+ */
+const count{{modelName}}Schema: ZodType<Prisma.{{modelName}}CountArgs> = z.object({
+    where: z.lazy(() => {{modelName}}WhereInputSchema).optional(),
+    orderBy: z.union([
+        z.lazy(() => {{modelName}}OrderByWithRelationInputSchema),
+        z.array(z.lazy(() => {{modelName}}OrderByWithRelationInputSchema))
+    ]).optional(),
+    cursor: z.lazy(() => {{modelName}}WhereUniqueInputSchema).optional(),
+    take: z.number().optional(),
+    skip: z.number().optional(),
+    select: z.union([z.literal(true), z.record(z.boolean())]).optional()
 });
 
 // ============== CRUD Props Types ============== //
 
 export type Create{{modelName}}Props = z.infer<typeof create{{modelName}}Schema>;
+
+export type Upsert{{modelName}}Props = z.infer<typeof upsert{{modelName}}Schema>;
 
 export type Update{{modelName}}Props = z.infer<typeof update{{modelName}}Schema>;
 
@@ -77,6 +92,8 @@ export type Count{{modelName}}Props = z.infer<typeof count{{modelName}}Schema>;
 export type ResponseFormat<Key extends string, Response> = { [key in Key]: Response } | { error: string };
 
 export type Create{{modelName}}Response = ResponseFormat<"{{modelNameLower}}", {{modelName}}Model>;
+
+export type Upsert{{modelName}}Response = ResponseFormat<"{{modelNameLower}}", {{modelName}}Model>;
 
 export type Update{{modelName}}Response = ResponseFormat<"{{modelNameLower}}", {{modelName}}Model>;
 
@@ -101,13 +118,18 @@ export class {{modelName}}Service {
      */
     static async create(props: Create{{modelName}}Props): Promise<Create{{modelName}}Response> {
         try {
-            const data = create{{modelName}}Schema.parse(props);
+            const { data, include, omit, select } = create{{modelName}}Schema.parse(props);
 
-            const {{modelNameLower}}: {{modelName}} = await PrismaInstance.{{modelNameLower}}.create(data);
+            const {{modelNameLower}}: {{modelName}} = await PrismaInstance.{{modelNameLower}}.create({
+                data,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
 
             return { {{modelNameLower}} };
         } catch (error) {
-            console.error("{{modelName}}Service.create -> " + (error as Error).message);
+            console.error("{{modelName}}Service -> Create -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("{{modelName}}Service -> Create -> Invalid Zod params -> " + error.message);
@@ -120,6 +142,34 @@ export class {{modelName}}Service {
         }
     }
 
+    static async upsert(props: Upsert{{modelName}}Props): Promise<Upsert{{modelName}}Response> {
+        try {
+            const { create, update, where, include, omit, select } = upsert{{modelName}}Schema.parse(props);
+
+            const {{modelNameLower}}: {{modelName}} = await PrismaInstance.{{modelNameLower}}.upsert({
+                create,
+                update,
+                where,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
+
+            return { {{modelNameLower}} };
+        } catch (error) {
+            console.error("{{modelName}}Service -> Upsert -> " + (error as Error).message);
+            if (process.env.NODE_ENV === "development") {
+                if (error instanceof ZodError)
+                    throw new Error("{{modelName}}Service -> Upsert -> Invalid Zod params -> " + error.message);
+                if (error instanceof PrismaClientKnownRequestError)
+                    throw new Error("{{modelName}}Service -> Upsert -> Prisma error -> " + error.message);
+                throw new Error("{{modelName}}Service -> Upsert -> " + (error as Error).message);
+            }
+            // TODO: add logging
+            return { error: "Unable to upsert {{modelNameLower}}..." };
+        }
+    }
+
     /**
      * Met à jour un(e) {{modelNameLower}}
      * @param props ID du/de la {{modelNameLower}} et nouvelles données
@@ -127,13 +177,19 @@ export class {{modelName}}Service {
      */
     static async update(props: Update{{modelName}}Props): Promise<Update{{modelName}}Response> {
         try {
-            const data = update{{modelName}}Schema.parse(props);
+            const { data, where, include, omit, select } = update{{modelName}}Schema.parse(props);
 
-            const {{modelNameLower}}: {{modelName}} = await PrismaInstance.{{modelNameLower}}.update(data);
+            const {{modelNameLower}}: {{modelName}} = await PrismaInstance.{{modelNameLower}}.update({
+                data,
+                where,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
 
             return { {{modelNameLower}} };
         } catch (error) {
-            console.error("{{modelName}}Service.update -> " + (error as Error).message);
+            console.error("{{modelName}}Service -> Update -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("{{modelName}}Service -> Update -> Invalid Zod params -> " + error.message);
@@ -153,13 +209,18 @@ export class {{modelName}}Service {
      */
     static async delete(props: Delete{{modelName}}Props): Promise<Delete{{modelName}}Response> {
         try {
-            const data = delete{{modelName}}Schema.parse(props);
+            const { where, include, omit, select } = delete{{modelName}}Schema.parse(props);
 
-            const {{modelNameLower}}: {{modelName}} = await PrismaInstance.{{modelNameLower}}.delete(data);
+            const {{modelNameLower}}: {{modelName}} = await PrismaInstance.{{modelNameLower}}.delete({
+                where,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
 
             return { {{modelNameLower}} };
         } catch (error) {
-            console.error("{{modelName}}Service.delete -> " + (error as Error).message);
+            console.error("{{modelName}}Service -> Delete -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("{{modelName}}Service -> Delete -> Invalid Zod params -> " + error.message);
@@ -177,13 +238,18 @@ export class {{modelName}}Service {
      */
     static async findUnique(props: FindUnique{{modelName}}Props): Promise<FindUnique{{modelName}}Response> {
         try {
-            const data = select{{modelName}}Schema.parse(props);
+            const { where, include, omit, select } = select{{modelName}}Schema.parse(props);
 
-            const {{modelNameLower}}: {{modelName}}Complete | null = await PrismaInstance.{{modelNameLower}}.findUnique(data);
+            const {{modelNameLower}}: {{modelName}}Complete | null = await PrismaInstance.{{modelNameLower}}.findUnique({
+                where,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
 
             return { {{modelNameLower}} };
         } catch (error) {
-            console.error("{{modelName}}Service.findUnique -> " + (error as Error).message);
+            console.error("{{modelName}}Service -> FindUnique -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("{{modelName}}Service -> FindUnique -> Invalid Zod params -> " + error.message);
@@ -201,13 +267,33 @@ export class {{modelName}}Service {
      */
     static async findMany(props: FindMany{{modelName}}Props): Promise<FindMany{{modelName}}Response> {
         try {
-            const data = selectMany{{modelName}}Schema.parse(props);
+            const {
+                cursor,
+                distinct,
+                include,
+                omit,
+                orderBy,
+                select,
+                skip = 0,
+                take = 10,
+                where,
+            } = selectMany{{modelName}}Schema.parse(props);
 
-            const {{modelNameLower}}List: {{modelName}}Complete[] = await PrismaInstance.{{modelNameLower}}.findMany(data);
+            const {{modelNameLower}}List: {{modelName}}Complete[] = await PrismaInstance.{{modelNameLower}}.findMany({
+                ...(cursor && { cursor }),
+                ...(distinct && { distinct }),
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(orderBy && { orderBy }),
+                ...(select && { select }),
+                ...(skip && { skip }),
+                ...(take && { take }),
+                ...(where && { where }),
+            });
 
             return { {{modelNameLower}}List };
         } catch (error) {
-            console.error("{{modelName}}Service.findMany -> " + (error as Error).message);
+            console.error("{{modelName}}Service -> FindMany -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("{{modelName}}Service -> FindMany -> Invalid Zod params -> " + error.message);
@@ -225,13 +311,19 @@ export class {{modelName}}Service {
      */
     static async count(props: Count{{modelName}}Props): Promise<Count{{modelName}}Response> {
         try {
-            const data = count{{modelName}}Schema.parse(props);
+            const { cursor, orderBy, select, skip = 0, take = 10, where } = count{{modelName}}Schema.parse(props);
 
-            const {{modelNameLower}}Amount: {{modelName}}Count = await PrismaInstance.{{modelNameLower}}.count(data);
-
+            const {{modelNameLower}}Amount: {{modelName}}Count = await PrismaInstance.{{modelNameLower}}.count({
+                ...(cursor && { cursor }),
+                ...(orderBy && { orderBy }),
+                ...(select && { select }),
+                ...(skip && { skip }),
+                ...(take && { take }),
+                ...(where && { where }),
+            });
             return { {{modelNameLower}}Amount };
         } catch (error) {
-            console.error("{{modelName}}Service.count -> " + (error as Error).message);
+            console.error("{{modelName}}Service -> Count -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("{{modelName}}Service -> Count -> Invalid Zod params -> " + error.message);

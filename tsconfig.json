@@ -20,9 +20,10 @@
             }
         ],
         "paths": {
-            "@actions/*": ["./actions/*"],
+            "@actions/*": ["./services/actions/*"],
             "@app/*": ["./app/*"],
             "@api/*": ["./app/api/*"],
+            "@class/*": ["./services/class/*"],
             "@comps/*": ["./components/*"],
             "@lib/*": ["./lib/*"],
             "@prisma/*": ["./prisma/*"],

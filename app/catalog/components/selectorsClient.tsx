@@ -1,6 +1,6 @@
 "use client";
 
-import { CategoryType } from "@actions/types/Category";
+import { CategoryModel } from "@class/CategoryClass";
 import { combo } from "@lib/combo";
 import { ChangeEventHandler, ReactNode, useContext } from "react";
 import { CatalogContext } from "./contextProvider";
@@ -8,7 +8,7 @@ import { ItemsPerPageParamType, PriceOrderParamType } from "./filterTypes";
 import { useCatalogParams } from "./useCatalogParams";
 
 type SelectorsClientProps = {
-    categoryList: CategoryType[];
+    categoryList: CategoryModel[];
 };
 
 export default function SelectorsClient(props: SelectorsClientProps) {

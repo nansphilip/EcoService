@@ -1,14 +1,9 @@
-import {
-    SelectCategoryAmountProps,
-    SelectCategoryListProps,
-    SelectCategoryProps,
-} from "@actions/types/Category";
-import { categoryIdSchema } from "@actions/zod/Category";
+import { CountCategoryProps, FindManyCategoryProps, FindUniqueCategoryProps } from "@class/CategoryClass";
 import { strictObject, z, ZodType } from "zod";
 
-export const selectCategoryUniqueSchema: ZodType<SelectCategoryProps> = strictObject({
+export const selectCategoryUniqueSchema: ZodType<FindUniqueCategoryProps> = strictObject({
     where: strictObject({
-        id: categoryIdSchema,
+        id: z.string().nanoid(),
         // TODO: choose allowed filters for select request
         // WARNING: this schema protect request from frontend
     }),
@@ -18,7 +13,7 @@ export const selectCategoryUniqueSchema: ZodType<SelectCategoryProps> = strictOb
     }).optional(),
 });
 
-export const selectCategoryListSchema: ZodType<SelectCategoryListProps> = strictObject({
+export const selectCategoryListSchema: ZodType<FindManyCategoryProps> = strictObject({
     orderBy: strictObject({
         // TODO: choose allowed filters for select request
         // WARNING: this schema protect request from frontend
@@ -32,7 +27,7 @@ export const selectCategoryListSchema: ZodType<SelectCategoryListProps> = strict
     }).optional(),
 });
 
-export const selectCategoryAmountSchema: ZodType<SelectCategoryAmountProps> = strictObject({
+export const selectCategoryAmountSchema: ZodType<CountCategoryProps> = strictObject({
     where: strictObject({
         // TODO: choose allowed filters for select request
         // WARNING: this schema protect request from frontend

@@ -1,23 +1,29 @@
 /**
  * Classe de service pour les opérations CRUD sur les products
- * 
+ *
  * Ce fichier centralise toute la logique d'accès aux données pour les products.
  * Il utilise les schémas Zod générés par zod-prisma-types pour la validation des données.
  * Chaque méthode retourne soit les données demandées, soit une erreur formatée.
- * 
+ *
  * Les types sont définis pour correspondre aux opérations Prisma (create, update, delete, etc.)
  * et suivent une nomenclature cohérente avec l'API Prisma.
  */
 import PrismaInstance from "@lib/prisma";
 import { Prisma } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
-import { Product, ProductSchema } from "@services/schemas";
 import {
-    ProductCreateInputSchema,
-    ProductUpdateInputSchema,
+    Product,
+    ProductCreateArgsSchema,
+    ProductDeleteArgsSchema,
+    ProductFindManyArgsSchema,
+    ProductFindUniqueArgsSchema,
+    ProductOrderByWithRelationInputSchema,
+    ProductSchema,
+    ProductUpdateArgsSchema,
+    ProductUpsertArgsSchema,
     ProductWhereInputSchema,
-    ProductWhereUniqueInputSchema,
-} from "@services/schemas/inputTypeSchemas";
+    ProductWhereUniqueInputSchema
+} from "@services/schemas";
 import { ProductIncludeSchema } from "@services/schemas/inputTypeSchemas/ProductIncludeSchema";
 import { z, ZodError, ZodType } from "zod";
 
@@ -33,34 +39,50 @@ export type ProductCount = number;
 
 // ============== Schema Types ============== //
 
-const createProductSchema: ZodType<Prisma.ProductCreateArgs> = z.strictObject({
-    data: ProductCreateInputSchema,
-});
+const createProductSchema: ZodType<Prisma.ProductCreateArgs> = ProductCreateArgsSchema;
 
-const updateProductSchema: ZodType<Prisma.ProductUpdateArgs> = z.strictObject({
-    where: ProductWhereUniqueInputSchema,
-    data: ProductUpdateInputSchema,
-});
+const upsertProductSchema: ZodType<Prisma.ProductUpsertArgs> = ProductUpsertArgsSchema;
 
-const deleteProductSchema: ZodType<Prisma.ProductDeleteArgs> = z.strictObject({
-    where: ProductWhereUniqueInputSchema,
-});
+const updateProductSchema: ZodType<Prisma.ProductUpdateArgs> = ProductUpdateArgsSchema;
 
-const selectProductSchema: ZodType<Prisma.ProductFindUniqueArgs> = z.strictObject({
-    where: ProductWhereUniqueInputSchema,
-});
+const deleteProductSchema: ZodType<Prisma.ProductDeleteArgs> = ProductDeleteArgsSchema;
 
-const selectManyProductSchema: ZodType<Prisma.ProductFindManyArgs> = z.strictObject({
-    where: ProductWhereInputSchema,
-});
+const selectProductSchema: ZodType<Prisma.ProductFindUniqueArgs> = ProductFindUniqueArgsSchema;
 
-const countProductSchema: ZodType<Prisma.ProductCountArgs> = z.strictObject({
-    where: ProductWhereInputSchema,
+const selectManyProductSchema: ZodType<Prisma.ProductFindManyArgs> = ProductFindManyArgsSchema;
+
+// const countProductSchema: ZodType<Prisma.ProductCountArgs> =ProductFindManyArgsSchema.omit({
+//     select: true,
+//     include: true,
+//     distinct: true,
+//     omit: true,
+// }).extend(ProductCountOutputTypeArgsSchema);
+
+/**
+ * Définition du schéma pour ProductCountArgs
+ * 
+ * Ce schéma correspond au type Prisma.ProductCountArgs qui est défini comme:
+ * Omit<ProductFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+ *   select?: ProductCountAggregateInputType | true
+ * }
+ */
+const countProductSchema: ZodType<Prisma.ProductCountArgs> = z.object({
+    where: z.lazy(() => ProductWhereInputSchema).optional(),
+    orderBy: z.union([
+        z.lazy(() => ProductOrderByWithRelationInputSchema),
+        z.array(z.lazy(() => ProductOrderByWithRelationInputSchema))
+    ]).optional(),
+    cursor: z.lazy(() => ProductWhereUniqueInputSchema).optional(),
+    take: z.number().optional(),
+    skip: z.number().optional(),
+    select: z.union([z.literal(true), z.record(z.boolean())]).optional()
 });
 
 // ============== CRUD Props Types ============== //
 
 export type CreateProductProps = z.infer<typeof createProductSchema>;
+
+export type UpsertProductProps = z.infer<typeof upsertProductSchema>;
 
 export type UpdateProductProps = z.infer<typeof updateProductSchema>;
 
@@ -77,6 +99,8 @@ export type CountProductProps = z.infer<typeof countProductSchema>;
 export type ResponseFormat<Key extends string, Response> = { [key in Key]: Response } | { error: string };
 
 export type CreateProductResponse = ResponseFormat<"product", ProductModel>;
+
+export type UpsertProductResponse = ResponseFormat<"product", ProductModel>;
 
 export type UpdateProductResponse = ResponseFormat<"product", ProductModel>;
 
@@ -101,13 +125,18 @@ export class ProductService {
      */
     static async create(props: CreateProductProps): Promise<CreateProductResponse> {
         try {
-            const data = createProductSchema.parse(props);
+            const { data, include, omit, select } = createProductSchema.parse(props);
 
-            const product: Product = await PrismaInstance.product.create(data);
+            const product: Product = await PrismaInstance.product.create({
+                data,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
 
             return { product };
         } catch (error) {
-            console.error("ProductService.create -> " + (error as Error).message);
+            console.error("ProductService -> Create -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("ProductService -> Create -> Invalid Zod params -> " + error.message);
@@ -120,6 +149,34 @@ export class ProductService {
         }
     }
 
+    static async upsert(props: UpsertProductProps): Promise<UpsertProductResponse> {
+        try {
+            const { create, update, where, include, omit, select } = upsertProductSchema.parse(props);
+
+            const product: Product = await PrismaInstance.product.upsert({
+                create,
+                update,
+                where,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
+
+            return { product };
+        } catch (error) {
+            console.error("ProductService -> Upsert -> " + (error as Error).message);
+            if (process.env.NODE_ENV === "development") {
+                if (error instanceof ZodError)
+                    throw new Error("ProductService -> Upsert -> Invalid Zod params -> " + error.message);
+                if (error instanceof PrismaClientKnownRequestError)
+                    throw new Error("ProductService -> Upsert -> Prisma error -> " + error.message);
+                throw new Error("ProductService -> Upsert -> " + (error as Error).message);
+            }
+            // TODO: add logging
+            return { error: "Unable to upsert product..." };
+        }
+    }
+
     /**
      * Met à jour un(e) product
      * @param props ID du/de la product et nouvelles données
@@ -127,13 +184,19 @@ export class ProductService {
      */
     static async update(props: UpdateProductProps): Promise<UpdateProductResponse> {
         try {
-            const data = updateProductSchema.parse(props);
+            const { data, where, include, omit, select } = updateProductSchema.parse(props);
 
-            const product: Product = await PrismaInstance.product.update(data);
+            const product: Product = await PrismaInstance.product.update({
+                data,
+                where,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
 
             return { product };
         } catch (error) {
-            console.error("ProductService.update -> " + (error as Error).message);
+            console.error("ProductService -> Update -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("ProductService -> Update -> Invalid Zod params -> " + error.message);
@@ -153,13 +216,18 @@ export class ProductService {
      */
     static async delete(props: DeleteProductProps): Promise<DeleteProductResponse> {
         try {
-            const data = deleteProductSchema.parse(props);
+            const { where, include, omit, select } = deleteProductSchema.parse(props);
 
-            const product: Product = await PrismaInstance.product.delete(data);
+            const product: Product = await PrismaInstance.product.delete({
+                where,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
 
             return { product };
         } catch (error) {
-            console.error("ProductService.delete -> " + (error as Error).message);
+            console.error("ProductService -> Delete -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("ProductService -> Delete -> Invalid Zod params -> " + error.message);
@@ -177,13 +245,18 @@ export class ProductService {
      */
     static async findUnique(props: FindUniqueProductProps): Promise<FindUniqueProductResponse> {
         try {
-            const data = selectProductSchema.parse(props);
+            const { where, include, omit, select } = selectProductSchema.parse(props);
 
-            const product: ProductComplete | null = await PrismaInstance.product.findUnique(data);
+            const product: ProductComplete | null = await PrismaInstance.product.findUnique({
+                where,
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(select && { select }),
+            });
 
             return { product };
         } catch (error) {
-            console.error("ProductService.findUnique -> " + (error as Error).message);
+            console.error("ProductService -> FindUnique -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("ProductService -> FindUnique -> Invalid Zod params -> " + error.message);
@@ -201,13 +274,33 @@ export class ProductService {
      */
     static async findMany(props: FindManyProductProps): Promise<FindManyProductResponse> {
         try {
-            const data = selectManyProductSchema.parse(props);
+            const {
+                cursor,
+                distinct,
+                include,
+                omit,
+                orderBy,
+                select,
+                skip = 0,
+                take = 10,
+                where,
+            } = selectManyProductSchema.parse(props);
 
-            const productList: ProductComplete[] = await PrismaInstance.product.findMany(data);
+            const productList: ProductComplete[] = await PrismaInstance.product.findMany({
+                ...(cursor && { cursor }),
+                ...(distinct && { distinct }),
+                ...(include && { include }),
+                ...(omit && { omit }),
+                ...(orderBy && { orderBy }),
+                ...(select && { select }),
+                ...(skip && { skip }),
+                ...(take && { take }),
+                ...(where && { where }),
+            });
 
             return { productList };
         } catch (error) {
-            console.error("ProductService.findMany -> " + (error as Error).message);
+            console.error("ProductService -> FindMany -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("ProductService -> FindMany -> Invalid Zod params -> " + error.message);
@@ -225,13 +318,19 @@ export class ProductService {
      */
     static async count(props: CountProductProps): Promise<CountProductResponse> {
         try {
-            const data = countProductSchema.parse(props);
+            const { cursor, orderBy, select, skip = 0, take = 10, where } = countProductSchema.parse(props);
 
-            const productAmount: ProductCount = await PrismaInstance.product.count(data);
-
+            const productAmount: ProductCount = await PrismaInstance.product.count({
+                ...(cursor && { cursor }),
+                ...(orderBy && { orderBy }),
+                ...(select && { select }),
+                ...(skip && { skip }),
+                ...(take && { take }),
+                ...(where && { where }),
+            });
             return { productAmount };
         } catch (error) {
-            console.error("ProductService.count -> " + (error as Error).message);
+            console.error("ProductService -> Count -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
                 if (error instanceof ZodError)
                     throw new Error("ProductService -> Count -> Invalid Zod params -> " + error.message);
@@ -243,4 +342,4 @@ export class ProductService {
             return { error: "Unable to count products..." };
         }
     }
-} 
+}
