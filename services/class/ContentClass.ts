@@ -1,19 +1,8 @@
-/**
- * Classe de service pour les opérations CRUD sur les contents
- * 
- * Ce fichier centralise toute la logique d'accès aux données pour les contents.
- * Il utilise les schémas Zod générés par zod-prisma-types pour la validation des données.
- * Chaque méthode retourne soit les données demandées, soit une erreur formatée.
- * 
- * Les types sont définis pour correspondre aux opérations Prisma (create, update, delete, etc.)
- * et suivent une nomenclature cohérente avec l'API Prisma.
- */
 import { ResponseFormat } from "@app/api/Routes";
 import PrismaInstance from "@lib/prisma";
 import { Prisma } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import {
-    Content,
     ContentCreateArgsSchema,
     ContentDeleteArgsSchema,
     ContentFindManyArgsSchema,
@@ -32,35 +21,18 @@ import { z, ZodError, ZodType } from "zod";
 // ============== Types ============== //
 
 export type ContentModel = z.infer<typeof ContentSchema>;
-
 export type ContentRelationsOptional = z.infer<typeof ContentSchema> & z.infer<typeof ContentIncludeSchema>;
-
 export type ContentRelationsComplete = z.infer<typeof ContentWithRelationsSchema>;
-
 export type ContentCount = number;
 
 // ============== Schema Types ============== //
 
 const createContentSchema: ZodType<Prisma.ContentCreateArgs> = ContentCreateArgsSchema;
-
 const upsertContentSchema: ZodType<Prisma.ContentUpsertArgs> = ContentUpsertArgsSchema;
-
 const updateContentSchema: ZodType<Prisma.ContentUpdateArgs> = ContentUpdateArgsSchema;
-
 const deleteContentSchema: ZodType<Prisma.ContentDeleteArgs> = ContentDeleteArgsSchema;
-
 const selectContentSchema: ZodType<Prisma.ContentFindUniqueArgs> = ContentFindUniqueArgsSchema;
-
 const selectManyContentSchema: ZodType<Prisma.ContentFindManyArgs> = ContentFindManyArgsSchema;
-
-/**
- * Définition du schéma pour ContentCountArgs
- * 
- * Ce schéma correspond au type Prisma.ContentCountArgs qui est défini comme:
- * Omit<ContentFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
- *   select?: ContentCountAggregateInputType | true
- * }
- */
 const countContentSchema: ZodType<Prisma.ContentCountArgs> = z.object({
     where: z.lazy(() => ContentWhereInputSchema).optional(),
     orderBy: z.union([
@@ -76,58 +48,39 @@ const countContentSchema: ZodType<Prisma.ContentCountArgs> = z.object({
 // ============== CRUD Props Types ============== //
 
 export type CreateContentProps = z.infer<typeof createContentSchema>;
-
 export type UpsertContentProps = z.infer<typeof upsertContentSchema>;
-
 export type UpdateContentProps = z.infer<typeof updateContentSchema>;
-
 export type DeleteContentProps = z.infer<typeof deleteContentSchema>;
-
 export type FindUniqueContentProps = z.infer<typeof selectContentSchema>;
-
 export type FindManyContentProps = z.infer<typeof selectManyContentSchema>;
-
 export type CountContentProps = z.infer<typeof countContentSchema>;
 
 // ============== CRUD Response Types ============== //
 
-export type CreateContentResponse = ContentModel;
-
-export type UpsertContentResponse = ContentModel;
-
-export type UpdateContentResponse = ContentModel;
-
-export type DeleteContentResponse = ContentModel;
-
-export type FindUniqueContentResponse = ContentRelationsOptional | null;
-
-export type FindManyContentResponse = ContentRelationsOptional[];
-
+export type CreateContentResponse<T extends CreateContentProps> = Prisma.ContentGetPayload<T>;
+export type UpsertContentResponse<T extends UpsertContentProps> = Prisma.ContentGetPayload<T>;
+export type UpdateContentResponse<T extends UpdateContentProps> = Prisma.ContentGetPayload<T>;
+export type DeleteContentResponse<T extends DeleteContentProps> = Prisma.ContentGetPayload<T>;
+export type FindUniqueContentResponse<T extends FindUniqueContentProps> = Prisma.ContentGetPayload<T> | null;
+export type FindManyContentResponse<T extends FindManyContentProps> = Prisma.ContentGetPayload<T>[];
 export type CountContentResponse = ContentCount;
 
 // ============== Services ============== //
 
-/**
- * Service pour les opérations de base de données sur les contents
- */
 export class ContentService {
-    /**
-     * Crée un(e) nouveau/nouvelle content
-     * @param props Propriétés du/de la content
-     * @returns Content créé(e) ou erreur
-     */
-    static async create(props: CreateContentProps): Promise<ResponseFormat<CreateContentResponse>> {
+
+    static async create<T extends CreateContentProps>(props: T): Promise<ResponseFormat<CreateContentResponse<T>>> {
         try {
             const { data, include, omit, select } = createContentSchema.parse(props);
 
-            const content: Content = await PrismaInstance.content.create({
+            const content = await PrismaInstance.content.create({
                 data,
                 ...(include && { include }),
                 ...(omit && { omit }),
                 ...(select && { select }),
             });
 
-            return { data: content };
+            return { data: content as CreateContentResponse<T> };
         } catch (error) {
             console.error("ContentService -> Create -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -142,11 +95,11 @@ export class ContentService {
         }
     }
 
-    static async upsert(props: UpsertContentProps): Promise<ResponseFormat<UpsertContentResponse>> {
+    static async upsert<T extends UpsertContentProps>(props: T): Promise<ResponseFormat<UpsertContentResponse<T>>> {
         try {
             const { create, update, where, include, omit, select } = upsertContentSchema.parse(props);
 
-            const content: Content = await PrismaInstance.content.upsert({
+            const content = await PrismaInstance.content.upsert({
                 create,
                 update,
                 where,
@@ -155,7 +108,7 @@ export class ContentService {
                 ...(select && { select }),
             });
 
-            return { data: content };
+            return { data: content as UpsertContentResponse<T> };
         } catch (error) {
             console.error("ContentService -> Upsert -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -170,16 +123,11 @@ export class ContentService {
         }
     }
 
-    /**
-     * Met à jour un(e) content
-     * @param props ID du/de la content et nouvelles données
-     * @returns Content mis(e) à jour ou erreur
-     */
-    static async update(props: UpdateContentProps): Promise<ResponseFormat<UpdateContentResponse>> {
+    static async update<T extends UpdateContentProps>(props: T): Promise<ResponseFormat<UpdateContentResponse<T>>> {
         try {
             const { data, where, include, omit, select } = updateContentSchema.parse(props);
 
-            const content: Content = await PrismaInstance.content.update({
+            const content = await PrismaInstance.content.update({
                 data,
                 where,
                 ...(include && { include }),
@@ -187,7 +135,7 @@ export class ContentService {
                 ...(select && { select }),
             });
 
-            return { data: content };
+            return { data: content as UpdateContentResponse<T> };
         } catch (error) {
             console.error("ContentService -> Update -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -202,23 +150,18 @@ export class ContentService {
         }
     }
 
-    /**
-     * Supprime un(e) content
-     * @param props ID du/de la content
-     * @returns Content supprimé(e) ou erreur
-     */
-    static async delete(props: DeleteContentProps): Promise<ResponseFormat<DeleteContentResponse>> {
+    static async delete<T extends DeleteContentProps>(props: T): Promise<ResponseFormat<DeleteContentResponse<T>>> {
         try {
             const { where, include, omit, select } = deleteContentSchema.parse(props);
 
-            const content: Content = await PrismaInstance.content.delete({
+            const content = await PrismaInstance.content.delete({
                 where,
                 ...(include && { include }),
                 ...(omit && { omit }),
                 ...(select && { select }),
             });
 
-            return { data: content };
+            return { data: content as DeleteContentResponse<T> };
         } catch (error) {
             console.error("ContentService -> Delete -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -233,21 +176,18 @@ export class ContentService {
         }
     }
 
-    /**
-     * Récupère un(e) content par ID ou autre filtre
-     */
-    static async findUnique(props: FindUniqueContentProps): Promise<ResponseFormat<FindUniqueContentResponse>> {
+    static async findUnique<T extends FindUniqueContentProps>(props: T): Promise<ResponseFormat<FindUniqueContentResponse<T>>> {
         try {
             const { where, include, omit, select } = selectContentSchema.parse(props);
 
-            const content: ContentRelationsOptional | null = await PrismaInstance.content.findUnique({
+            const content = await PrismaInstance.content.findUnique({
                 where,
                 ...(include && { include }),
                 ...(omit && { omit }),
                 ...(select && { select }),
             });
 
-            return { data: content };
+            return { data: content as FindUniqueContentResponse<T> };
         } catch (error) {
             console.error("ContentService -> FindUnique -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -262,10 +202,7 @@ export class ContentService {
         }
     }
 
-    /**
-     * Récupère une liste de contents avec filtres
-     */
-    static async findMany(props: FindManyContentProps): Promise<ResponseFormat<FindManyContentResponse>> {
+    static async findMany<T extends FindManyContentProps>(props: T): Promise<ResponseFormat<FindManyContentResponse<T>>> {
         try {
             const {
                 cursor,
@@ -279,7 +216,7 @@ export class ContentService {
                 where,
             } = selectManyContentSchema.parse(props);
 
-            const contentList: ContentRelationsOptional[] = await PrismaInstance.content.findMany({
+            const contentList = await PrismaInstance.content.findMany({
                 ...(cursor && { cursor }),
                 ...(distinct && { distinct }),
                 ...(include && { include }),
@@ -291,7 +228,7 @@ export class ContentService {
                 ...(where && { where }),
             });
 
-            return { data: contentList };
+            return { data: contentList as FindManyContentResponse<T> };
         } catch (error) {
             console.error("ContentService -> FindMany -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -306,9 +243,6 @@ export class ContentService {
         }
     }
 
-    /**
-     * Compte les contents avec filtres
-     */
     static async count(props: CountContentProps): Promise<ResponseFormat<CountContentResponse>> {
         try {
             const { cursor, orderBy, select, skip, take, where } = countContentSchema.parse(props);

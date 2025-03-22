@@ -1,19 +1,8 @@
-/**
- * Classe de service pour les opérations CRUD sur les diys
- * 
- * Ce fichier centralise toute la logique d'accès aux données pour les diys.
- * Il utilise les schémas Zod générés par zod-prisma-types pour la validation des données.
- * Chaque méthode retourne soit les données demandées, soit une erreur formatée.
- * 
- * Les types sont définis pour correspondre aux opérations Prisma (create, update, delete, etc.)
- * et suivent une nomenclature cohérente avec l'API Prisma.
- */
 import { ResponseFormat } from "@app/api/Routes";
 import PrismaInstance from "@lib/prisma";
 import { Prisma } from "@prisma/client";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import {
-    Diy,
     DiyCreateArgsSchema,
     DiyDeleteArgsSchema,
     DiyFindManyArgsSchema,
@@ -32,35 +21,18 @@ import { z, ZodError, ZodType } from "zod";
 // ============== Types ============== //
 
 export type DiyModel = z.infer<typeof DiySchema>;
-
 export type DiyRelationsOptional = z.infer<typeof DiySchema> & z.infer<typeof DiyIncludeSchema>;
-
 export type DiyRelationsComplete = z.infer<typeof DiyWithRelationsSchema>;
-
 export type DiyCount = number;
 
 // ============== Schema Types ============== //
 
 const createDiySchema: ZodType<Prisma.DiyCreateArgs> = DiyCreateArgsSchema;
-
 const upsertDiySchema: ZodType<Prisma.DiyUpsertArgs> = DiyUpsertArgsSchema;
-
 const updateDiySchema: ZodType<Prisma.DiyUpdateArgs> = DiyUpdateArgsSchema;
-
 const deleteDiySchema: ZodType<Prisma.DiyDeleteArgs> = DiyDeleteArgsSchema;
-
 const selectDiySchema: ZodType<Prisma.DiyFindUniqueArgs> = DiyFindUniqueArgsSchema;
-
 const selectManyDiySchema: ZodType<Prisma.DiyFindManyArgs> = DiyFindManyArgsSchema;
-
-/**
- * Définition du schéma pour DiyCountArgs
- * 
- * Ce schéma correspond au type Prisma.DiyCountArgs qui est défini comme:
- * Omit<DiyFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
- *   select?: DiyCountAggregateInputType | true
- * }
- */
 const countDiySchema: ZodType<Prisma.DiyCountArgs> = z.object({
     where: z.lazy(() => DiyWhereInputSchema).optional(),
     orderBy: z.union([
@@ -76,58 +48,39 @@ const countDiySchema: ZodType<Prisma.DiyCountArgs> = z.object({
 // ============== CRUD Props Types ============== //
 
 export type CreateDiyProps = z.infer<typeof createDiySchema>;
-
 export type UpsertDiyProps = z.infer<typeof upsertDiySchema>;
-
 export type UpdateDiyProps = z.infer<typeof updateDiySchema>;
-
 export type DeleteDiyProps = z.infer<typeof deleteDiySchema>;
-
 export type FindUniqueDiyProps = z.infer<typeof selectDiySchema>;
-
 export type FindManyDiyProps = z.infer<typeof selectManyDiySchema>;
-
 export type CountDiyProps = z.infer<typeof countDiySchema>;
 
 // ============== CRUD Response Types ============== //
 
-export type CreateDiyResponse = DiyModel;
-
-export type UpsertDiyResponse = DiyModel;
-
-export type UpdateDiyResponse = DiyModel;
-
-export type DeleteDiyResponse = DiyModel;
-
-export type FindUniqueDiyResponse = DiyRelationsOptional | null;
-
-export type FindManyDiyResponse = DiyRelationsOptional[];
-
+export type CreateDiyResponse<T extends CreateDiyProps> = Prisma.DiyGetPayload<T>;
+export type UpsertDiyResponse<T extends UpsertDiyProps> = Prisma.DiyGetPayload<T>;
+export type UpdateDiyResponse<T extends UpdateDiyProps> = Prisma.DiyGetPayload<T>;
+export type DeleteDiyResponse<T extends DeleteDiyProps> = Prisma.DiyGetPayload<T>;
+export type FindUniqueDiyResponse<T extends FindUniqueDiyProps> = Prisma.DiyGetPayload<T> | null;
+export type FindManyDiyResponse<T extends FindManyDiyProps> = Prisma.DiyGetPayload<T>[];
 export type CountDiyResponse = DiyCount;
 
 // ============== Services ============== //
 
-/**
- * Service pour les opérations de base de données sur les diys
- */
 export class DiyService {
-    /**
-     * Crée un(e) nouveau/nouvelle diy
-     * @param props Propriétés du/de la diy
-     * @returns Diy créé(e) ou erreur
-     */
-    static async create(props: CreateDiyProps): Promise<ResponseFormat<CreateDiyResponse>> {
+
+    static async create<T extends CreateDiyProps>(props: T): Promise<ResponseFormat<CreateDiyResponse<T>>> {
         try {
             const { data, include, omit, select } = createDiySchema.parse(props);
 
-            const diy: Diy = await PrismaInstance.diy.create({
+            const diy = await PrismaInstance.diy.create({
                 data,
                 ...(include && { include }),
                 ...(omit && { omit }),
                 ...(select && { select }),
             });
 
-            return { data: diy };
+            return { data: diy as CreateDiyResponse<T> };
         } catch (error) {
             console.error("DiyService -> Create -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -142,11 +95,11 @@ export class DiyService {
         }
     }
 
-    static async upsert(props: UpsertDiyProps): Promise<ResponseFormat<UpsertDiyResponse>> {
+    static async upsert<T extends UpsertDiyProps>(props: T): Promise<ResponseFormat<UpsertDiyResponse<T>>> {
         try {
             const { create, update, where, include, omit, select } = upsertDiySchema.parse(props);
 
-            const diy: Diy = await PrismaInstance.diy.upsert({
+            const diy = await PrismaInstance.diy.upsert({
                 create,
                 update,
                 where,
@@ -155,7 +108,7 @@ export class DiyService {
                 ...(select && { select }),
             });
 
-            return { data: diy };
+            return { data: diy as UpsertDiyResponse<T> };
         } catch (error) {
             console.error("DiyService -> Upsert -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -170,16 +123,11 @@ export class DiyService {
         }
     }
 
-    /**
-     * Met à jour un(e) diy
-     * @param props ID du/de la diy et nouvelles données
-     * @returns Diy mis(e) à jour ou erreur
-     */
-    static async update(props: UpdateDiyProps): Promise<ResponseFormat<UpdateDiyResponse>> {
+    static async update<T extends UpdateDiyProps>(props: T): Promise<ResponseFormat<UpdateDiyResponse<T>>> {
         try {
             const { data, where, include, omit, select } = updateDiySchema.parse(props);
 
-            const diy: Diy = await PrismaInstance.diy.update({
+            const diy = await PrismaInstance.diy.update({
                 data,
                 where,
                 ...(include && { include }),
@@ -187,7 +135,7 @@ export class DiyService {
                 ...(select && { select }),
             });
 
-            return { data: diy };
+            return { data: diy as UpdateDiyResponse<T> };
         } catch (error) {
             console.error("DiyService -> Update -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -202,23 +150,18 @@ export class DiyService {
         }
     }
 
-    /**
-     * Supprime un(e) diy
-     * @param props ID du/de la diy
-     * @returns Diy supprimé(e) ou erreur
-     */
-    static async delete(props: DeleteDiyProps): Promise<ResponseFormat<DeleteDiyResponse>> {
+    static async delete<T extends DeleteDiyProps>(props: T): Promise<ResponseFormat<DeleteDiyResponse<T>>> {
         try {
             const { where, include, omit, select } = deleteDiySchema.parse(props);
 
-            const diy: Diy = await PrismaInstance.diy.delete({
+            const diy = await PrismaInstance.diy.delete({
                 where,
                 ...(include && { include }),
                 ...(omit && { omit }),
                 ...(select && { select }),
             });
 
-            return { data: diy };
+            return { data: diy as DeleteDiyResponse<T> };
         } catch (error) {
             console.error("DiyService -> Delete -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -233,21 +176,18 @@ export class DiyService {
         }
     }
 
-    /**
-     * Récupère un(e) diy par ID ou autre filtre
-     */
-    static async findUnique(props: FindUniqueDiyProps): Promise<ResponseFormat<FindUniqueDiyResponse>> {
+    static async findUnique<T extends FindUniqueDiyProps>(props: T): Promise<ResponseFormat<FindUniqueDiyResponse<T>>> {
         try {
             const { where, include, omit, select } = selectDiySchema.parse(props);
 
-            const diy: DiyRelationsOptional | null = await PrismaInstance.diy.findUnique({
+            const diy = await PrismaInstance.diy.findUnique({
                 where,
                 ...(include && { include }),
                 ...(omit && { omit }),
                 ...(select && { select }),
             });
 
-            return { data: diy };
+            return { data: diy as FindUniqueDiyResponse<T> };
         } catch (error) {
             console.error("DiyService -> FindUnique -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -262,10 +202,7 @@ export class DiyService {
         }
     }
 
-    /**
-     * Récupère une liste de diys avec filtres
-     */
-    static async findMany(props: FindManyDiyProps): Promise<ResponseFormat<FindManyDiyResponse>> {
+    static async findMany<T extends FindManyDiyProps>(props: T): Promise<ResponseFormat<FindManyDiyResponse<T>>> {
         try {
             const {
                 cursor,
@@ -279,7 +216,7 @@ export class DiyService {
                 where,
             } = selectManyDiySchema.parse(props);
 
-            const diyList: DiyRelationsOptional[] = await PrismaInstance.diy.findMany({
+            const diyList = await PrismaInstance.diy.findMany({
                 ...(cursor && { cursor }),
                 ...(distinct && { distinct }),
                 ...(include && { include }),
@@ -291,7 +228,7 @@ export class DiyService {
                 ...(where && { where }),
             });
 
-            return { data: diyList };
+            return { data: diyList as FindManyDiyResponse<T> };
         } catch (error) {
             console.error("DiyService -> FindMany -> " + (error as Error).message);
             if (process.env.NODE_ENV === "development") {
@@ -306,9 +243,6 @@ export class DiyService {
         }
     }
 
-    /**
-     * Compte les diys avec filtres
-     */
     static async count(props: CountDiyProps): Promise<ResponseFormat<CountDiyResponse>> {
         try {
             const { cursor, orderBy, select, skip, take, where } = countDiySchema.parse(props);

@@ -13,7 +13,7 @@ import {
     ArticleUpsertArgsSchema,
     ArticleWhereInputSchema,
     ArticleWhereUniqueInputSchema,
-    ArticleWithRelationsSchema,
+    ArticleWithRelationsSchema
 } from "@services/schemas";
 import { ArticleIncludeSchema } from "@services/schemas/inputTypeSchemas/ArticleIncludeSchema";
 import { z, ZodError, ZodType } from "zod";
@@ -35,16 +35,14 @@ const selectArticleSchema: ZodType<Prisma.ArticleFindUniqueArgs> = ArticleFindUn
 const selectManyArticleSchema: ZodType<Prisma.ArticleFindManyArgs> = ArticleFindManyArgsSchema;
 const countArticleSchema: ZodType<Prisma.ArticleCountArgs> = z.object({
     where: z.lazy(() => ArticleWhereInputSchema).optional(),
-    orderBy: z
-        .union([
-            z.lazy(() => ArticleOrderByWithRelationInputSchema),
-            z.array(z.lazy(() => ArticleOrderByWithRelationInputSchema)),
-        ])
-        .optional(),
+    orderBy: z.union([
+        z.lazy(() => ArticleOrderByWithRelationInputSchema),
+        z.array(z.lazy(() => ArticleOrderByWithRelationInputSchema))
+    ]).optional(),
     cursor: z.lazy(() => ArticleWhereUniqueInputSchema).optional(),
     take: z.number().optional(),
     skip: z.number().optional(),
-    select: z.union([z.literal(true), z.record(z.boolean())]).optional(),
+    select: z.union([z.literal(true), z.record(z.boolean())]).optional()
 });
 
 // ============== CRUD Props Types ============== //
@@ -70,6 +68,7 @@ export type CountArticleResponse = ArticleCount;
 // ============== Services ============== //
 
 export class ArticleService {
+
     static async create<T extends CreateArticleProps>(props: T): Promise<ResponseFormat<CreateArticleResponse<T>>> {
         try {
             const { data, include, omit, select } = createArticleSchema.parse(props);
@@ -203,9 +202,6 @@ export class ArticleService {
         }
     }
 
-    /**
-     * Récupère une liste de articles avec filtres
-     */
     static async findMany<T extends FindManyArticleProps>(props: T): Promise<ResponseFormat<FindManyArticleResponse<T>>> {
         try {
             const {
@@ -247,9 +243,6 @@ export class ArticleService {
         }
     }
 
-    /**
-     * Compte les articles avec filtres
-     */
     static async count(props: CountArticleProps): Promise<ResponseFormat<CountArticleResponse>> {
         try {
             const { cursor, orderBy, select, skip, take, where } = countArticleSchema.parse(props);

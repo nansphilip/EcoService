@@ -2,14 +2,14 @@
 
 import { useFetch } from "@utils/FetchHook";
 import { SelectArticleList } from "@actions/ArticleAction";
-import { FindManyArticleResponse } from "@class/ArticleClass";
+import { FindManyArticleProps, FindManyArticleResponse } from "@class/ArticleClass";
 import { useEffect, useRef, useState } from "react";
 import Button from "@comps/ui/Button";
 
 type ClientProps = {
     initialData: {
-        dataApiInit: FindManyArticleResponse;
-        dataActionInit: FindManyArticleResponse;
+        dataApiInit: FindManyArticleResponse<FindManyArticleProps>;
+        dataActionInit: FindManyArticleResponse<FindManyArticleProps>;
     };
 };
 
@@ -20,10 +20,10 @@ export default function Client(props: ClientProps) {
     const [fetchAuthor, setFetchAuthor] = useState(true);
 
     // For Fetch and useFetch data
-    const [dataApi, setDataApi] = useState<FindManyArticleResponse>(dataApiInit);
+    const [dataApi, setDataApi] = useState<FindManyArticleResponse<FindManyArticleProps>>(dataApiInit);
 
     // For server and client Actions data
-    const [dataAction, setDataAction] = useState<FindManyArticleResponse>(dataActionInit);
+    const [dataAction, setDataAction] = useState<FindManyArticleResponse<FindManyArticleProps>>(dataActionInit);
     const [isLoadingAction, setIsLoadingAction] = useState(false);
     const [errorAction, setErrorAction] = useState<string>();
 
