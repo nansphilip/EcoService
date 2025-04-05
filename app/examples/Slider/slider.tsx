@@ -1,26 +1,63 @@
 "use client";
 
-import Card from "@comps/server/card";
-import ImageRatio from "@comps/server/imageRatio";
 import Button from "@comps/ui/button";
+import Loader from "@comps/ui/loader";
 import { combo } from "@lib/combo";
 import { motion, PanInfo } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-import { ProductListType } from "./fetchParams";
+import {
+    Children,
+    cloneElement,
+    DetailedReactHTMLElement,
+    HTMLAttributes,
+    ReactNode,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from "react";
+import { useWidth } from "./useWidth";
+
+type ItemNumberType = { minWidth: number; itemAmount: number }[];
 
 type SliderProps = {
-    dataList: ProductListType;
-    itemNumber?: number;
+    dataListLength: number;
+    itemsPerBreakpoint?: ItemNumberType;
     gap?: number;
     paddingX?: number;
     paddingY?: number;
     overflow?: boolean;
     className?: string;
+    children: ReactNode;
 };
 
 const Slider = (props: SliderProps) => {
-    const { dataList, className, itemNumber = 3, gap = 16, paddingX = 8, paddingY = 8, overflow = false } = props;
+    const {
+        dataListLength,
+        className,
+        itemsPerBreakpoint = [
+            { minWidth: 0, itemAmount: 1 },
+            { minWidth: 768, itemAmount: 2 },
+            { minWidth: 1024, itemAmount: 3 },
+        ],
+        gap = 16,
+        paddingX = 8,
+        paddingY = 8,
+        overflow = false,
+        children,
+    } = props;
+
+    // Get window width
+    const windowWidth = useWidth();
+
+    // Sort breakpoints from highest to lowest for the find method
+    const sortedItemsPerBreakpoint = useMemo(
+        () => [...itemsPerBreakpoint].sort((a, b) => b.minWidth - a.minWidth),
+        [itemsPerBreakpoint],
+    );
+
+    // Get the number of items per breakpoint
+    const itemNumber = sortedItemsPerBreakpoint.find(({ minWidth }) => (windowWidth ?? 0) >= minWidth)!.itemAmount;
 
     // Slider states
     const sliderRef = useRef<HTMLDivElement>(null);
@@ -37,7 +74,7 @@ const Slider = (props: SliderProps) => {
 
     // Swipe to right
     const handleNext = () => {
-        if (currentIndex < dataList.length - itemNumber) setCurrentIndex((prev) => prev + 1);
+        if (currentIndex < dataListLength - itemNumber) setCurrentIndex((prev) => prev + 1);
     };
 
     // Handle dragging
@@ -56,7 +93,7 @@ const Slider = (props: SliderProps) => {
 
         // Power
         const power = velocityX * offsetX;
-        const limit = 50000;
+        const limit = 10000;
 
         // Swipe
         if (toLeft && power > limit) {
@@ -73,7 +110,17 @@ const Slider = (props: SliderProps) => {
             const itemWidth = slider.children[0].getBoundingClientRect().width;
             setTranslateX(-currentIndex * (itemWidth + gap));
         }
-    }, [currentIndex, gap]);
+    }, [windowWidth, currentIndex, gap]); // windowWidth is required to re-position the slider on resize
+
+    // Display a loader until the window width is defined
+    if (windowWidth === undefined) {
+        return (
+            <div className="flex h-40 w-full items-center justify-center gap-3">
+                <Loader />
+                <span>Loading...</span>
+            </div>
+        );
+    }
 
     return (
         <div className={combo("relative w-full", className)}>
@@ -92,10 +139,19 @@ const Slider = (props: SliderProps) => {
                 onDragStart={() => setIsDragging(true)}
                 onDragEnd={handleDrag}
                 // Style
+                initial={{ transform: `translateX(${translateX}px)` }}
+                animate={{ transform: `translateX(${translateX}px)` }}
+                transition={{
+                    duration: 0.4,
+                    ease: "easeInOut",
+                    type: "spring",
+                    bounce: 0.2,
+                }}
                 style={{
                     gap: `${gap}px`,
                     paddingInline: `${paddingX}px`,
                     paddingBlock: `${paddingY}px`,
+                    // target children to apply style ?
                 }}
                 className={combo(
                     "flex flex-row items-stretch justify-start outline-none",
@@ -118,43 +174,44 @@ const Slider = (props: SliderProps) => {
                     }
                 }}
             >
-                {/* Slider items */}
-                {dataList.map(({ name, description, price, image }, index) => {
-                    const gapOffset = `calc(${gap}px / (${itemNumber} / ${itemNumber - 1}))`;
-                    const itemWidth = `calc(100% / ${itemNumber} - ${gapOffset})`;
-
-                    return (
-                        <motion.div
-                            key={index}
-                            initial={{ transform: `translateX(${translateX}px)` }}
-                            animate={{ transform: `translateX(${translateX}px)` }}
-                            transition={{
-                                duration: 0.4,
-                                ease: "easeInOut",
-                                type: "spring",
-                                bounce: 0.2,
-                            }}
-                            style={{
-                                width: itemWidth,
-                            }}
-                            className="shrink-0 grow-0"
-                        >
-                            <Card className={combo("h-full overflow-hidden p-0")}>
-                                <ImageRatio src={image} alt={name} onMouseDown={(e) => e.preventDefault()} />
-                                <div className="p-7">
-                                    <div className="flex flex-row items-end justify-between">
-                                        <h2 className="text-xl font-bold">{name}</h2>
-                                        <p className="font-bold text-nowrap text-gray-500">{price} €</p>
-                                    </div>
-                                    <p className="text-sm text-gray-500">{description}</p>
-                                </div>
-                            </Card>
-                        </motion.div>
-                    );
-                })}
+                {Children.map(children, (child) =>
+                    cloneElement(child as DetailedReactHTMLElement<HTMLAttributes<HTMLElement>, HTMLElement>, {
+                        style: {
+                            width: `calc(100% / ${itemNumber} - (${gap}px / (${itemNumber} / ${itemNumber - 1}) ) )`,
+                            flexShrink: 0,
+                            flexGrow: 0,
+                        },
+                    }),
+                )}
             </motion.div>
 
             {/* Swipe buttons */}
+            <NavButtons
+                handlePrevious={handlePrevious}
+                handleNext={handleNext}
+                currentIndex={currentIndex}
+                dataListLength={dataListLength}
+                itemNumber={itemNumber}
+            />
+        </div>
+    );
+};
+
+export default Slider;
+
+type NavButtonsProps = {
+    handlePrevious: () => void;
+    handleNext: () => void;
+    currentIndex: number;
+    dataListLength: number;
+    itemNumber: number;
+};
+
+const NavButtons = (props: NavButtonsProps) => {
+    const { handlePrevious, handleNext, currentIndex, dataListLength, itemNumber } = props;
+
+    return (
+        <>
             <Button
                 label="Previous"
                 onClick={handlePrevious}
@@ -172,15 +229,13 @@ const Slider = (props: SliderProps) => {
                 onClick={handleNext}
                 className={combo(
                     "absolute top-1/2 -right-1.5 -translate-y-1/2 rounded-full p-1",
-                    currentIndex === dataList.length - itemNumber && "opacity-50 hover:opacity-50",
+                    currentIndex === dataListLength - itemNumber && "opacity-50 hover:opacity-50",
                 )}
-                disabled={currentIndex === dataList.length - itemNumber}
+                disabled={currentIndex === dataListLength - itemNumber}
                 baseStyleWithout={["padding"]}
             >
                 <ChevronRight className="size-10 translate-x-px" />
             </Button>
-        </div>
+        </>
     );
 };
-
-export default Slider;
