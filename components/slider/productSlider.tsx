@@ -1,24 +1,20 @@
 "use client";
 
+import Slider from "@comps/ui/slider";
 import { useBasketStore } from "@comps/basket/basketStore";
-import ButtonClient from "@comps/client/button";
 import ImageRatio from "@comps/server/imageRatio";
-import { ProductListType } from "@comps/slider/fetchParams";
-import { combo } from "@lib/combo";
+import Button from "@comps/ui/button";
 import { CircleCheck, CirclePlus, CircleX, ShoppingCart } from "lucide-react";
+import { ProductListType } from "./fetchParams";
 import Link from "next/link";
-import "swiper/css";
-import "swiper/css/pagination";
-import { Pagination } from "swiper/modules";
-import { Swiper, SwiperSlide } from "swiper/react";
+import Card from "@comps/server/card";
 
 type ProductSliderProps = {
-    className?: string;
     dataList: ProductListType;
 };
 
 export default function ProductSlider(props: ProductSliderProps) {
-    const { className, dataList } = props;
+    const { dataList } = props;
 
     const { basketProductList, addProductToBasket, removeProductFromBasket } = useBasketStore();
 
@@ -33,57 +29,18 @@ export default function ProductSlider(props: ProductSliderProps) {
     };
 
     return (
-        <Swiper
-            className={combo(className)}
-            slidesPerView={3.2}
-            pagination={{
-                enabled: true,
-                dynamicBullets: true,
-                clickable: true,
-            }}
-            breakpoints={{
-                1280: {
-                    slidesPerView: 4.2,
-                },
-                1024: {
-                    slidesPerView: 3.2,
-                },
-                768: {
-                    slidesPerView: 2.2,
-                },
-                480: {
-                    slidesPerView: 1.2,
-                },
-                320: {
-                    slidesPerView: 1.2,
-                },
-                20: {
-                    slidesPerView: 1.2,
-                },
-            }}
-            modules={[Pagination]}
-            loop
-        >
+        <Slider dataListLength={dataList.length}>
             {dataList.map((product) => (
-                <SwiperSlide key={product.id} className="h-full">
-                    <Link
-                        href={`/product/${product.id}`}
-                        className="group m-3 mb-6 flex h-full flex-col overflow-hidden rounded-xl border border-gray-300 bg-white shadow-md"
-                    >
-                        <div className="h-48 overflow-hidden">
-                            <ImageRatio
-                                src={product.image}
-                                alt={product.name}
-                                className="size-full transition-transform duration-300 group-hover:scale-105"
-                            />
-                        </div>
-                        <div className="flex flex-1 flex-col p-4">
-                            <h3 className="mb-2 line-clamp-1 text-xl font-semibold transition-colors duration-300 group-hover:text-teal-600">
+                <Link key={product.id} href={`/product/${product.id}`}>
+                    <Card className="overflow-hidden p-0">
+                        <ImageRatio src={product.image} alt={product.name} />
+                        <div className="p-5">
+                            <h3 className="text-xl font-bold">
                                 {product.name}
                             </h3>
-                            <p className="text-primary mb-4 text-lg">{product.price.toFixed(2)} €</p>
+                            <div className="text-primary mb-4 text-lg">{product.price.toFixed(2)} €</div>
                             <div className="mt-auto flex items-center justify-end">
-                                <ButtonClient
+                                <Button
                                     type="button"
                                     label="add-to-basket"
                                     onClick={(e) => handleClick(e, product)}
@@ -100,12 +57,12 @@ export default function ProductSlider(props: ProductSliderProps) {
                                             <ShoppingCart />
                                         </>
                                     )}
-                                </ButtonClient>
+                                </Button>
                             </div>
                         </div>
-                    </Link>
-                </SwiperSlide>
+                    </Card>
+                </Link>
             ))}
-        </Swiper>
+        </Slider>
     );
 }

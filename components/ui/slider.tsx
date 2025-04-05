@@ -16,7 +16,7 @@ import {
     useRef,
     useState,
 } from "react";
-import { useWidth } from "./useWidth";
+import { useWidth } from "@utils/useWidth";
 
 type ItemNumberType = { minWidth: number; itemAmount: number }[];
 

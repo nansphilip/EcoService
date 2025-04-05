@@ -1,8 +1,8 @@
 import { FetchV2 } from "@utils/FetchV2";
 import { ProductFetchParams } from "./fetchParams";
-import Slider from "./slider";
 import Card from "@comps/server/card";
 import ImageRatio from "@comps/server/imageRatio";
+import Slider from "@comps/ui/slider";
 
 export default async function Page() {
     const productList = await FetchV2({
