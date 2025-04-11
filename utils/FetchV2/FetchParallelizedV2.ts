@@ -38,6 +38,37 @@ import { FetchProps, FetchResponse, FetchV2, Params, Route } from "./FetchV2";
  * Ci-dessous se trouve la version où l'inférence dynamique du typage de la réponse Prisma fonctionne. Mais le typage des `params` en fonction de la `route` sélectionnée ne fonctionne pas.
  */
 
+// type MapProps<
+//     Input,
+//     R extends Route<Input>[],
+//     P extends { [K in keyof R]: Params<Input, R[K]> }
+// > = {
+//     [K in keyof R]: FetchProps<Input, R[K], P[K]>;
+// };
+
+// type MapResponse<T> = T extends FetchProps<infer Input, infer R, infer P>
+//     ? FetchResponse<Input, R, P>
+//     : never;
+
+// export const FetchParallelizedV2 = async <
+//     Input,
+//     R extends Route<Input>[],
+//     P extends { [K in keyof R]: Params<Input, R[K]> },
+//     T extends MapProps<Input, R, P>
+// >(
+//     paramList: T
+// ): Promise<{ [K in keyof T]: MapResponse<T[K]> }> => {
+//     const promises = paramList.map((param) => FetchV2(param));
+
+//     return Promise.all(promises) as Promise<{ [K in keyof T]: MapResponse<T[K]> }>;
+// };
+
+/**
+ * Ci-dessous se trouve la version qui doit faire les deux :
+ * - Inférence dynamique du typage des `params` en fonction de la `route` sélectionnée
+ * - Inférence dynamique du typage de la réponse Prisma
+ */
+
 type MapProps<
     Input,
     R extends Route<Input>[],
@@ -62,27 +93,3 @@ export const FetchParallelizedV2 = async <
 
     return Promise.all(promises) as Promise<{ [K in keyof T]: MapResponse<T[K]> }>;
 };
-
-/**
- * Ci-dessous se trouve la version qui doit faire les deux :
- * - Inférence dynamique du typage des `params` en fonction de la `route` sélectionnée
- * - Inférence dynamique du typage de la réponse Prisma
- */
-
-// type MapProps<Input, R extends Route<Input>[]> = {
-//     [K in keyof R]: FetchProps<Input, R[K], Params<Input, R[K]>>;
-// };
-
-// type MapResponse<Input, R extends Route<Input>[]> = {
-//     [K in keyof R]: FetchResponse<Input, R[K], Params<Input, R[K]>>;
-// };
-
-// export function FetchParallelizedV2<
-//     Input,
-//     R extends Route<Input>[]
-// >(
-//     paramList: MapProps<Input, R>
-// ): Promise<MapResponse<Input, R>> {
-//     const promises = paramList.map((param) => FetchV2(param));
-//     return Promise.all(promises) as Promise<MapResponse<Input, R>>;
-// }
