@@ -2,8 +2,9 @@
 
 import FruitService from "@services/class/FruitClass";
 import { CountFruitProps, CountFruitResponse, CreateFruitProps, CreateFruitResponse, DeleteFruitProps, DeleteFruitResponse, FindManyFruitProps, FindManyFruitResponse, FindUniqueFruitProps, FindUniqueFruitResponse, UpdateFruitProps, UpdateFruitResponse, UpsertFruitProps, UpsertFruitResponse } from "@services/types/FruitType";
+import { Exact } from "@utils/FetchConfig";
 
-export const CreateFruit = async <T extends CreateFruitProps>(props: T): Promise<CreateFruitResponse<T>> => {
+export const CreateFruit = async <T extends CreateFruitProps>(props: Exact<CreateFruitProps, T>): Promise<CreateFruitResponse<T>> => {
     try {
         const { data, error } = await FruitService.create(props);
         if (!data || error) throw new Error(error);
@@ -13,7 +14,7 @@ export const CreateFruit = async <T extends CreateFruitProps>(props: T): Promise
     }
 };
 
-export const UpsertFruit = async <T extends UpsertFruitProps>(props: T): Promise<UpsertFruitResponse<T>> => {
+export const UpsertFruit = async <T extends UpsertFruitProps>(props: Exact<UpsertFruitProps, T>): Promise<UpsertFruitResponse<T>> => {
     try {
         const { data, error } = await FruitService.upsert(props);
         if (!data || error) throw new Error(error);
@@ -23,7 +24,7 @@ export const UpsertFruit = async <T extends UpsertFruitProps>(props: T): Promise
     }
 };
 
-export const UpdateFruit = async <T extends UpdateFruitProps>(props: T): Promise<UpdateFruitResponse<T>> => {
+export const UpdateFruit = async <T extends UpdateFruitProps>(props: Exact<UpdateFruitProps, T>): Promise<UpdateFruitResponse<T>> => {
     try {
         const { data, error } = await FruitService.update(props);
         if (!data || error) throw new Error(error);
@@ -33,7 +34,7 @@ export const UpdateFruit = async <T extends UpdateFruitProps>(props: T): Promise
     }
 };
 
-export const DeleteFruit = async <T extends DeleteFruitProps>(props: T): Promise<DeleteFruitResponse<T>> => {
+export const DeleteFruit = async <T extends DeleteFruitProps>(props: Exact<DeleteFruitProps, T>): Promise<DeleteFruitResponse<T>> => {
     try {
         const { data, error } = await FruitService.delete(props);
         if (!data || error) throw new Error(error);
@@ -47,7 +48,7 @@ export const DeleteFruit = async <T extends DeleteFruitProps>(props: T): Promise
  * WARNING: do not use this for fetching data -> use API routes with caching instead
  */
 export const SelectFruit = async <T extends FindUniqueFruitProps>(
-    props: T
+    props: Exact<FindUniqueFruitProps, T>
 ): Promise<FindUniqueFruitResponse<T>> => {
     try {
         const { data, error } = await FruitService.findUnique(props);
@@ -62,7 +63,7 @@ export const SelectFruit = async <T extends FindUniqueFruitProps>(
  * WARNING: do not use this for fetching data -> use API routes with caching instead
  */
 export const SelectFruitList = async <T extends FindManyFruitProps>(
-    props: T
+    props: Exact<FindManyFruitProps, T>
 ): Promise<FindManyFruitResponse<T>> => {
     try {
         const { data, error } = await FruitService.findMany(props);

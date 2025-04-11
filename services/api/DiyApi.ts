@@ -3,16 +3,17 @@ import { CountDiyProps, CountDiyResponse, FindManyDiyProps, FindManyDiyResponse,
 import { parseAndDecodeParams, revalidate } from "@utils/FetchConfig";
 import { unstable_cache as cache } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
+import { Exact } from "@utils/FetchConfig";
 
 // ============== API Routes Types ============== //
 
 export type DiyRoutes<Input> = {
     "/diy": {
-        params: FindManyDiyProps,
+        params: Exact<FindManyDiyProps, Input extends FindManyDiyProps ? Input : never>,
         response: FindManyDiyResponse<Input extends FindManyDiyProps ? Input : never>
     },
     "/diy/unique": {
-        params: FindUniqueDiyProps,
+        params: Exact<FindUniqueDiyProps, Input extends FindUniqueDiyProps ? Input : never>,
         response: FindUniqueDiyResponse<Input extends FindUniqueDiyProps ? Input : never>
     },
     "/diy/count": {
@@ -23,15 +24,15 @@ export type DiyRoutes<Input> = {
 
 // ==================== Find Many ==================== //
 
-const diyListCached = cache(async <T extends FindManyDiyProps>(params: T) => DiyService.findMany(params), ["diy"], {
+const diyListCached = cache(async <T extends FindManyDiyProps>(params: Exact<FindManyDiyProps, T>) => DiyService.findMany(params), ["diy"], {
     revalidate,
     tags: ["diy"],
 });
 
 export const SelectDiyList = async <T extends FindManyDiyProps>(request: NextRequest) => {
     try {
-        const params: T = parseAndDecodeParams(request);
-        const response = await diyListCached<T>(params);
+        const params: Exact<FindManyDiyProps, T> = parseAndDecodeParams(request);
+        const response = await diyListCached(params);
         return NextResponse.json(response, { status: 200 });
     } catch (error) {
         return NextResponse.json({ error: "getDiyListCached -> " + (error as Error).message }, { status: 500 });
@@ -41,15 +42,15 @@ export const SelectDiyList = async <T extends FindManyDiyProps>(request: NextReq
 // ==================== Find Unique ==================== //
 
 const diyUniqueCached = cache(
-    async <T extends FindUniqueDiyProps>(params: T) => DiyService.findUnique(params),
+    async <T extends FindUniqueDiyProps>(params: Exact<FindUniqueDiyProps, T>) => DiyService.findUnique(params),
     ["diy/unique"],
     { revalidate, tags: ["diy/unique"] },
 );
 
 export const SelectDiyUnique = async <T extends FindUniqueDiyProps>(request: NextRequest) => {
     try {
-        const params: T = parseAndDecodeParams(request);
-        const response = await diyUniqueCached<T>(params);
+        const params: Exact<FindUniqueDiyProps, T> = parseAndDecodeParams(request);
+        const response = await diyUniqueCached(params);
         return NextResponse.json(response, { status: 200 });
     } catch (error) {
         return NextResponse.json({ error: "getDiyUniqueCached -> " + (error as Error).message }, { status: 500 });

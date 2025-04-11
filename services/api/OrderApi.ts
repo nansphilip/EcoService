@@ -3,16 +3,17 @@ import { CountOrderProps, CountOrderResponse, FindManyOrderProps, FindManyOrderR
 import { parseAndDecodeParams, revalidate } from "@utils/FetchConfig";
 import { unstable_cache as cache } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
+import { Exact } from "@utils/FetchConfig";
 
 // ============== API Routes Types ============== //
 
 export type OrderRoutes<Input> = {
     "/order": {
-        params: FindManyOrderProps,
+        params: Exact<FindManyOrderProps, Input extends FindManyOrderProps ? Input : never>,
         response: FindManyOrderResponse<Input extends FindManyOrderProps ? Input : never>
     },
     "/order/unique": {
-        params: FindUniqueOrderProps,
+        params: Exact<FindUniqueOrderProps, Input extends FindUniqueOrderProps ? Input : never>,
         response: FindUniqueOrderResponse<Input extends FindUniqueOrderProps ? Input : never>
     },
     "/order/count": {
@@ -23,15 +24,15 @@ export type OrderRoutes<Input> = {
 
 // ==================== Find Many ==================== //
 
-const orderListCached = cache(async <T extends FindManyOrderProps>(params: T) => OrderService.findMany(params), ["order"], {
+const orderListCached = cache(async <T extends FindManyOrderProps>(params: Exact<FindManyOrderProps, T>) => OrderService.findMany(params), ["order"], {
     revalidate,
     tags: ["order"],
 });
 
 export const SelectOrderList = async <T extends FindManyOrderProps>(request: NextRequest) => {
     try {
-        const params: T = parseAndDecodeParams(request);
-        const response = await orderListCached<T>(params);
+        const params: Exact<FindManyOrderProps, T> = parseAndDecodeParams(request);
+        const response = await orderListCached(params);
         return NextResponse.json(response, { status: 200 });
     } catch (error) {
         return NextResponse.json({ error: "getOrderListCached -> " + (error as Error).message }, { status: 500 });
@@ -41,15 +42,15 @@ export const SelectOrderList = async <T extends FindManyOrderProps>(request: Nex
 // ==================== Find Unique ==================== //
 
 const orderUniqueCached = cache(
-    async <T extends FindUniqueOrderProps>(params: T) => OrderService.findUnique(params),
+    async <T extends FindUniqueOrderProps>(params: Exact<FindUniqueOrderProps, T>) => OrderService.findUnique(params),
     ["order/unique"],
     { revalidate, tags: ["order/unique"] },
 );
 
 export const SelectOrderUnique = async <T extends FindUniqueOrderProps>(request: NextRequest) => {
     try {
-        const params: T = parseAndDecodeParams(request);
-        const response = await orderUniqueCached<T>(params);
+        const params: Exact<FindUniqueOrderProps, T> = parseAndDecodeParams(request);
+        const response = await orderUniqueCached(params);
         return NextResponse.json(response, { status: 200 });
     } catch (error) {
         return NextResponse.json({ error: "getOrderUniqueCached -> " + (error as Error).message }, { status: 500 });

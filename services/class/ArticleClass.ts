@@ -1,11 +1,11 @@
 import PrismaInstance from "@lib/prisma";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { ArticleCount, CountArticleProps, CountArticleResponse, CreateArticleProps, CreateArticleResponse, DeleteArticleProps, DeleteArticleResponse, FindManyArticleProps, FindManyArticleResponse, FindUniqueArticleProps, FindUniqueArticleResponse, UpdateArticleProps, UpdateArticleResponse, UpsertArticleProps, UpsertArticleResponse, countArticleSchema, createArticleSchema, deleteArticleSchema, selectArticleSchema, selectManyArticleSchema, updateArticleSchema, upsertArticleSchema } from "@services/types/ArticleType";
-import { ResponseFormat } from "@utils/FetchConfig";
+import { Exact, ResponseFormat } from "@utils/FetchConfig";
 import { ZodError } from "zod";
 
 export default class ArticleService {
-    static async create<T extends CreateArticleProps>(props: T): Promise<ResponseFormat<CreateArticleResponse<T>>> {
+    static async create<T extends CreateArticleProps>(props: Exact<CreateArticleProps, T>): Promise<ResponseFormat<CreateArticleResponse<T>>> {
         try {
             const { data, include, omit, select } = createArticleSchema.parse(props);
 
@@ -31,7 +31,7 @@ export default class ArticleService {
         }
     }
 
-    static async upsert<T extends UpsertArticleProps>(props: T): Promise<ResponseFormat<UpsertArticleResponse<T>>> {
+    static async upsert<T extends UpsertArticleProps>(props: Exact<UpsertArticleProps, T>): Promise<ResponseFormat<UpsertArticleResponse<T>>> {
         try {
             const { create, update, where, include, omit, select } = upsertArticleSchema.parse(props);
 
@@ -59,7 +59,7 @@ export default class ArticleService {
         }
     }
 
-    static async update<T extends UpdateArticleProps>(props: T): Promise<ResponseFormat<UpdateArticleResponse<T>>> {
+    static async update<T extends UpdateArticleProps>(props: Exact<UpdateArticleProps, T>): Promise<ResponseFormat<UpdateArticleResponse<T>>> {
         try {
             const { data, where, include, omit, select } = updateArticleSchema.parse(props);
 
@@ -86,7 +86,7 @@ export default class ArticleService {
         }
     }
 
-    static async delete<T extends DeleteArticleProps>(props: T): Promise<ResponseFormat<DeleteArticleResponse<T>>> {
+    static async delete<T extends DeleteArticleProps>(props: Exact<DeleteArticleProps, T>): Promise<ResponseFormat<DeleteArticleResponse<T>>> {
         try {
             const { where, include, omit, select } = deleteArticleSchema.parse(props);
 
@@ -112,7 +112,7 @@ export default class ArticleService {
         }
     }
 
-    static async findUnique<T extends FindUniqueArticleProps>(props: T): Promise<ResponseFormat<FindUniqueArticleResponse<T>>> {
+    static async findUnique<T extends FindUniqueArticleProps>(props: Exact<FindUniqueArticleProps, T>): Promise<ResponseFormat<FindUniqueArticleResponse<T>>> {
         try {
             const { where, include, omit, select } = selectArticleSchema.parse(props);
 
@@ -138,7 +138,7 @@ export default class ArticleService {
         }
     }
 
-    static async findMany<T extends FindManyArticleProps>(props: T): Promise<ResponseFormat<FindManyArticleResponse<T>>> {
+    static async findMany<T extends FindManyArticleProps>(props: Exact<FindManyArticleProps, T>): Promise<ResponseFormat<FindManyArticleResponse<T>>> {
         try {
             const {
                 cursor,

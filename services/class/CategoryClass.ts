@@ -1,11 +1,11 @@
 import PrismaInstance from "@lib/prisma";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { CategoryCount, CountCategoryProps, CountCategoryResponse, CreateCategoryProps, CreateCategoryResponse, DeleteCategoryProps, DeleteCategoryResponse, FindManyCategoryProps, FindManyCategoryResponse, FindUniqueCategoryProps, FindUniqueCategoryResponse, UpdateCategoryProps, UpdateCategoryResponse, UpsertCategoryProps, UpsertCategoryResponse, countCategorySchema, createCategorySchema, deleteCategorySchema, selectCategorySchema, selectManyCategorySchema, updateCategorySchema, upsertCategorySchema } from "@services/types/CategoryType";
-import { ResponseFormat } from "@utils/FetchConfig";
+import { Exact, ResponseFormat } from "@utils/FetchConfig";
 import { ZodError } from "zod";
 
 export default class CategoryService {
-    static async create<T extends CreateCategoryProps>(props: T): Promise<ResponseFormat<CreateCategoryResponse<T>>> {
+    static async create<T extends CreateCategoryProps>(props: Exact<CreateCategoryProps, T>): Promise<ResponseFormat<CreateCategoryResponse<T>>> {
         try {
             const { data, include, omit, select } = createCategorySchema.parse(props);
 
@@ -31,7 +31,7 @@ export default class CategoryService {
         }
     }
 
-    static async upsert<T extends UpsertCategoryProps>(props: T): Promise<ResponseFormat<UpsertCategoryResponse<T>>> {
+    static async upsert<T extends UpsertCategoryProps>(props: Exact<UpsertCategoryProps, T>): Promise<ResponseFormat<UpsertCategoryResponse<T>>> {
         try {
             const { create, update, where, include, omit, select } = upsertCategorySchema.parse(props);
 
@@ -59,7 +59,7 @@ export default class CategoryService {
         }
     }
 
-    static async update<T extends UpdateCategoryProps>(props: T): Promise<ResponseFormat<UpdateCategoryResponse<T>>> {
+    static async update<T extends UpdateCategoryProps>(props: Exact<UpdateCategoryProps, T>): Promise<ResponseFormat<UpdateCategoryResponse<T>>> {
         try {
             const { data, where, include, omit, select } = updateCategorySchema.parse(props);
 
@@ -86,7 +86,7 @@ export default class CategoryService {
         }
     }
 
-    static async delete<T extends DeleteCategoryProps>(props: T): Promise<ResponseFormat<DeleteCategoryResponse<T>>> {
+    static async delete<T extends DeleteCategoryProps>(props: Exact<DeleteCategoryProps, T>): Promise<ResponseFormat<DeleteCategoryResponse<T>>> {
         try {
             const { where, include, omit, select } = deleteCategorySchema.parse(props);
 
@@ -112,7 +112,7 @@ export default class CategoryService {
         }
     }
 
-    static async findUnique<T extends FindUniqueCategoryProps>(props: T): Promise<ResponseFormat<FindUniqueCategoryResponse<T>>> {
+    static async findUnique<T extends FindUniqueCategoryProps>(props: Exact<FindUniqueCategoryProps, T>): Promise<ResponseFormat<FindUniqueCategoryResponse<T>>> {
         try {
             const { where, include, omit, select } = selectCategorySchema.parse(props);
 
@@ -138,7 +138,7 @@ export default class CategoryService {
         }
     }
 
-    static async findMany<T extends FindManyCategoryProps>(props: T): Promise<ResponseFormat<FindManyCategoryResponse<T>>> {
+    static async findMany<T extends FindManyCategoryProps>(props: Exact<FindManyCategoryProps, T>): Promise<ResponseFormat<FindManyCategoryResponse<T>>> {
         try {
             const {
                 cursor,

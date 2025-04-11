@@ -1,11 +1,11 @@
 import PrismaInstance from "@lib/prisma";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { ContentCount, CountContentProps, CountContentResponse, CreateContentProps, CreateContentResponse, DeleteContentProps, DeleteContentResponse, FindManyContentProps, FindManyContentResponse, FindUniqueContentProps, FindUniqueContentResponse, UpdateContentProps, UpdateContentResponse, UpsertContentProps, UpsertContentResponse, countContentSchema, createContentSchema, deleteContentSchema, selectContentSchema, selectManyContentSchema, updateContentSchema, upsertContentSchema } from "@services/types/ContentType";
-import { ResponseFormat } from "@utils/FetchConfig";
+import { Exact, ResponseFormat } from "@utils/FetchConfig";
 import { ZodError } from "zod";
 
 export default class ContentService {
-    static async create<T extends CreateContentProps>(props: T): Promise<ResponseFormat<CreateContentResponse<T>>> {
+    static async create<T extends CreateContentProps>(props: Exact<CreateContentProps, T>): Promise<ResponseFormat<CreateContentResponse<T>>> {
         try {
             const { data, include, omit, select } = createContentSchema.parse(props);
 
@@ -31,7 +31,7 @@ export default class ContentService {
         }
     }
 
-    static async upsert<T extends UpsertContentProps>(props: T): Promise<ResponseFormat<UpsertContentResponse<T>>> {
+    static async upsert<T extends UpsertContentProps>(props: Exact<UpsertContentProps, T>): Promise<ResponseFormat<UpsertContentResponse<T>>> {
         try {
             const { create, update, where, include, omit, select } = upsertContentSchema.parse(props);
 
@@ -59,7 +59,7 @@ export default class ContentService {
         }
     }
 
-    static async update<T extends UpdateContentProps>(props: T): Promise<ResponseFormat<UpdateContentResponse<T>>> {
+    static async update<T extends UpdateContentProps>(props: Exact<UpdateContentProps, T>): Promise<ResponseFormat<UpdateContentResponse<T>>> {
         try {
             const { data, where, include, omit, select } = updateContentSchema.parse(props);
 
@@ -86,7 +86,7 @@ export default class ContentService {
         }
     }
 
-    static async delete<T extends DeleteContentProps>(props: T): Promise<ResponseFormat<DeleteContentResponse<T>>> {
+    static async delete<T extends DeleteContentProps>(props: Exact<DeleteContentProps, T>): Promise<ResponseFormat<DeleteContentResponse<T>>> {
         try {
             const { where, include, omit, select } = deleteContentSchema.parse(props);
 
@@ -112,7 +112,7 @@ export default class ContentService {
         }
     }
 
-    static async findUnique<T extends FindUniqueContentProps>(props: T): Promise<ResponseFormat<FindUniqueContentResponse<T>>> {
+    static async findUnique<T extends FindUniqueContentProps>(props: Exact<FindUniqueContentProps, T>): Promise<ResponseFormat<FindUniqueContentResponse<T>>> {
         try {
             const { where, include, omit, select } = selectContentSchema.parse(props);
 
@@ -138,7 +138,7 @@ export default class ContentService {
         }
     }
 
-    static async findMany<T extends FindManyContentProps>(props: T): Promise<ResponseFormat<FindManyContentResponse<T>>> {
+    static async findMany<T extends FindManyContentProps>(props: Exact<FindManyContentProps, T>): Promise<ResponseFormat<FindManyContentResponse<T>>> {
         try {
             const {
                 cursor,

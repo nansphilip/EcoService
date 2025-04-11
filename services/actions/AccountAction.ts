@@ -2,8 +2,9 @@
 
 import AccountService from "@services/class/AccountClass";
 import { CountAccountProps, CountAccountResponse, CreateAccountProps, CreateAccountResponse, DeleteAccountProps, DeleteAccountResponse, FindManyAccountProps, FindManyAccountResponse, FindUniqueAccountProps, FindUniqueAccountResponse, UpdateAccountProps, UpdateAccountResponse, UpsertAccountProps, UpsertAccountResponse } from "@services/types/AccountType";
+import { Exact } from "@utils/FetchConfig";
 
-export const CreateAccount = async <T extends CreateAccountProps>(props: T): Promise<CreateAccountResponse<T>> => {
+export const CreateAccount = async <T extends CreateAccountProps>(props: Exact<CreateAccountProps, T>): Promise<CreateAccountResponse<T>> => {
     try {
         const { data, error } = await AccountService.create(props);
         if (!data || error) throw new Error(error);
@@ -13,7 +14,7 @@ export const CreateAccount = async <T extends CreateAccountProps>(props: T): Pro
     }
 };
 
-export const UpsertAccount = async <T extends UpsertAccountProps>(props: T): Promise<UpsertAccountResponse<T>> => {
+export const UpsertAccount = async <T extends UpsertAccountProps>(props: Exact<UpsertAccountProps, T>): Promise<UpsertAccountResponse<T>> => {
     try {
         const { data, error } = await AccountService.upsert(props);
         if (!data || error) throw new Error(error);
@@ -23,7 +24,7 @@ export const UpsertAccount = async <T extends UpsertAccountProps>(props: T): Pro
     }
 };
 
-export const UpdateAccount = async <T extends UpdateAccountProps>(props: T): Promise<UpdateAccountResponse<T>> => {
+export const UpdateAccount = async <T extends UpdateAccountProps>(props: Exact<UpdateAccountProps, T>): Promise<UpdateAccountResponse<T>> => {
     try {
         const { data, error } = await AccountService.update(props);
         if (!data || error) throw new Error(error);
@@ -33,7 +34,7 @@ export const UpdateAccount = async <T extends UpdateAccountProps>(props: T): Pro
     }
 };
 
-export const DeleteAccount = async <T extends DeleteAccountProps>(props: T): Promise<DeleteAccountResponse<T>> => {
+export const DeleteAccount = async <T extends DeleteAccountProps>(props: Exact<DeleteAccountProps, T>): Promise<DeleteAccountResponse<T>> => {
     try {
         const { data, error } = await AccountService.delete(props);
         if (!data || error) throw new Error(error);
@@ -47,7 +48,7 @@ export const DeleteAccount = async <T extends DeleteAccountProps>(props: T): Pro
  * WARNING: do not use this for fetching data -> use API routes with caching instead
  */
 export const SelectAccount = async <T extends FindUniqueAccountProps>(
-    props: T
+    props: Exact<FindUniqueAccountProps, T>
 ): Promise<FindUniqueAccountResponse<T>> => {
     try {
         const { data, error } = await AccountService.findUnique(props);
@@ -62,7 +63,7 @@ export const SelectAccount = async <T extends FindUniqueAccountProps>(
  * WARNING: do not use this for fetching data -> use API routes with caching instead
  */
 export const SelectAccountList = async <T extends FindManyAccountProps>(
-    props: T
+    props: Exact<FindManyAccountProps, T>
 ): Promise<FindManyAccountResponse<T>> => {
     try {
         const { data, error } = await AccountService.findMany(props);

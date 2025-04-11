@@ -1,11 +1,11 @@
 import PrismaInstance from "@lib/prisma";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { {{modelName}}Count, Count{{modelName}}Props, Count{{modelName}}Response, Create{{modelName}}Props, Create{{modelName}}Response, Delete{{modelName}}Props, Delete{{modelName}}Response, FindMany{{modelName}}Props, FindMany{{modelName}}Response, FindUnique{{modelName}}Props, FindUnique{{modelName}}Response, Update{{modelName}}Props, Update{{modelName}}Response, Upsert{{modelName}}Props, Upsert{{modelName}}Response, count{{modelName}}Schema, create{{modelName}}Schema, delete{{modelName}}Schema, select{{modelName}}Schema, selectMany{{modelName}}Schema, update{{modelName}}Schema, upsert{{modelName}}Schema } from "@services/types/{{modelName}}Type";
-import { ResponseFormat } from "@utils/FetchConfig";
+import { Exact, ResponseFormat } from "@utils/FetchConfig";
 import { ZodError } from "zod";
 
 export default class {{modelName}}Service {
-    static async create<T extends Create{{modelName}}Props>(props: T): Promise<ResponseFormat<Create{{modelName}}Response<T>>> {
+    static async create<T extends Create{{modelName}}Props>(props: Exact<Create{{modelName}}Props, T>): Promise<ResponseFormat<Create{{modelName}}Response<T>>> {
         try {
             const { data{{#if hasRelations}}, include{{/if}}, omit, select } = create{{modelName}}Schema.parse(props);
 
@@ -31,7 +31,7 @@ export default class {{modelName}}Service {
         }
     }
 
-    static async upsert<T extends Upsert{{modelName}}Props>(props: T): Promise<ResponseFormat<Upsert{{modelName}}Response<T>>> {
+    static async upsert<T extends Upsert{{modelName}}Props>(props: Exact<Upsert{{modelName}}Props, T>): Promise<ResponseFormat<Upsert{{modelName}}Response<T>>> {
         try {
             const { create, update, where{{#if hasRelations}}, include{{/if}}, omit, select } = upsert{{modelName}}Schema.parse(props);
 
@@ -59,7 +59,7 @@ export default class {{modelName}}Service {
         }
     }
 
-    static async update<T extends Update{{modelName}}Props>(props: T): Promise<ResponseFormat<Update{{modelName}}Response<T>>> {
+    static async update<T extends Update{{modelName}}Props>(props: Exact<Update{{modelName}}Props, T>): Promise<ResponseFormat<Update{{modelName}}Response<T>>> {
         try {
             const { data, where{{#if hasRelations}}, include{{/if}}, omit, select } = update{{modelName}}Schema.parse(props);
 
@@ -86,7 +86,7 @@ export default class {{modelName}}Service {
         }
     }
 
-    static async delete<T extends Delete{{modelName}}Props>(props: T): Promise<ResponseFormat<Delete{{modelName}}Response<T>>> {
+    static async delete<T extends Delete{{modelName}}Props>(props: Exact<Delete{{modelName}}Props, T>): Promise<ResponseFormat<Delete{{modelName}}Response<T>>> {
         try {
             const { where{{#if hasRelations}}, include{{/if}}, omit, select } = delete{{modelName}}Schema.parse(props);
 
@@ -112,7 +112,7 @@ export default class {{modelName}}Service {
         }
     }
 
-    static async findUnique<T extends FindUnique{{modelName}}Props>(props: T): Promise<ResponseFormat<FindUnique{{modelName}}Response<T>>> {
+    static async findUnique<T extends FindUnique{{modelName}}Props>(props: Exact<FindUnique{{modelName}}Props, T>): Promise<ResponseFormat<FindUnique{{modelName}}Response<T>>> {
         try {
             const { where{{#if hasRelations}}, include{{/if}}, omit, select } = select{{modelName}}Schema.parse(props);
 
@@ -138,7 +138,7 @@ export default class {{modelName}}Service {
         }
     }
 
-    static async findMany<T extends FindMany{{modelName}}Props>(props: T): Promise<ResponseFormat<FindMany{{modelName}}Response<T>>> {
+    static async findMany<T extends FindMany{{modelName}}Props>(props: Exact<FindMany{{modelName}}Props, T>): Promise<ResponseFormat<FindMany{{modelName}}Response<T>>> {
         try {
             const {
                 cursor,

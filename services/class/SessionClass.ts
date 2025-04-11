@@ -1,11 +1,11 @@
 import PrismaInstance from "@lib/prisma";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { SessionCount, CountSessionProps, CountSessionResponse, CreateSessionProps, CreateSessionResponse, DeleteSessionProps, DeleteSessionResponse, FindManySessionProps, FindManySessionResponse, FindUniqueSessionProps, FindUniqueSessionResponse, UpdateSessionProps, UpdateSessionResponse, UpsertSessionProps, UpsertSessionResponse, countSessionSchema, createSessionSchema, deleteSessionSchema, selectSessionSchema, selectManySessionSchema, updateSessionSchema, upsertSessionSchema } from "@services/types/SessionType";
-import { ResponseFormat } from "@utils/FetchConfig";
+import { Exact, ResponseFormat } from "@utils/FetchConfig";
 import { ZodError } from "zod";
 
 export default class SessionService {
-    static async create<T extends CreateSessionProps>(props: T): Promise<ResponseFormat<CreateSessionResponse<T>>> {
+    static async create<T extends CreateSessionProps>(props: Exact<CreateSessionProps, T>): Promise<ResponseFormat<CreateSessionResponse<T>>> {
         try {
             const { data, include, omit, select } = createSessionSchema.parse(props);
 
@@ -31,7 +31,7 @@ export default class SessionService {
         }
     }
 
-    static async upsert<T extends UpsertSessionProps>(props: T): Promise<ResponseFormat<UpsertSessionResponse<T>>> {
+    static async upsert<T extends UpsertSessionProps>(props: Exact<UpsertSessionProps, T>): Promise<ResponseFormat<UpsertSessionResponse<T>>> {
         try {
             const { create, update, where, include, omit, select } = upsertSessionSchema.parse(props);
 
@@ -59,7 +59,7 @@ export default class SessionService {
         }
     }
 
-    static async update<T extends UpdateSessionProps>(props: T): Promise<ResponseFormat<UpdateSessionResponse<T>>> {
+    static async update<T extends UpdateSessionProps>(props: Exact<UpdateSessionProps, T>): Promise<ResponseFormat<UpdateSessionResponse<T>>> {
         try {
             const { data, where, include, omit, select } = updateSessionSchema.parse(props);
 
@@ -86,7 +86,7 @@ export default class SessionService {
         }
     }
 
-    static async delete<T extends DeleteSessionProps>(props: T): Promise<ResponseFormat<DeleteSessionResponse<T>>> {
+    static async delete<T extends DeleteSessionProps>(props: Exact<DeleteSessionProps, T>): Promise<ResponseFormat<DeleteSessionResponse<T>>> {
         try {
             const { where, include, omit, select } = deleteSessionSchema.parse(props);
 
@@ -112,7 +112,7 @@ export default class SessionService {
         }
     }
 
-    static async findUnique<T extends FindUniqueSessionProps>(props: T): Promise<ResponseFormat<FindUniqueSessionResponse<T>>> {
+    static async findUnique<T extends FindUniqueSessionProps>(props: Exact<FindUniqueSessionProps, T>): Promise<ResponseFormat<FindUniqueSessionResponse<T>>> {
         try {
             const { where, include, omit, select } = selectSessionSchema.parse(props);
 
@@ -138,7 +138,7 @@ export default class SessionService {
         }
     }
 
-    static async findMany<T extends FindManySessionProps>(props: T): Promise<ResponseFormat<FindManySessionResponse<T>>> {
+    static async findMany<T extends FindManySessionProps>(props: Exact<FindManySessionProps, T>): Promise<ResponseFormat<FindManySessionResponse<T>>> {
         try {
             const {
                 cursor,

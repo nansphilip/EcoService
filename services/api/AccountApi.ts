@@ -3,16 +3,17 @@ import { CountAccountProps, CountAccountResponse, FindManyAccountProps, FindMany
 import { parseAndDecodeParams, revalidate } from "@utils/FetchConfig";
 import { unstable_cache as cache } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
+import { Exact } from "@utils/FetchConfig";
 
 // ============== API Routes Types ============== //
 
 export type AccountRoutes<Input> = {
     "/account": {
-        params: FindManyAccountProps,
+        params: Exact<FindManyAccountProps, Input extends FindManyAccountProps ? Input : never>,
         response: FindManyAccountResponse<Input extends FindManyAccountProps ? Input : never>
     },
     "/account/unique": {
-        params: FindUniqueAccountProps,
+        params: Exact<FindUniqueAccountProps, Input extends FindUniqueAccountProps ? Input : never>,
         response: FindUniqueAccountResponse<Input extends FindUniqueAccountProps ? Input : never>
     },
     "/account/count": {
@@ -23,15 +24,15 @@ export type AccountRoutes<Input> = {
 
 // ==================== Find Many ==================== //
 
-const accountListCached = cache(async <T extends FindManyAccountProps>(params: T) => AccountService.findMany(params), ["account"], {
+const accountListCached = cache(async <T extends FindManyAccountProps>(params: Exact<FindManyAccountProps, T>) => AccountService.findMany(params), ["account"], {
     revalidate,
     tags: ["account"],
 });
 
 export const SelectAccountList = async <T extends FindManyAccountProps>(request: NextRequest) => {
     try {
-        const params: T = parseAndDecodeParams(request);
-        const response = await accountListCached<T>(params);
+        const params: Exact<FindManyAccountProps, T> = parseAndDecodeParams(request);
+        const response = await accountListCached(params);
         return NextResponse.json(response, { status: 200 });
     } catch (error) {
         return NextResponse.json({ error: "getAccountListCached -> " + (error as Error).message }, { status: 500 });
@@ -41,15 +42,15 @@ export const SelectAccountList = async <T extends FindManyAccountProps>(request:
 // ==================== Find Unique ==================== //
 
 const accountUniqueCached = cache(
-    async <T extends FindUniqueAccountProps>(params: T) => AccountService.findUnique(params),
+    async <T extends FindUniqueAccountProps>(params: Exact<FindUniqueAccountProps, T>) => AccountService.findUnique(params),
     ["account/unique"],
     { revalidate, tags: ["account/unique"] },
 );
 
 export const SelectAccountUnique = async <T extends FindUniqueAccountProps>(request: NextRequest) => {
     try {
-        const params: T = parseAndDecodeParams(request);
-        const response = await accountUniqueCached<T>(params);
+        const params: Exact<FindUniqueAccountProps, T> = parseAndDecodeParams(request);
+        const response = await accountUniqueCached(params);
         return NextResponse.json(response, { status: 200 });
     } catch (error) {
         return NextResponse.json({ error: "getAccountUniqueCached -> " + (error as Error).message }, { status: 500 });

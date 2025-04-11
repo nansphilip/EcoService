@@ -1,11 +1,11 @@
 import PrismaInstance from "@lib/prisma";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { AccountCount, CountAccountProps, CountAccountResponse, CreateAccountProps, CreateAccountResponse, DeleteAccountProps, DeleteAccountResponse, FindManyAccountProps, FindManyAccountResponse, FindUniqueAccountProps, FindUniqueAccountResponse, UpdateAccountProps, UpdateAccountResponse, UpsertAccountProps, UpsertAccountResponse, countAccountSchema, createAccountSchema, deleteAccountSchema, selectAccountSchema, selectManyAccountSchema, updateAccountSchema, upsertAccountSchema } from "@services/types/AccountType";
-import { ResponseFormat } from "@utils/FetchConfig";
+import { Exact, ResponseFormat } from "@utils/FetchConfig";
 import { ZodError } from "zod";
 
 export default class AccountService {
-    static async create<T extends CreateAccountProps>(props: T): Promise<ResponseFormat<CreateAccountResponse<T>>> {
+    static async create<T extends CreateAccountProps>(props: Exact<CreateAccountProps, T>): Promise<ResponseFormat<CreateAccountResponse<T>>> {
         try {
             const { data, include, omit, select } = createAccountSchema.parse(props);
 
@@ -31,7 +31,7 @@ export default class AccountService {
         }
     }
 
-    static async upsert<T extends UpsertAccountProps>(props: T): Promise<ResponseFormat<UpsertAccountResponse<T>>> {
+    static async upsert<T extends UpsertAccountProps>(props: Exact<UpsertAccountProps, T>): Promise<ResponseFormat<UpsertAccountResponse<T>>> {
         try {
             const { create, update, where, include, omit, select } = upsertAccountSchema.parse(props);
 
@@ -59,7 +59,7 @@ export default class AccountService {
         }
     }
 
-    static async update<T extends UpdateAccountProps>(props: T): Promise<ResponseFormat<UpdateAccountResponse<T>>> {
+    static async update<T extends UpdateAccountProps>(props: Exact<UpdateAccountProps, T>): Promise<ResponseFormat<UpdateAccountResponse<T>>> {
         try {
             const { data, where, include, omit, select } = updateAccountSchema.parse(props);
 
@@ -86,7 +86,7 @@ export default class AccountService {
         }
     }
 
-    static async delete<T extends DeleteAccountProps>(props: T): Promise<ResponseFormat<DeleteAccountResponse<T>>> {
+    static async delete<T extends DeleteAccountProps>(props: Exact<DeleteAccountProps, T>): Promise<ResponseFormat<DeleteAccountResponse<T>>> {
         try {
             const { where, include, omit, select } = deleteAccountSchema.parse(props);
 
@@ -112,7 +112,7 @@ export default class AccountService {
         }
     }
 
-    static async findUnique<T extends FindUniqueAccountProps>(props: T): Promise<ResponseFormat<FindUniqueAccountResponse<T>>> {
+    static async findUnique<T extends FindUniqueAccountProps>(props: Exact<FindUniqueAccountProps, T>): Promise<ResponseFormat<FindUniqueAccountResponse<T>>> {
         try {
             const { where, include, omit, select } = selectAccountSchema.parse(props);
 
@@ -138,7 +138,7 @@ export default class AccountService {
         }
     }
 
-    static async findMany<T extends FindManyAccountProps>(props: T): Promise<ResponseFormat<FindManyAccountResponse<T>>> {
+    static async findMany<T extends FindManyAccountProps>(props: Exact<FindManyAccountProps, T>): Promise<ResponseFormat<FindManyAccountResponse<T>>> {
         try {
             const {
                 cursor,

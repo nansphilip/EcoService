@@ -3,16 +3,17 @@ import { CountArticleProps, CountArticleResponse, FindManyArticleProps, FindMany
 import { parseAndDecodeParams, revalidate } from "@utils/FetchConfig";
 import { unstable_cache as cache } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
+import { Exact } from "@utils/FetchConfig";
 
 // ============== API Routes Types ============== //
 
 export type ArticleRoutes<Input> = {
     "/article": {
-        params: FindManyArticleProps,
+        params: Exact<FindManyArticleProps, Input extends FindManyArticleProps ? Input : never>,
         response: FindManyArticleResponse<Input extends FindManyArticleProps ? Input : never>
     },
     "/article/unique": {
-        params: FindUniqueArticleProps,
+        params: Exact<FindUniqueArticleProps, Input extends FindUniqueArticleProps ? Input : never>,
         response: FindUniqueArticleResponse<Input extends FindUniqueArticleProps ? Input : never>
     },
     "/article/count": {
@@ -23,15 +24,15 @@ export type ArticleRoutes<Input> = {
 
 // ==================== Find Many ==================== //
 
-const articleListCached = cache(async <T extends FindManyArticleProps>(params: T) => ArticleService.findMany(params), ["article"], {
+const articleListCached = cache(async <T extends FindManyArticleProps>(params: Exact<FindManyArticleProps, T>) => ArticleService.findMany(params), ["article"], {
     revalidate,
     tags: ["article"],
 });
 
 export const SelectArticleList = async <T extends FindManyArticleProps>(request: NextRequest) => {
     try {
-        const params: T = parseAndDecodeParams(request);
-        const response = await articleListCached<T>(params);
+        const params: Exact<FindManyArticleProps, T> = parseAndDecodeParams(request);
+        const response = await articleListCached(params);
         return NextResponse.json(response, { status: 200 });
     } catch (error) {
         return NextResponse.json({ error: "getArticleListCached -> " + (error as Error).message }, { status: 500 });
@@ -41,15 +42,15 @@ export const SelectArticleList = async <T extends FindManyArticleProps>(request:
 // ==================== Find Unique ==================== //
 
 const articleUniqueCached = cache(
-    async <T extends FindUniqueArticleProps>(params: T) => ArticleService.findUnique(params),
+    async <T extends FindUniqueArticleProps>(params: Exact<FindUniqueArticleProps, T>) => ArticleService.findUnique(params),
     ["article/unique"],
     { revalidate, tags: ["article/unique"] },
 );
 
 export const SelectArticleUnique = async <T extends FindUniqueArticleProps>(request: NextRequest) => {
     try {
-        const params: T = parseAndDecodeParams(request);
-        const response = await articleUniqueCached<T>(params);
+        const params: Exact<FindUniqueArticleProps, T> = parseAndDecodeParams(request);
+        const response = await articleUniqueCached(params);
         return NextResponse.json(response, { status: 200 });
     } catch (error) {
         return NextResponse.json({ error: "getArticleUniqueCached -> " + (error as Error).message }, { status: 500 });

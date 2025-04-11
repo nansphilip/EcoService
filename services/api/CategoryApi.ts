@@ -3,16 +3,17 @@ import { CountCategoryProps, CountCategoryResponse, FindManyCategoryProps, FindM
 import { parseAndDecodeParams, revalidate } from "@utils/FetchConfig";
 import { unstable_cache as cache } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
+import { Exact } from "@utils/FetchConfig";
 
 // ============== API Routes Types ============== //
 
 export type CategoryRoutes<Input> = {
     "/category": {
-        params: FindManyCategoryProps,
+        params: Exact<FindManyCategoryProps, Input extends FindManyCategoryProps ? Input : never>,
         response: FindManyCategoryResponse<Input extends FindManyCategoryProps ? Input : never>
     },
     "/category/unique": {
-        params: FindUniqueCategoryProps,
+        params: Exact<FindUniqueCategoryProps, Input extends FindUniqueCategoryProps ? Input : never>,
         response: FindUniqueCategoryResponse<Input extends FindUniqueCategoryProps ? Input : never>
     },
     "/category/count": {
@@ -23,15 +24,15 @@ export type CategoryRoutes<Input> = {
 
 // ==================== Find Many ==================== //
 
-const categoryListCached = cache(async <T extends FindManyCategoryProps>(params: T) => CategoryService.findMany(params), ["category"], {
+const categoryListCached = cache(async <T extends FindManyCategoryProps>(params: Exact<FindManyCategoryProps, T>) => CategoryService.findMany(params), ["category"], {
     revalidate,
     tags: ["category"],
 });
 
 export const SelectCategoryList = async <T extends FindManyCategoryProps>(request: NextRequest) => {
     try {
-        const params: T = parseAndDecodeParams(request);
-        const response = await categoryListCached<T>(params);
+        const params: Exact<FindManyCategoryProps, T> = parseAndDecodeParams(request);
+        const response = await categoryListCached(params);
         return NextResponse.json(response, { status: 200 });
     } catch (error) {
         return NextResponse.json({ error: "getCategoryListCached -> " + (error as Error).message }, { status: 500 });
@@ -41,15 +42,15 @@ export const SelectCategoryList = async <T extends FindManyCategoryProps>(reques
 // ==================== Find Unique ==================== //
 
 const categoryUniqueCached = cache(
-    async <T extends FindUniqueCategoryProps>(params: T) => CategoryService.findUnique(params),
+    async <T extends FindUniqueCategoryProps>(params: Exact<FindUniqueCategoryProps, T>) => CategoryService.findUnique(params),
     ["category/unique"],
     { revalidate, tags: ["category/unique"] },
 );
 
 export const SelectCategoryUnique = async <T extends FindUniqueCategoryProps>(request: NextRequest) => {
     try {
-        const params: T = parseAndDecodeParams(request);
-        const response = await categoryUniqueCached<T>(params);
+        const params: Exact<FindUniqueCategoryProps, T> = parseAndDecodeParams(request);
+        const response = await categoryUniqueCached(params);
         return NextResponse.json(response, { status: 200 });
     } catch (error) {
         return NextResponse.json({ error: "getCategoryUniqueCached -> " + (error as Error).message }, { status: 500 });

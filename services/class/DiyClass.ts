@@ -1,11 +1,11 @@
 import PrismaInstance from "@lib/prisma";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { DiyCount, CountDiyProps, CountDiyResponse, CreateDiyProps, CreateDiyResponse, DeleteDiyProps, DeleteDiyResponse, FindManyDiyProps, FindManyDiyResponse, FindUniqueDiyProps, FindUniqueDiyResponse, UpdateDiyProps, UpdateDiyResponse, UpsertDiyProps, UpsertDiyResponse, countDiySchema, createDiySchema, deleteDiySchema, selectDiySchema, selectManyDiySchema, updateDiySchema, upsertDiySchema } from "@services/types/DiyType";
-import { ResponseFormat } from "@utils/FetchConfig";
+import { Exact, ResponseFormat } from "@utils/FetchConfig";
 import { ZodError } from "zod";
 
 export default class DiyService {
-    static async create<T extends CreateDiyProps>(props: T): Promise<ResponseFormat<CreateDiyResponse<T>>> {
+    static async create<T extends CreateDiyProps>(props: Exact<CreateDiyProps, T>): Promise<ResponseFormat<CreateDiyResponse<T>>> {
         try {
             const { data, include, omit, select } = createDiySchema.parse(props);
 
@@ -31,7 +31,7 @@ export default class DiyService {
         }
     }
 
-    static async upsert<T extends UpsertDiyProps>(props: T): Promise<ResponseFormat<UpsertDiyResponse<T>>> {
+    static async upsert<T extends UpsertDiyProps>(props: Exact<UpsertDiyProps, T>): Promise<ResponseFormat<UpsertDiyResponse<T>>> {
         try {
             const { create, update, where, include, omit, select } = upsertDiySchema.parse(props);
 
@@ -59,7 +59,7 @@ export default class DiyService {
         }
     }
 
-    static async update<T extends UpdateDiyProps>(props: T): Promise<ResponseFormat<UpdateDiyResponse<T>>> {
+    static async update<T extends UpdateDiyProps>(props: Exact<UpdateDiyProps, T>): Promise<ResponseFormat<UpdateDiyResponse<T>>> {
         try {
             const { data, where, include, omit, select } = updateDiySchema.parse(props);
 
@@ -86,7 +86,7 @@ export default class DiyService {
         }
     }
 
-    static async delete<T extends DeleteDiyProps>(props: T): Promise<ResponseFormat<DeleteDiyResponse<T>>> {
+    static async delete<T extends DeleteDiyProps>(props: Exact<DeleteDiyProps, T>): Promise<ResponseFormat<DeleteDiyResponse<T>>> {
         try {
             const { where, include, omit, select } = deleteDiySchema.parse(props);
 
@@ -112,7 +112,7 @@ export default class DiyService {
         }
     }
 
-    static async findUnique<T extends FindUniqueDiyProps>(props: T): Promise<ResponseFormat<FindUniqueDiyResponse<T>>> {
+    static async findUnique<T extends FindUniqueDiyProps>(props: Exact<FindUniqueDiyProps, T>): Promise<ResponseFormat<FindUniqueDiyResponse<T>>> {
         try {
             const { where, include, omit, select } = selectDiySchema.parse(props);
 
@@ -138,7 +138,7 @@ export default class DiyService {
         }
     }
 
-    static async findMany<T extends FindManyDiyProps>(props: T): Promise<ResponseFormat<FindManyDiyResponse<T>>> {
+    static async findMany<T extends FindManyDiyProps>(props: Exact<FindManyDiyProps, T>): Promise<ResponseFormat<FindManyDiyResponse<T>>> {
         try {
             const {
                 cursor,

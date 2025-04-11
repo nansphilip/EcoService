@@ -1,11 +1,11 @@
 import PrismaInstance from "@lib/prisma";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { VerificationCount, CountVerificationProps, CountVerificationResponse, CreateVerificationProps, CreateVerificationResponse, DeleteVerificationProps, DeleteVerificationResponse, FindManyVerificationProps, FindManyVerificationResponse, FindUniqueVerificationProps, FindUniqueVerificationResponse, UpdateVerificationProps, UpdateVerificationResponse, UpsertVerificationProps, UpsertVerificationResponse, countVerificationSchema, createVerificationSchema, deleteVerificationSchema, selectVerificationSchema, selectManyVerificationSchema, updateVerificationSchema, upsertVerificationSchema } from "@services/types/VerificationType";
-import { ResponseFormat } from "@utils/FetchConfig";
+import { Exact, ResponseFormat } from "@utils/FetchConfig";
 import { ZodError } from "zod";
 
 export default class VerificationService {
-    static async create<T extends CreateVerificationProps>(props: T): Promise<ResponseFormat<CreateVerificationResponse<T>>> {
+    static async create<T extends CreateVerificationProps>(props: Exact<CreateVerificationProps, T>): Promise<ResponseFormat<CreateVerificationResponse<T>>> {
         try {
             const { data, omit, select } = createVerificationSchema.parse(props);
 
@@ -31,7 +31,7 @@ export default class VerificationService {
         }
     }
 
-    static async upsert<T extends UpsertVerificationProps>(props: T): Promise<ResponseFormat<UpsertVerificationResponse<T>>> {
+    static async upsert<T extends UpsertVerificationProps>(props: Exact<UpsertVerificationProps, T>): Promise<ResponseFormat<UpsertVerificationResponse<T>>> {
         try {
             const { create, update, where, omit, select } = upsertVerificationSchema.parse(props);
 
@@ -59,7 +59,7 @@ export default class VerificationService {
         }
     }
 
-    static async update<T extends UpdateVerificationProps>(props: T): Promise<ResponseFormat<UpdateVerificationResponse<T>>> {
+    static async update<T extends UpdateVerificationProps>(props: Exact<UpdateVerificationProps, T>): Promise<ResponseFormat<UpdateVerificationResponse<T>>> {
         try {
             const { data, where, omit, select } = updateVerificationSchema.parse(props);
 
@@ -86,7 +86,7 @@ export default class VerificationService {
         }
     }
 
-    static async delete<T extends DeleteVerificationProps>(props: T): Promise<ResponseFormat<DeleteVerificationResponse<T>>> {
+    static async delete<T extends DeleteVerificationProps>(props: Exact<DeleteVerificationProps, T>): Promise<ResponseFormat<DeleteVerificationResponse<T>>> {
         try {
             const { where, omit, select } = deleteVerificationSchema.parse(props);
 
@@ -112,7 +112,7 @@ export default class VerificationService {
         }
     }
 
-    static async findUnique<T extends FindUniqueVerificationProps>(props: T): Promise<ResponseFormat<FindUniqueVerificationResponse<T>>> {
+    static async findUnique<T extends FindUniqueVerificationProps>(props: Exact<FindUniqueVerificationProps, T>): Promise<ResponseFormat<FindUniqueVerificationResponse<T>>> {
         try {
             const { where, omit, select } = selectVerificationSchema.parse(props);
 
@@ -138,7 +138,7 @@ export default class VerificationService {
         }
     }
 
-    static async findMany<T extends FindManyVerificationProps>(props: T): Promise<ResponseFormat<FindManyVerificationResponse<T>>> {
+    static async findMany<T extends FindManyVerificationProps>(props: Exact<FindManyVerificationProps, T>): Promise<ResponseFormat<FindManyVerificationResponse<T>>> {
         try {
             const {
                 cursor,

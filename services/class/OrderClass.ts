@@ -1,11 +1,11 @@
 import PrismaInstance from "@lib/prisma";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { OrderCount, CountOrderProps, CountOrderResponse, CreateOrderProps, CreateOrderResponse, DeleteOrderProps, DeleteOrderResponse, FindManyOrderProps, FindManyOrderResponse, FindUniqueOrderProps, FindUniqueOrderResponse, UpdateOrderProps, UpdateOrderResponse, UpsertOrderProps, UpsertOrderResponse, countOrderSchema, createOrderSchema, deleteOrderSchema, selectOrderSchema, selectManyOrderSchema, updateOrderSchema, upsertOrderSchema } from "@services/types/OrderType";
-import { ResponseFormat } from "@utils/FetchConfig";
+import { Exact, ResponseFormat } from "@utils/FetchConfig";
 import { ZodError } from "zod";
 
 export default class OrderService {
-    static async create<T extends CreateOrderProps>(props: T): Promise<ResponseFormat<CreateOrderResponse<T>>> {
+    static async create<T extends CreateOrderProps>(props: Exact<CreateOrderProps, T>): Promise<ResponseFormat<CreateOrderResponse<T>>> {
         try {
             const { data, include, omit, select } = createOrderSchema.parse(props);
 
@@ -31,7 +31,7 @@ export default class OrderService {
         }
     }
 
-    static async upsert<T extends UpsertOrderProps>(props: T): Promise<ResponseFormat<UpsertOrderResponse<T>>> {
+    static async upsert<T extends UpsertOrderProps>(props: Exact<UpsertOrderProps, T>): Promise<ResponseFormat<UpsertOrderResponse<T>>> {
         try {
             const { create, update, where, include, omit, select } = upsertOrderSchema.parse(props);
 
@@ -59,7 +59,7 @@ export default class OrderService {
         }
     }
 
-    static async update<T extends UpdateOrderProps>(props: T): Promise<ResponseFormat<UpdateOrderResponse<T>>> {
+    static async update<T extends UpdateOrderProps>(props: Exact<UpdateOrderProps, T>): Promise<ResponseFormat<UpdateOrderResponse<T>>> {
         try {
             const { data, where, include, omit, select } = updateOrderSchema.parse(props);
 
@@ -86,7 +86,7 @@ export default class OrderService {
         }
     }
 
-    static async delete<T extends DeleteOrderProps>(props: T): Promise<ResponseFormat<DeleteOrderResponse<T>>> {
+    static async delete<T extends DeleteOrderProps>(props: Exact<DeleteOrderProps, T>): Promise<ResponseFormat<DeleteOrderResponse<T>>> {
         try {
             const { where, include, omit, select } = deleteOrderSchema.parse(props);
 
@@ -112,7 +112,7 @@ export default class OrderService {
         }
     }
 
-    static async findUnique<T extends FindUniqueOrderProps>(props: T): Promise<ResponseFormat<FindUniqueOrderResponse<T>>> {
+    static async findUnique<T extends FindUniqueOrderProps>(props: Exact<FindUniqueOrderProps, T>): Promise<ResponseFormat<FindUniqueOrderResponse<T>>> {
         try {
             const { where, include, omit, select } = selectOrderSchema.parse(props);
 
@@ -138,7 +138,7 @@ export default class OrderService {
         }
     }
 
-    static async findMany<T extends FindManyOrderProps>(props: T): Promise<ResponseFormat<FindManyOrderResponse<T>>> {
+    static async findMany<T extends FindManyOrderProps>(props: Exact<FindManyOrderProps, T>): Promise<ResponseFormat<FindManyOrderResponse<T>>> {
         try {
             const {
                 cursor,

@@ -2,8 +2,9 @@
 
 import QuantityService from "@services/class/QuantityClass";
 import { CountQuantityProps, CountQuantityResponse, CreateQuantityProps, CreateQuantityResponse, DeleteQuantityProps, DeleteQuantityResponse, FindManyQuantityProps, FindManyQuantityResponse, FindUniqueQuantityProps, FindUniqueQuantityResponse, UpdateQuantityProps, UpdateQuantityResponse, UpsertQuantityProps, UpsertQuantityResponse } from "@services/types/QuantityType";
+import { Exact } from "@utils/FetchConfig";
 
-export const CreateQuantity = async <T extends CreateQuantityProps>(props: T): Promise<CreateQuantityResponse<T>> => {
+export const CreateQuantity = async <T extends CreateQuantityProps>(props: Exact<CreateQuantityProps, T>): Promise<CreateQuantityResponse<T>> => {
     try {
         const { data, error } = await QuantityService.create(props);
         if (!data || error) throw new Error(error);
@@ -13,7 +14,7 @@ export const CreateQuantity = async <T extends CreateQuantityProps>(props: T): P
     }
 };
 
-export const UpsertQuantity = async <T extends UpsertQuantityProps>(props: T): Promise<UpsertQuantityResponse<T>> => {
+export const UpsertQuantity = async <T extends UpsertQuantityProps>(props: Exact<UpsertQuantityProps, T>): Promise<UpsertQuantityResponse<T>> => {
     try {
         const { data, error } = await QuantityService.upsert(props);
         if (!data || error) throw new Error(error);
@@ -23,7 +24,7 @@ export const UpsertQuantity = async <T extends UpsertQuantityProps>(props: T): P
     }
 };
 
-export const UpdateQuantity = async <T extends UpdateQuantityProps>(props: T): Promise<UpdateQuantityResponse<T>> => {
+export const UpdateQuantity = async <T extends UpdateQuantityProps>(props: Exact<UpdateQuantityProps, T>): Promise<UpdateQuantityResponse<T>> => {
     try {
         const { data, error } = await QuantityService.update(props);
         if (!data || error) throw new Error(error);
@@ -33,7 +34,7 @@ export const UpdateQuantity = async <T extends UpdateQuantityProps>(props: T): P
     }
 };
 
-export const DeleteQuantity = async <T extends DeleteQuantityProps>(props: T): Promise<DeleteQuantityResponse<T>> => {
+export const DeleteQuantity = async <T extends DeleteQuantityProps>(props: Exact<DeleteQuantityProps, T>): Promise<DeleteQuantityResponse<T>> => {
     try {
         const { data, error } = await QuantityService.delete(props);
         if (!data || error) throw new Error(error);
@@ -47,7 +48,7 @@ export const DeleteQuantity = async <T extends DeleteQuantityProps>(props: T): P
  * WARNING: do not use this for fetching data -> use API routes with caching instead
  */
 export const SelectQuantity = async <T extends FindUniqueQuantityProps>(
-    props: T
+    props: Exact<FindUniqueQuantityProps, T>
 ): Promise<FindUniqueQuantityResponse<T>> => {
     try {
         const { data, error } = await QuantityService.findUnique(props);
@@ -62,7 +63,7 @@ export const SelectQuantity = async <T extends FindUniqueQuantityProps>(
  * WARNING: do not use this for fetching data -> use API routes with caching instead
  */
 export const SelectQuantityList = async <T extends FindManyQuantityProps>(
-    props: T
+    props: Exact<FindManyQuantityProps, T>
 ): Promise<FindManyQuantityResponse<T>> => {
     try {
         const { data, error } = await QuantityService.findMany(props);

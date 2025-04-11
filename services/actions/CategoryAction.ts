@@ -2,8 +2,9 @@
 
 import CategoryService from "@services/class/CategoryClass";
 import { CountCategoryProps, CountCategoryResponse, CreateCategoryProps, CreateCategoryResponse, DeleteCategoryProps, DeleteCategoryResponse, FindManyCategoryProps, FindManyCategoryResponse, FindUniqueCategoryProps, FindUniqueCategoryResponse, UpdateCategoryProps, UpdateCategoryResponse, UpsertCategoryProps, UpsertCategoryResponse } from "@services/types/CategoryType";
+import { Exact } from "@utils/FetchConfig";
 
-export const CreateCategory = async <T extends CreateCategoryProps>(props: T): Promise<CreateCategoryResponse<T>> => {
+export const CreateCategory = async <T extends CreateCategoryProps>(props: Exact<CreateCategoryProps, T>): Promise<CreateCategoryResponse<T>> => {
     try {
         const { data, error } = await CategoryService.create(props);
         if (!data || error) throw new Error(error);
@@ -13,7 +14,7 @@ export const CreateCategory = async <T extends CreateCategoryProps>(props: T): P
     }
 };
 
-export const UpsertCategory = async <T extends UpsertCategoryProps>(props: T): Promise<UpsertCategoryResponse<T>> => {
+export const UpsertCategory = async <T extends UpsertCategoryProps>(props: Exact<UpsertCategoryProps, T>): Promise<UpsertCategoryResponse<T>> => {
     try {
         const { data, error } = await CategoryService.upsert(props);
         if (!data || error) throw new Error(error);
@@ -23,7 +24,7 @@ export const UpsertCategory = async <T extends UpsertCategoryProps>(props: T): P
     }
 };
 
-export const UpdateCategory = async <T extends UpdateCategoryProps>(props: T): Promise<UpdateCategoryResponse<T>> => {
+export const UpdateCategory = async <T extends UpdateCategoryProps>(props: Exact<UpdateCategoryProps, T>): Promise<UpdateCategoryResponse<T>> => {
     try {
         const { data, error } = await CategoryService.update(props);
         if (!data || error) throw new Error(error);
@@ -33,7 +34,7 @@ export const UpdateCategory = async <T extends UpdateCategoryProps>(props: T): P
     }
 };
 
-export const DeleteCategory = async <T extends DeleteCategoryProps>(props: T): Promise<DeleteCategoryResponse<T>> => {
+export const DeleteCategory = async <T extends DeleteCategoryProps>(props: Exact<DeleteCategoryProps, T>): Promise<DeleteCategoryResponse<T>> => {
     try {
         const { data, error } = await CategoryService.delete(props);
         if (!data || error) throw new Error(error);
@@ -47,7 +48,7 @@ export const DeleteCategory = async <T extends DeleteCategoryProps>(props: T): P
  * WARNING: do not use this for fetching data -> use API routes with caching instead
  */
 export const SelectCategory = async <T extends FindUniqueCategoryProps>(
-    props: T
+    props: Exact<FindUniqueCategoryProps, T>
 ): Promise<FindUniqueCategoryResponse<T>> => {
     try {
         const { data, error } = await CategoryService.findUnique(props);
@@ -62,7 +63,7 @@ export const SelectCategory = async <T extends FindUniqueCategoryProps>(
  * WARNING: do not use this for fetching data -> use API routes with caching instead
  */
 export const SelectCategoryList = async <T extends FindManyCategoryProps>(
-    props: T
+    props: Exact<FindManyCategoryProps, T>
 ): Promise<FindManyCategoryResponse<T>> => {
     try {
         const { data, error } = await CategoryService.findMany(props);

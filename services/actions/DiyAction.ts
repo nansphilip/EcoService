@@ -2,8 +2,9 @@
 
 import DiyService from "@services/class/DiyClass";
 import { CountDiyProps, CountDiyResponse, CreateDiyProps, CreateDiyResponse, DeleteDiyProps, DeleteDiyResponse, FindManyDiyProps, FindManyDiyResponse, FindUniqueDiyProps, FindUniqueDiyResponse, UpdateDiyProps, UpdateDiyResponse, UpsertDiyProps, UpsertDiyResponse } from "@services/types/DiyType";
+import { Exact } from "@utils/FetchConfig";
 
-export const CreateDiy = async <T extends CreateDiyProps>(props: T): Promise<CreateDiyResponse<T>> => {
+export const CreateDiy = async <T extends CreateDiyProps>(props: Exact<CreateDiyProps, T>): Promise<CreateDiyResponse<T>> => {
     try {
         const { data, error } = await DiyService.create(props);
         if (!data || error) throw new Error(error);
@@ -13,7 +14,7 @@ export const CreateDiy = async <T extends CreateDiyProps>(props: T): Promise<Cre
     }
 };
 
-export const UpsertDiy = async <T extends UpsertDiyProps>(props: T): Promise<UpsertDiyResponse<T>> => {
+export const UpsertDiy = async <T extends UpsertDiyProps>(props: Exact<UpsertDiyProps, T>): Promise<UpsertDiyResponse<T>> => {
     try {
         const { data, error } = await DiyService.upsert(props);
         if (!data || error) throw new Error(error);
@@ -23,7 +24,7 @@ export const UpsertDiy = async <T extends UpsertDiyProps>(props: T): Promise<Ups
     }
 };
 
-export const UpdateDiy = async <T extends UpdateDiyProps>(props: T): Promise<UpdateDiyResponse<T>> => {
+export const UpdateDiy = async <T extends UpdateDiyProps>(props: Exact<UpdateDiyProps, T>): Promise<UpdateDiyResponse<T>> => {
     try {
         const { data, error } = await DiyService.update(props);
         if (!data || error) throw new Error(error);
@@ -33,7 +34,7 @@ export const UpdateDiy = async <T extends UpdateDiyProps>(props: T): Promise<Upd
     }
 };
 
-export const DeleteDiy = async <T extends DeleteDiyProps>(props: T): Promise<DeleteDiyResponse<T>> => {
+export const DeleteDiy = async <T extends DeleteDiyProps>(props: Exact<DeleteDiyProps, T>): Promise<DeleteDiyResponse<T>> => {
     try {
         const { data, error } = await DiyService.delete(props);
         if (!data || error) throw new Error(error);
@@ -47,7 +48,7 @@ export const DeleteDiy = async <T extends DeleteDiyProps>(props: T): Promise<Del
  * WARNING: do not use this for fetching data -> use API routes with caching instead
  */
 export const SelectDiy = async <T extends FindUniqueDiyProps>(
-    props: T
+    props: Exact<FindUniqueDiyProps, T>
 ): Promise<FindUniqueDiyResponse<T>> => {
     try {
         const { data, error } = await DiyService.findUnique(props);
@@ -62,7 +63,7 @@ export const SelectDiy = async <T extends FindUniqueDiyProps>(
  * WARNING: do not use this for fetching data -> use API routes with caching instead
  */
 export const SelectDiyList = async <T extends FindManyDiyProps>(
-    props: T
+    props: Exact<FindManyDiyProps, T>
 ): Promise<FindManyDiyResponse<T>> => {
     try {
         const { data, error } = await DiyService.findMany(props);

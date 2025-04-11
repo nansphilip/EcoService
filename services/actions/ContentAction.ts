@@ -2,8 +2,9 @@
 
 import ContentService from "@services/class/ContentClass";
 import { CountContentProps, CountContentResponse, CreateContentProps, CreateContentResponse, DeleteContentProps, DeleteContentResponse, FindManyContentProps, FindManyContentResponse, FindUniqueContentProps, FindUniqueContentResponse, UpdateContentProps, UpdateContentResponse, UpsertContentProps, UpsertContentResponse } from "@services/types/ContentType";
+import { Exact } from "@utils/FetchConfig";
 
-export const CreateContent = async <T extends CreateContentProps>(props: T): Promise<CreateContentResponse<T>> => {
+export const CreateContent = async <T extends CreateContentProps>(props: Exact<CreateContentProps, T>): Promise<CreateContentResponse<T>> => {
     try {
         const { data, error } = await ContentService.create(props);
         if (!data || error) throw new Error(error);
@@ -13,7 +14,7 @@ export const CreateContent = async <T extends CreateContentProps>(props: T): Pro
     }
 };
 
-export const UpsertContent = async <T extends UpsertContentProps>(props: T): Promise<UpsertContentResponse<T>> => {
+export const UpsertContent = async <T extends UpsertContentProps>(props: Exact<UpsertContentProps, T>): Promise<UpsertContentResponse<T>> => {
     try {
         const { data, error } = await ContentService.upsert(props);
         if (!data || error) throw new Error(error);
@@ -23,7 +24,7 @@ export const UpsertContent = async <T extends UpsertContentProps>(props: T): Pro
     }
 };
 
-export const UpdateContent = async <T extends UpdateContentProps>(props: T): Promise<UpdateContentResponse<T>> => {
+export const UpdateContent = async <T extends UpdateContentProps>(props: Exact<UpdateContentProps, T>): Promise<UpdateContentResponse<T>> => {
     try {
         const { data, error } = await ContentService.update(props);
         if (!data || error) throw new Error(error);
@@ -33,7 +34,7 @@ export const UpdateContent = async <T extends UpdateContentProps>(props: T): Pro
     }
 };
 
-export const DeleteContent = async <T extends DeleteContentProps>(props: T): Promise<DeleteContentResponse<T>> => {
+export const DeleteContent = async <T extends DeleteContentProps>(props: Exact<DeleteContentProps, T>): Promise<DeleteContentResponse<T>> => {
     try {
         const { data, error } = await ContentService.delete(props);
         if (!data || error) throw new Error(error);
@@ -47,7 +48,7 @@ export const DeleteContent = async <T extends DeleteContentProps>(props: T): Pro
  * WARNING: do not use this for fetching data -> use API routes with caching instead
  */
 export const SelectContent = async <T extends FindUniqueContentProps>(
-    props: T
+    props: Exact<FindUniqueContentProps, T>
 ): Promise<FindUniqueContentResponse<T>> => {
     try {
         const { data, error } = await ContentService.findUnique(props);
@@ -62,7 +63,7 @@ export const SelectContent = async <T extends FindUniqueContentProps>(
  * WARNING: do not use this for fetching data -> use API routes with caching instead
  */
 export const SelectContentList = async <T extends FindManyContentProps>(
-    props: T
+    props: Exact<FindManyContentProps, T>
 ): Promise<FindManyContentResponse<T>> => {
     try {
         const { data, error } = await ContentService.findMany(props);

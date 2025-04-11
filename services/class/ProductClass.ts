@@ -1,11 +1,11 @@
 import PrismaInstance from "@lib/prisma";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { ProductCount, CountProductProps, CountProductResponse, CreateProductProps, CreateProductResponse, DeleteProductProps, DeleteProductResponse, FindManyProductProps, FindManyProductResponse, FindUniqueProductProps, FindUniqueProductResponse, UpdateProductProps, UpdateProductResponse, UpsertProductProps, UpsertProductResponse, countProductSchema, createProductSchema, deleteProductSchema, selectProductSchema, selectManyProductSchema, updateProductSchema, upsertProductSchema } from "@services/types/ProductType";
-import { ResponseFormat } from "@utils/FetchConfig";
+import { Exact, ResponseFormat } from "@utils/FetchConfig";
 import { ZodError } from "zod";
 
 export default class ProductService {
-    static async create<T extends CreateProductProps>(props: T): Promise<ResponseFormat<CreateProductResponse<T>>> {
+    static async create<T extends CreateProductProps>(props: Exact<CreateProductProps, T>): Promise<ResponseFormat<CreateProductResponse<T>>> {
         try {
             const { data, include, omit, select } = createProductSchema.parse(props);
 
@@ -31,7 +31,7 @@ export default class ProductService {
         }
     }
 
-    static async upsert<T extends UpsertProductProps>(props: T): Promise<ResponseFormat<UpsertProductResponse<T>>> {
+    static async upsert<T extends UpsertProductProps>(props: Exact<UpsertProductProps, T>): Promise<ResponseFormat<UpsertProductResponse<T>>> {
         try {
             const { create, update, where, include, omit, select } = upsertProductSchema.parse(props);
 
@@ -59,7 +59,7 @@ export default class ProductService {
         }
     }
 
-    static async update<T extends UpdateProductProps>(props: T): Promise<ResponseFormat<UpdateProductResponse<T>>> {
+    static async update<T extends UpdateProductProps>(props: Exact<UpdateProductProps, T>): Promise<ResponseFormat<UpdateProductResponse<T>>> {
         try {
             const { data, where, include, omit, select } = updateProductSchema.parse(props);
 
@@ -86,7 +86,7 @@ export default class ProductService {
         }
     }
 
-    static async delete<T extends DeleteProductProps>(props: T): Promise<ResponseFormat<DeleteProductResponse<T>>> {
+    static async delete<T extends DeleteProductProps>(props: Exact<DeleteProductProps, T>): Promise<ResponseFormat<DeleteProductResponse<T>>> {
         try {
             const { where, include, omit, select } = deleteProductSchema.parse(props);
 
@@ -112,7 +112,7 @@ export default class ProductService {
         }
     }
 
-    static async findUnique<T extends FindUniqueProductProps>(props: T): Promise<ResponseFormat<FindUniqueProductResponse<T>>> {
+    static async findUnique<T extends FindUniqueProductProps>(props: Exact<FindUniqueProductProps, T>): Promise<ResponseFormat<FindUniqueProductResponse<T>>> {
         try {
             const { where, include, omit, select } = selectProductSchema.parse(props);
 
@@ -138,7 +138,7 @@ export default class ProductService {
         }
     }
 
-    static async findMany<T extends FindManyProductProps>(props: T): Promise<ResponseFormat<FindManyProductResponse<T>>> {
+    static async findMany<T extends FindManyProductProps>(props: Exact<FindManyProductProps, T>): Promise<ResponseFormat<FindManyProductResponse<T>>> {
         try {
             const {
                 cursor,

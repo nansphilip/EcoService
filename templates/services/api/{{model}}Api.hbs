@@ -3,16 +3,17 @@ import { Count{{modelName}}Props, Count{{modelName}}Response, FindMany{{modelNam
 import { parseAndDecodeParams, revalidate } from "@utils/FetchConfig";
 import { unstable_cache as cache } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
+import { Exact } from "@utils/FetchConfig";
 
 // ============== API Routes Types ============== //
 
 export type {{modelName}}Routes<Input> = {
     "/{{modelNameLower}}": {
-        params: FindMany{{modelName}}Props,
+        params: Exact<FindMany{{modelName}}Props, Input extends FindMany{{modelName}}Props ? Input : never>,
         response: FindMany{{modelName}}Response<Input extends FindMany{{modelName}}Props ? Input : never>
     },
     "/{{modelNameLower}}/unique": {
-        params: FindUnique{{modelName}}Props,
+        params: Exact<FindUnique{{modelName}}Props, Input extends FindUnique{{modelName}}Props ? Input : never>,
         response: FindUnique{{modelName}}Response<Input extends FindUnique{{modelName}}Props ? Input : never>
     },
     "/{{modelNameLower}}/count": {
@@ -23,15 +24,15 @@ export type {{modelName}}Routes<Input> = {
 
 // ==================== Find Many ==================== //
 
-const {{modelNameLower}}ListCached = cache(async <T extends FindMany{{modelName}}Props>(params: T) => {{modelName}}Service.findMany(params), ["{{modelNameLower}}"], {
+const {{modelNameLower}}ListCached = cache(async <T extends FindMany{{modelName}}Props>(params: Exact<FindMany{{modelName}}Props, T>) => {{modelName}}Service.findMany(params), ["{{modelNameLower}}"], {
     revalidate,
     tags: ["{{modelNameLower}}"],
 });
 
 export const Select{{modelName}}List = async <T extends FindMany{{modelName}}Props>(request: NextRequest) => {
     try {
-        const params: T = parseAndDecodeParams(request);
-        const response = await {{modelNameLower}}ListCached<T>(params);
+        const params: Exact<FindMany{{modelName}}Props, T> = parseAndDecodeParams(request);
+        const response = await {{modelNameLower}}ListCached(params);
         return NextResponse.json(response, { status: 200 });
     } catch (error) {
         return NextResponse.json({ error: "get{{modelName}}ListCached -> " + (error as Error).message }, { status: 500 });
@@ -41,15 +42,15 @@ export const Select{{modelName}}List = async <T extends FindMany{{modelName}}Pro
 // ==================== Find Unique ==================== //
 
 const {{modelNameLower}}UniqueCached = cache(
-    async <T extends FindUnique{{modelName}}Props>(params: T) => {{modelName}}Service.findUnique(params),
+    async <T extends FindUnique{{modelName}}Props>(params: Exact<FindUnique{{modelName}}Props, T>) => {{modelName}}Service.findUnique(params),
     ["{{modelNameLower}}/unique"],
     { revalidate, tags: ["{{modelNameLower}}/unique"] },
 );
 
 export const Select{{modelName}}Unique = async <T extends FindUnique{{modelName}}Props>(request: NextRequest) => {
     try {
-        const params: T = parseAndDecodeParams(request);
-        const response = await {{modelNameLower}}UniqueCached<T>(params);
+        const params: Exact<FindUnique{{modelName}}Props, T> = parseAndDecodeParams(request);
+        const response = await {{modelNameLower}}UniqueCached(params);
         return NextResponse.json(response, { status: 200 });
     } catch (error) {
         return NextResponse.json({ error: "get{{modelName}}UniqueCached -> " + (error as Error).message }, { status: 500 });

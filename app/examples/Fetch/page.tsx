@@ -8,7 +8,7 @@ export default async function Page() {
      * To avoid, not cachable and parallelizable
      */
     const articlesPrisma = await PrismaInstance.article.findMany({
-        select: { id: true, authorId: true },
+        select: { id: true, authorId: true, tomato: true },
     });
 
     /**
@@ -16,7 +16,7 @@ export default async function Page() {
      * To avoid, not cachable and parallelizable
      */
     const articlesAction = await SelectArticleList({
-        select: { id: true, authorId: true },
+        select: { id: true, authorId: true, tomato: true },
     });
 
     /**
@@ -26,7 +26,7 @@ export default async function Page() {
     const articlesApi = await FetchV2({
         route: "/article",
         params: {
-            select: { id: true, authorId: true },
+            select: { id: true, authorId: true, tomato: true },
         },
     });
 

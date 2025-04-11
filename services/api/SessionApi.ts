@@ -3,16 +3,17 @@ import { CountSessionProps, CountSessionResponse, FindManySessionProps, FindMany
 import { parseAndDecodeParams, revalidate } from "@utils/FetchConfig";
 import { unstable_cache as cache } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
+import { Exact } from "@utils/FetchConfig";
 
 // ============== API Routes Types ============== //
 
 export type SessionRoutes<Input> = {
     "/session": {
-        params: FindManySessionProps,
+        params: Exact<FindManySessionProps, Input extends FindManySessionProps ? Input : never>,
         response: FindManySessionResponse<Input extends FindManySessionProps ? Input : never>
     },
     "/session/unique": {
-        params: FindUniqueSessionProps,
+        params: Exact<FindUniqueSessionProps, Input extends FindUniqueSessionProps ? Input : never>,
         response: FindUniqueSessionResponse<Input extends FindUniqueSessionProps ? Input : never>
     },
     "/session/count": {
@@ -23,15 +24,15 @@ export type SessionRoutes<Input> = {
 
 // ==================== Find Many ==================== //
 
-const sessionListCached = cache(async <T extends FindManySessionProps>(params: T) => SessionService.findMany(params), ["session"], {
+const sessionListCached = cache(async <T extends FindManySessionProps>(params: Exact<FindManySessionProps, T>) => SessionService.findMany(params), ["session"], {
     revalidate,
     tags: ["session"],
 });
 
 export const SelectSessionList = async <T extends FindManySessionProps>(request: NextRequest) => {
     try {
-        const params: T = parseAndDecodeParams(request);
-        const response = await sessionListCached<T>(params);
+        const params: Exact<FindManySessionProps, T> = parseAndDecodeParams(request);
+        const response = await sessionListCached(params);
         return NextResponse.json(response, { status: 200 });
     } catch (error) {
         return NextResponse.json({ error: "getSessionListCached -> " + (error as Error).message }, { status: 500 });
@@ -41,15 +42,15 @@ export const SelectSessionList = async <T extends FindManySessionProps>(request:
 // ==================== Find Unique ==================== //
 
 const sessionUniqueCached = cache(
-    async <T extends FindUniqueSessionProps>(params: T) => SessionService.findUnique(params),
+    async <T extends FindUniqueSessionProps>(params: Exact<FindUniqueSessionProps, T>) => SessionService.findUnique(params),
     ["session/unique"],
     { revalidate, tags: ["session/unique"] },
 );
 
 export const SelectSessionUnique = async <T extends FindUniqueSessionProps>(request: NextRequest) => {
     try {
-        const params: T = parseAndDecodeParams(request);
-        const response = await sessionUniqueCached<T>(params);
+        const params: Exact<FindUniqueSessionProps, T> = parseAndDecodeParams(request);
+        const response = await sessionUniqueCached(params);
         return NextResponse.json(response, { status: 200 });
     } catch (error) {
         return NextResponse.json({ error: "getSessionUniqueCached -> " + (error as Error).message }, { status: 500 });

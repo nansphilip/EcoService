@@ -1,11 +1,11 @@
 import PrismaInstance from "@lib/prisma";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { FruitCount, CountFruitProps, CountFruitResponse, CreateFruitProps, CreateFruitResponse, DeleteFruitProps, DeleteFruitResponse, FindManyFruitProps, FindManyFruitResponse, FindUniqueFruitProps, FindUniqueFruitResponse, UpdateFruitProps, UpdateFruitResponse, UpsertFruitProps, UpsertFruitResponse, countFruitSchema, createFruitSchema, deleteFruitSchema, selectFruitSchema, selectManyFruitSchema, updateFruitSchema, upsertFruitSchema } from "@services/types/FruitType";
-import { ResponseFormat } from "@utils/FetchConfig";
+import { Exact, ResponseFormat } from "@utils/FetchConfig";
 import { ZodError } from "zod";
 
 export default class FruitService {
-    static async create<T extends CreateFruitProps>(props: T): Promise<ResponseFormat<CreateFruitResponse<T>>> {
+    static async create<T extends CreateFruitProps>(props: Exact<CreateFruitProps, T>): Promise<ResponseFormat<CreateFruitResponse<T>>> {
         try {
             const { data, omit, select } = createFruitSchema.parse(props);
 
@@ -31,7 +31,7 @@ export default class FruitService {
         }
     }
 
-    static async upsert<T extends UpsertFruitProps>(props: T): Promise<ResponseFormat<UpsertFruitResponse<T>>> {
+    static async upsert<T extends UpsertFruitProps>(props: Exact<UpsertFruitProps, T>): Promise<ResponseFormat<UpsertFruitResponse<T>>> {
         try {
             const { create, update, where, omit, select } = upsertFruitSchema.parse(props);
 
@@ -59,7 +59,7 @@ export default class FruitService {
         }
     }
 
-    static async update<T extends UpdateFruitProps>(props: T): Promise<ResponseFormat<UpdateFruitResponse<T>>> {
+    static async update<T extends UpdateFruitProps>(props: Exact<UpdateFruitProps, T>): Promise<ResponseFormat<UpdateFruitResponse<T>>> {
         try {
             const { data, where, omit, select } = updateFruitSchema.parse(props);
 
@@ -86,7 +86,7 @@ export default class FruitService {
         }
     }
 
-    static async delete<T extends DeleteFruitProps>(props: T): Promise<ResponseFormat<DeleteFruitResponse<T>>> {
+    static async delete<T extends DeleteFruitProps>(props: Exact<DeleteFruitProps, T>): Promise<ResponseFormat<DeleteFruitResponse<T>>> {
         try {
             const { where, omit, select } = deleteFruitSchema.parse(props);
 
@@ -112,7 +112,7 @@ export default class FruitService {
         }
     }
 
-    static async findUnique<T extends FindUniqueFruitProps>(props: T): Promise<ResponseFormat<FindUniqueFruitResponse<T>>> {
+    static async findUnique<T extends FindUniqueFruitProps>(props: Exact<FindUniqueFruitProps, T>): Promise<ResponseFormat<FindUniqueFruitResponse<T>>> {
         try {
             const { where, omit, select } = selectFruitSchema.parse(props);
 
@@ -138,7 +138,7 @@ export default class FruitService {
         }
     }
 
-    static async findMany<T extends FindManyFruitProps>(props: T): Promise<ResponseFormat<FindManyFruitResponse<T>>> {
+    static async findMany<T extends FindManyFruitProps>(props: Exact<FindManyFruitProps, T>): Promise<ResponseFormat<FindManyFruitResponse<T>>> {
         try {
             const {
                 cursor,

@@ -3,16 +3,17 @@ import { CountProductProps, CountProductResponse, FindManyProductProps, FindMany
 import { parseAndDecodeParams, revalidate } from "@utils/FetchConfig";
 import { unstable_cache as cache } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
+import { Exact } from "@utils/FetchConfig";
 
 // ============== API Routes Types ============== //
 
 export type ProductRoutes<Input> = {
     "/product": {
-        params: FindManyProductProps,
+        params: Exact<FindManyProductProps, Input extends FindManyProductProps ? Input : never>,
         response: FindManyProductResponse<Input extends FindManyProductProps ? Input : never>
     },
     "/product/unique": {
-        params: FindUniqueProductProps,
+        params: Exact<FindUniqueProductProps, Input extends FindUniqueProductProps ? Input : never>,
         response: FindUniqueProductResponse<Input extends FindUniqueProductProps ? Input : never>
     },
     "/product/count": {
@@ -23,15 +24,15 @@ export type ProductRoutes<Input> = {
 
 // ==================== Find Many ==================== //
 
-const productListCached = cache(async <T extends FindManyProductProps>(params: T) => ProductService.findMany(params), ["product"], {
+const productListCached = cache(async <T extends FindManyProductProps>(params: Exact<FindManyProductProps, T>) => ProductService.findMany(params), ["product"], {
     revalidate,
     tags: ["product"],
 });
 
 export const SelectProductList = async <T extends FindManyProductProps>(request: NextRequest) => {
     try {
-        const params: T = parseAndDecodeParams(request);
-        const response = await productListCached<T>(params);
+        const params: Exact<FindManyProductProps, T> = parseAndDecodeParams(request);
+        const response = await productListCached(params);
         return NextResponse.json(response, { status: 200 });
     } catch (error) {
         return NextResponse.json({ error: "getProductListCached -> " + (error as Error).message }, { status: 500 });
@@ -41,15 +42,15 @@ export const SelectProductList = async <T extends FindManyProductProps>(request:
 // ==================== Find Unique ==================== //
 
 const productUniqueCached = cache(
-    async <T extends FindUniqueProductProps>(params: T) => ProductService.findUnique(params),
+    async <T extends FindUniqueProductProps>(params: Exact<FindUniqueProductProps, T>) => ProductService.findUnique(params),
     ["product/unique"],
     { revalidate, tags: ["product/unique"] },
 );
 
 export const SelectProductUnique = async <T extends FindUniqueProductProps>(request: NextRequest) => {
     try {
-        const params: T = parseAndDecodeParams(request);
-        const response = await productUniqueCached<T>(params);
+        const params: Exact<FindUniqueProductProps, T> = parseAndDecodeParams(request);
+        const response = await productUniqueCached(params);
         return NextResponse.json(response, { status: 200 });
     } catch (error) {
         return NextResponse.json({ error: "getProductUniqueCached -> " + (error as Error).message }, { status: 500 });

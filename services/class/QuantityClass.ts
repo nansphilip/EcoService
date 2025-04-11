@@ -1,11 +1,11 @@
 import PrismaInstance from "@lib/prisma";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { QuantityCount, CountQuantityProps, CountQuantityResponse, CreateQuantityProps, CreateQuantityResponse, DeleteQuantityProps, DeleteQuantityResponse, FindManyQuantityProps, FindManyQuantityResponse, FindUniqueQuantityProps, FindUniqueQuantityResponse, UpdateQuantityProps, UpdateQuantityResponse, UpsertQuantityProps, UpsertQuantityResponse, countQuantitySchema, createQuantitySchema, deleteQuantitySchema, selectQuantitySchema, selectManyQuantitySchema, updateQuantitySchema, upsertQuantitySchema } from "@services/types/QuantityType";
-import { ResponseFormat } from "@utils/FetchConfig";
+import { Exact, ResponseFormat } from "@utils/FetchConfig";
 import { ZodError } from "zod";
 
 export default class QuantityService {
-    static async create<T extends CreateQuantityProps>(props: T): Promise<ResponseFormat<CreateQuantityResponse<T>>> {
+    static async create<T extends CreateQuantityProps>(props: Exact<CreateQuantityProps, T>): Promise<ResponseFormat<CreateQuantityResponse<T>>> {
         try {
             const { data, include, omit, select } = createQuantitySchema.parse(props);
 
@@ -31,7 +31,7 @@ export default class QuantityService {
         }
     }
 
-    static async upsert<T extends UpsertQuantityProps>(props: T): Promise<ResponseFormat<UpsertQuantityResponse<T>>> {
+    static async upsert<T extends UpsertQuantityProps>(props: Exact<UpsertQuantityProps, T>): Promise<ResponseFormat<UpsertQuantityResponse<T>>> {
         try {
             const { create, update, where, include, omit, select } = upsertQuantitySchema.parse(props);
 
@@ -59,7 +59,7 @@ export default class QuantityService {
         }
     }
 
-    static async update<T extends UpdateQuantityProps>(props: T): Promise<ResponseFormat<UpdateQuantityResponse<T>>> {
+    static async update<T extends UpdateQuantityProps>(props: Exact<UpdateQuantityProps, T>): Promise<ResponseFormat<UpdateQuantityResponse<T>>> {
         try {
             const { data, where, include, omit, select } = updateQuantitySchema.parse(props);
 
@@ -86,7 +86,7 @@ export default class QuantityService {
         }
     }
 
-    static async delete<T extends DeleteQuantityProps>(props: T): Promise<ResponseFormat<DeleteQuantityResponse<T>>> {
+    static async delete<T extends DeleteQuantityProps>(props: Exact<DeleteQuantityProps, T>): Promise<ResponseFormat<DeleteQuantityResponse<T>>> {
         try {
             const { where, include, omit, select } = deleteQuantitySchema.parse(props);
 
@@ -112,7 +112,7 @@ export default class QuantityService {
         }
     }
 
-    static async findUnique<T extends FindUniqueQuantityProps>(props: T): Promise<ResponseFormat<FindUniqueQuantityResponse<T>>> {
+    static async findUnique<T extends FindUniqueQuantityProps>(props: Exact<FindUniqueQuantityProps, T>): Promise<ResponseFormat<FindUniqueQuantityResponse<T>>> {
         try {
             const { where, include, omit, select } = selectQuantitySchema.parse(props);
 
@@ -138,7 +138,7 @@ export default class QuantityService {
         }
     }
 
-    static async findMany<T extends FindManyQuantityProps>(props: T): Promise<ResponseFormat<FindManyQuantityResponse<T>>> {
+    static async findMany<T extends FindManyQuantityProps>(props: Exact<FindManyQuantityProps, T>): Promise<ResponseFormat<FindManyQuantityResponse<T>>> {
         try {
             const {
                 cursor,

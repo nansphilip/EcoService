@@ -3,16 +3,17 @@ import { CountUserProps, CountUserResponse, FindManyUserProps, FindManyUserRespo
 import { parseAndDecodeParams, revalidate } from "@utils/FetchConfig";
 import { unstable_cache as cache } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
+import { Exact } from "@utils/FetchConfig";
 
 // ============== API Routes Types ============== //
 
 export type UserRoutes<Input> = {
     "/user": {
-        params: FindManyUserProps,
+        params: Exact<FindManyUserProps, Input extends FindManyUserProps ? Input : never>,
         response: FindManyUserResponse<Input extends FindManyUserProps ? Input : never>
     },
     "/user/unique": {
-        params: FindUniqueUserProps,
+        params: Exact<FindUniqueUserProps, Input extends FindUniqueUserProps ? Input : never>,
         response: FindUniqueUserResponse<Input extends FindUniqueUserProps ? Input : never>
     },
     "/user/count": {
@@ -23,15 +24,15 @@ export type UserRoutes<Input> = {
 
 // ==================== Find Many ==================== //
 
-const userListCached = cache(async <T extends FindManyUserProps>(params: T) => UserService.findMany(params), ["user"], {
+const userListCached = cache(async <T extends FindManyUserProps>(params: Exact<FindManyUserProps, T>) => UserService.findMany(params), ["user"], {
     revalidate,
     tags: ["user"],
 });
 
 export const SelectUserList = async <T extends FindManyUserProps>(request: NextRequest) => {
     try {
-        const params: T = parseAndDecodeParams(request);
-        const response = await userListCached<T>(params);
+        const params: Exact<FindManyUserProps, T> = parseAndDecodeParams(request);
+        const response = await userListCached(params);
         return NextResponse.json(response, { status: 200 });
     } catch (error) {
         return NextResponse.json({ error: "getUserListCached -> " + (error as Error).message }, { status: 500 });
@@ -41,15 +42,15 @@ export const SelectUserList = async <T extends FindManyUserProps>(request: NextR
 // ==================== Find Unique ==================== //
 
 const userUniqueCached = cache(
-    async <T extends FindUniqueUserProps>(params: T) => UserService.findUnique(params),
+    async <T extends FindUniqueUserProps>(params: Exact<FindUniqueUserProps, T>) => UserService.findUnique(params),
     ["user/unique"],
     { revalidate, tags: ["user/unique"] },
 );
 
 export const SelectUserUnique = async <T extends FindUniqueUserProps>(request: NextRequest) => {
     try {
-        const params: T = parseAndDecodeParams(request);
-        const response = await userUniqueCached<T>(params);
+        const params: Exact<FindUniqueUserProps, T> = parseAndDecodeParams(request);
+        const response = await userUniqueCached(params);
         return NextResponse.json(response, { status: 200 });
     } catch (error) {
         return NextResponse.json({ error: "getUserUniqueCached -> " + (error as Error).message }, { status: 500 });

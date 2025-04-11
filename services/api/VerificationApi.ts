@@ -3,16 +3,17 @@ import { CountVerificationProps, CountVerificationResponse, FindManyVerification
 import { parseAndDecodeParams, revalidate } from "@utils/FetchConfig";
 import { unstable_cache as cache } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
+import { Exact } from "@utils/FetchConfig";
 
 // ============== API Routes Types ============== //
 
 export type VerificationRoutes<Input> = {
     "/verification": {
-        params: FindManyVerificationProps,
+        params: Exact<FindManyVerificationProps, Input extends FindManyVerificationProps ? Input : never>,
         response: FindManyVerificationResponse<Input extends FindManyVerificationProps ? Input : never>
     },
     "/verification/unique": {
-        params: FindUniqueVerificationProps,
+        params: Exact<FindUniqueVerificationProps, Input extends FindUniqueVerificationProps ? Input : never>,
         response: FindUniqueVerificationResponse<Input extends FindUniqueVerificationProps ? Input : never>
     },
     "/verification/count": {
@@ -23,15 +24,15 @@ export type VerificationRoutes<Input> = {
 
 // ==================== Find Many ==================== //
 
-const verificationListCached = cache(async <T extends FindManyVerificationProps>(params: T) => VerificationService.findMany(params), ["verification"], {
+const verificationListCached = cache(async <T extends FindManyVerificationProps>(params: Exact<FindManyVerificationProps, T>) => VerificationService.findMany(params), ["verification"], {
     revalidate,
     tags: ["verification"],
 });
 
 export const SelectVerificationList = async <T extends FindManyVerificationProps>(request: NextRequest) => {
     try {
-        const params: T = parseAndDecodeParams(request);
-        const response = await verificationListCached<T>(params);
+        const params: Exact<FindManyVerificationProps, T> = parseAndDecodeParams(request);
+        const response = await verificationListCached(params);
         return NextResponse.json(response, { status: 200 });
     } catch (error) {
         return NextResponse.json({ error: "getVerificationListCached -> " + (error as Error).message }, { status: 500 });
@@ -41,15 +42,15 @@ export const SelectVerificationList = async <T extends FindManyVerificationProps
 // ==================== Find Unique ==================== //
 
 const verificationUniqueCached = cache(
-    async <T extends FindUniqueVerificationProps>(params: T) => VerificationService.findUnique(params),
+    async <T extends FindUniqueVerificationProps>(params: Exact<FindUniqueVerificationProps, T>) => VerificationService.findUnique(params),
     ["verification/unique"],
     { revalidate, tags: ["verification/unique"] },
 );
 
 export const SelectVerificationUnique = async <T extends FindUniqueVerificationProps>(request: NextRequest) => {
     try {
-        const params: T = parseAndDecodeParams(request);
-        const response = await verificationUniqueCached<T>(params);
+        const params: Exact<FindUniqueVerificationProps, T> = parseAndDecodeParams(request);
+        const response = await verificationUniqueCached(params);
         return NextResponse.json(response, { status: 200 });
     } catch (error) {
         return NextResponse.json({ error: "getVerificationUniqueCached -> " + (error as Error).message }, { status: 500 });

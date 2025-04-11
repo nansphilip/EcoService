@@ -3,16 +3,17 @@ import { CountContentProps, CountContentResponse, FindManyContentProps, FindMany
 import { parseAndDecodeParams, revalidate } from "@utils/FetchConfig";
 import { unstable_cache as cache } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
+import { Exact } from "@utils/FetchConfig";
 
 // ============== API Routes Types ============== //
 
 export type ContentRoutes<Input> = {
     "/content": {
-        params: FindManyContentProps,
+        params: Exact<FindManyContentProps, Input extends FindManyContentProps ? Input : never>,
         response: FindManyContentResponse<Input extends FindManyContentProps ? Input : never>
     },
     "/content/unique": {
-        params: FindUniqueContentProps,
+        params: Exact<FindUniqueContentProps, Input extends FindUniqueContentProps ? Input : never>,
         response: FindUniqueContentResponse<Input extends FindUniqueContentProps ? Input : never>
     },
     "/content/count": {
@@ -23,15 +24,15 @@ export type ContentRoutes<Input> = {
 
 // ==================== Find Many ==================== //
 
-const contentListCached = cache(async <T extends FindManyContentProps>(params: T) => ContentService.findMany(params), ["content"], {
+const contentListCached = cache(async <T extends FindManyContentProps>(params: Exact<FindManyContentProps, T>) => ContentService.findMany(params), ["content"], {
     revalidate,
     tags: ["content"],
 });
 
 export const SelectContentList = async <T extends FindManyContentProps>(request: NextRequest) => {
     try {
-        const params: T = parseAndDecodeParams(request);
-        const response = await contentListCached<T>(params);
+        const params: Exact<FindManyContentProps, T> = parseAndDecodeParams(request);
+        const response = await contentListCached(params);
         return NextResponse.json(response, { status: 200 });
     } catch (error) {
         return NextResponse.json({ error: "getContentListCached -> " + (error as Error).message }, { status: 500 });
@@ -41,15 +42,15 @@ export const SelectContentList = async <T extends FindManyContentProps>(request:
 // ==================== Find Unique ==================== //
 
 const contentUniqueCached = cache(
-    async <T extends FindUniqueContentProps>(params: T) => ContentService.findUnique(params),
+    async <T extends FindUniqueContentProps>(params: Exact<FindUniqueContentProps, T>) => ContentService.findUnique(params),
     ["content/unique"],
     { revalidate, tags: ["content/unique"] },
 );
 
 export const SelectContentUnique = async <T extends FindUniqueContentProps>(request: NextRequest) => {
     try {
-        const params: T = parseAndDecodeParams(request);
-        const response = await contentUniqueCached<T>(params);
+        const params: Exact<FindUniqueContentProps, T> = parseAndDecodeParams(request);
+        const response = await contentUniqueCached(params);
         return NextResponse.json(response, { status: 200 });
     } catch (error) {
         return NextResponse.json({ error: "getContentUniqueCached -> " + (error as Error).message }, { status: 500 });

@@ -1,11 +1,11 @@
 import PrismaInstance from "@lib/prisma";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { UserCount, CountUserProps, CountUserResponse, CreateUserProps, CreateUserResponse, DeleteUserProps, DeleteUserResponse, FindManyUserProps, FindManyUserResponse, FindUniqueUserProps, FindUniqueUserResponse, UpdateUserProps, UpdateUserResponse, UpsertUserProps, UpsertUserResponse, countUserSchema, createUserSchema, deleteUserSchema, selectUserSchema, selectManyUserSchema, updateUserSchema, upsertUserSchema } from "@services/types/UserType";
-import { ResponseFormat } from "@utils/FetchConfig";
+import { Exact, ResponseFormat } from "@utils/FetchConfig";
 import { ZodError } from "zod";
 
 export default class UserService {
-    static async create<T extends CreateUserProps>(props: T): Promise<ResponseFormat<CreateUserResponse<T>>> {
+    static async create<T extends CreateUserProps>(props: Exact<CreateUserProps, T>): Promise<ResponseFormat<CreateUserResponse<T>>> {
         try {
             const { data, include, omit, select } = createUserSchema.parse(props);
 
@@ -31,7 +31,7 @@ export default class UserService {
         }
     }
 
-    static async upsert<T extends UpsertUserProps>(props: T): Promise<ResponseFormat<UpsertUserResponse<T>>> {
+    static async upsert<T extends UpsertUserProps>(props: Exact<UpsertUserProps, T>): Promise<ResponseFormat<UpsertUserResponse<T>>> {
         try {
             const { create, update, where, include, omit, select } = upsertUserSchema.parse(props);
 
@@ -59,7 +59,7 @@ export default class UserService {
         }
     }
 
-    static async update<T extends UpdateUserProps>(props: T): Promise<ResponseFormat<UpdateUserResponse<T>>> {
+    static async update<T extends UpdateUserProps>(props: Exact<UpdateUserProps, T>): Promise<ResponseFormat<UpdateUserResponse<T>>> {
         try {
             const { data, where, include, omit, select } = updateUserSchema.parse(props);
 
@@ -86,7 +86,7 @@ export default class UserService {
         }
     }
 
-    static async delete<T extends DeleteUserProps>(props: T): Promise<ResponseFormat<DeleteUserResponse<T>>> {
+    static async delete<T extends DeleteUserProps>(props: Exact<DeleteUserProps, T>): Promise<ResponseFormat<DeleteUserResponse<T>>> {
         try {
             const { where, include, omit, select } = deleteUserSchema.parse(props);
 
@@ -112,7 +112,7 @@ export default class UserService {
         }
     }
 
-    static async findUnique<T extends FindUniqueUserProps>(props: T): Promise<ResponseFormat<FindUniqueUserResponse<T>>> {
+    static async findUnique<T extends FindUniqueUserProps>(props: Exact<FindUniqueUserProps, T>): Promise<ResponseFormat<FindUniqueUserResponse<T>>> {
         try {
             const { where, include, omit, select } = selectUserSchema.parse(props);
 
@@ -138,7 +138,7 @@ export default class UserService {
         }
     }
 
-    static async findMany<T extends FindManyUserProps>(props: T): Promise<ResponseFormat<FindManyUserResponse<T>>> {
+    static async findMany<T extends FindManyUserProps>(props: Exact<FindManyUserProps, T>): Promise<ResponseFormat<FindManyUserResponse<T>>> {
         try {
             const {
                 cursor,

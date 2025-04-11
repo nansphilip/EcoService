@@ -2,8 +2,9 @@
 
 import OrderService from "@services/class/OrderClass";
 import { CountOrderProps, CountOrderResponse, CreateOrderProps, CreateOrderResponse, DeleteOrderProps, DeleteOrderResponse, FindManyOrderProps, FindManyOrderResponse, FindUniqueOrderProps, FindUniqueOrderResponse, UpdateOrderProps, UpdateOrderResponse, UpsertOrderProps, UpsertOrderResponse } from "@services/types/OrderType";
+import { Exact } from "@utils/FetchConfig";
 
-export const CreateOrder = async <T extends CreateOrderProps>(props: T): Promise<CreateOrderResponse<T>> => {
+export const CreateOrder = async <T extends CreateOrderProps>(props: Exact<CreateOrderProps, T>): Promise<CreateOrderResponse<T>> => {
     try {
         const { data, error } = await OrderService.create(props);
         if (!data || error) throw new Error(error);
@@ -13,7 +14,7 @@ export const CreateOrder = async <T extends CreateOrderProps>(props: T): Promise
     }
 };
 
-export const UpsertOrder = async <T extends UpsertOrderProps>(props: T): Promise<UpsertOrderResponse<T>> => {
+export const UpsertOrder = async <T extends UpsertOrderProps>(props: Exact<UpsertOrderProps, T>): Promise<UpsertOrderResponse<T>> => {
     try {
         const { data, error } = await OrderService.upsert(props);
         if (!data || error) throw new Error(error);
@@ -23,7 +24,7 @@ export const UpsertOrder = async <T extends UpsertOrderProps>(props: T): Promise
     }
 };
 
-export const UpdateOrder = async <T extends UpdateOrderProps>(props: T): Promise<UpdateOrderResponse<T>> => {
+export const UpdateOrder = async <T extends UpdateOrderProps>(props: Exact<UpdateOrderProps, T>): Promise<UpdateOrderResponse<T>> => {
     try {
         const { data, error } = await OrderService.update(props);
         if (!data || error) throw new Error(error);
@@ -33,7 +34,7 @@ export const UpdateOrder = async <T extends UpdateOrderProps>(props: T): Promise
     }
 };
 
-export const DeleteOrder = async <T extends DeleteOrderProps>(props: T): Promise<DeleteOrderResponse<T>> => {
+export const DeleteOrder = async <T extends DeleteOrderProps>(props: Exact<DeleteOrderProps, T>): Promise<DeleteOrderResponse<T>> => {
     try {
         const { data, error } = await OrderService.delete(props);
         if (!data || error) throw new Error(error);
@@ -47,7 +48,7 @@ export const DeleteOrder = async <T extends DeleteOrderProps>(props: T): Promise
  * WARNING: do not use this for fetching data -> use API routes with caching instead
  */
 export const SelectOrder = async <T extends FindUniqueOrderProps>(
-    props: T
+    props: Exact<FindUniqueOrderProps, T>
 ): Promise<FindUniqueOrderResponse<T>> => {
     try {
         const { data, error } = await OrderService.findUnique(props);
@@ -62,7 +63,7 @@ export const SelectOrder = async <T extends FindUniqueOrderProps>(
  * WARNING: do not use this for fetching data -> use API routes with caching instead
  */
 export const SelectOrderList = async <T extends FindManyOrderProps>(
-    props: T
+    props: Exact<FindManyOrderProps, T>
 ): Promise<FindManyOrderResponse<T>> => {
     try {
         const { data, error } = await OrderService.findMany(props);

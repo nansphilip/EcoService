@@ -2,8 +2,9 @@
 
 import SessionService from "@services/class/SessionClass";
 import { CountSessionProps, CountSessionResponse, CreateSessionProps, CreateSessionResponse, DeleteSessionProps, DeleteSessionResponse, FindManySessionProps, FindManySessionResponse, FindUniqueSessionProps, FindUniqueSessionResponse, UpdateSessionProps, UpdateSessionResponse, UpsertSessionProps, UpsertSessionResponse } from "@services/types/SessionType";
+import { Exact } from "@utils/FetchConfig";
 
-export const CreateSession = async <T extends CreateSessionProps>(props: T): Promise<CreateSessionResponse<T>> => {
+export const CreateSession = async <T extends CreateSessionProps>(props: Exact<CreateSessionProps, T>): Promise<CreateSessionResponse<T>> => {
     try {
         const { data, error } = await SessionService.create(props);
         if (!data || error) throw new Error(error);
@@ -13,7 +14,7 @@ export const CreateSession = async <T extends CreateSessionProps>(props: T): Pro
     }
 };
 
-export const UpsertSession = async <T extends UpsertSessionProps>(props: T): Promise<UpsertSessionResponse<T>> => {
+export const UpsertSession = async <T extends UpsertSessionProps>(props: Exact<UpsertSessionProps, T>): Promise<UpsertSessionResponse<T>> => {
     try {
         const { data, error } = await SessionService.upsert(props);
         if (!data || error) throw new Error(error);
@@ -23,7 +24,7 @@ export const UpsertSession = async <T extends UpsertSessionProps>(props: T): Pro
     }
 };
 
-export const UpdateSession = async <T extends UpdateSessionProps>(props: T): Promise<UpdateSessionResponse<T>> => {
+export const UpdateSession = async <T extends UpdateSessionProps>(props: Exact<UpdateSessionProps, T>): Promise<UpdateSessionResponse<T>> => {
     try {
         const { data, error } = await SessionService.update(props);
         if (!data || error) throw new Error(error);
@@ -33,7 +34,7 @@ export const UpdateSession = async <T extends UpdateSessionProps>(props: T): Pro
     }
 };
 
-export const DeleteSession = async <T extends DeleteSessionProps>(props: T): Promise<DeleteSessionResponse<T>> => {
+export const DeleteSession = async <T extends DeleteSessionProps>(props: Exact<DeleteSessionProps, T>): Promise<DeleteSessionResponse<T>> => {
     try {
         const { data, error } = await SessionService.delete(props);
         if (!data || error) throw new Error(error);
@@ -47,7 +48,7 @@ export const DeleteSession = async <T extends DeleteSessionProps>(props: T): Pro
  * WARNING: do not use this for fetching data -> use API routes with caching instead
  */
 export const SelectSession = async <T extends FindUniqueSessionProps>(
-    props: T
+    props: Exact<FindUniqueSessionProps, T>
 ): Promise<FindUniqueSessionResponse<T>> => {
     try {
         const { data, error } = await SessionService.findUnique(props);
@@ -62,7 +63,7 @@ export const SelectSession = async <T extends FindUniqueSessionProps>(
  * WARNING: do not use this for fetching data -> use API routes with caching instead
  */
 export const SelectSessionList = async <T extends FindManySessionProps>(
-    props: T
+    props: Exact<FindManySessionProps, T>
 ): Promise<FindManySessionResponse<T>> => {
     try {
         const { data, error } = await SessionService.findMany(props);

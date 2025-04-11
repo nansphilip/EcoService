@@ -2,8 +2,9 @@
 
 import UserService from "@services/class/UserClass";
 import { CountUserProps, CountUserResponse, CreateUserProps, CreateUserResponse, DeleteUserProps, DeleteUserResponse, FindManyUserProps, FindManyUserResponse, FindUniqueUserProps, FindUniqueUserResponse, UpdateUserProps, UpdateUserResponse, UpsertUserProps, UpsertUserResponse } from "@services/types/UserType";
+import { Exact } from "@utils/FetchConfig";
 
-export const CreateUser = async <T extends CreateUserProps>(props: T): Promise<CreateUserResponse<T>> => {
+export const CreateUser = async <T extends CreateUserProps>(props: Exact<CreateUserProps, T>): Promise<CreateUserResponse<T>> => {
     try {
         const { data, error } = await UserService.create(props);
         if (!data || error) throw new Error(error);
@@ -13,7 +14,7 @@ export const CreateUser = async <T extends CreateUserProps>(props: T): Promise<C
     }
 };
 
-export const UpsertUser = async <T extends UpsertUserProps>(props: T): Promise<UpsertUserResponse<T>> => {
+export const UpsertUser = async <T extends UpsertUserProps>(props: Exact<UpsertUserProps, T>): Promise<UpsertUserResponse<T>> => {
     try {
         const { data, error } = await UserService.upsert(props);
         if (!data || error) throw new Error(error);
@@ -23,7 +24,7 @@ export const UpsertUser = async <T extends UpsertUserProps>(props: T): Promise<U
     }
 };
 
-export const UpdateUser = async <T extends UpdateUserProps>(props: T): Promise<UpdateUserResponse<T>> => {
+export const UpdateUser = async <T extends UpdateUserProps>(props: Exact<UpdateUserProps, T>): Promise<UpdateUserResponse<T>> => {
     try {
         const { data, error } = await UserService.update(props);
         if (!data || error) throw new Error(error);
@@ -33,7 +34,7 @@ export const UpdateUser = async <T extends UpdateUserProps>(props: T): Promise<U
     }
 };
 
-export const DeleteUser = async <T extends DeleteUserProps>(props: T): Promise<DeleteUserResponse<T>> => {
+export const DeleteUser = async <T extends DeleteUserProps>(props: Exact<DeleteUserProps, T>): Promise<DeleteUserResponse<T>> => {
     try {
         const { data, error } = await UserService.delete(props);
         if (!data || error) throw new Error(error);
@@ -47,7 +48,7 @@ export const DeleteUser = async <T extends DeleteUserProps>(props: T): Promise<D
  * WARNING: do not use this for fetching data -> use API routes with caching instead
  */
 export const SelectUser = async <T extends FindUniqueUserProps>(
-    props: T
+    props: Exact<FindUniqueUserProps, T>
 ): Promise<FindUniqueUserResponse<T>> => {
     try {
         const { data, error } = await UserService.findUnique(props);
@@ -62,7 +63,7 @@ export const SelectUser = async <T extends FindUniqueUserProps>(
  * WARNING: do not use this for fetching data -> use API routes with caching instead
  */
 export const SelectUserList = async <T extends FindManyUserProps>(
-    props: T
+    props: Exact<FindManyUserProps, T>
 ): Promise<FindManyUserResponse<T>> => {
     try {
         const { data, error } = await UserService.findMany(props);

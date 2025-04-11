@@ -2,8 +2,9 @@
 
 import ProductService from "@services/class/ProductClass";
 import { CountProductProps, CountProductResponse, CreateProductProps, CreateProductResponse, DeleteProductProps, DeleteProductResponse, FindManyProductProps, FindManyProductResponse, FindUniqueProductProps, FindUniqueProductResponse, UpdateProductProps, UpdateProductResponse, UpsertProductProps, UpsertProductResponse } from "@services/types/ProductType";
+import { Exact } from "@utils/FetchConfig";
 
-export const CreateProduct = async <T extends CreateProductProps>(props: T): Promise<CreateProductResponse<T>> => {
+export const CreateProduct = async <T extends CreateProductProps>(props: Exact<CreateProductProps, T>): Promise<CreateProductResponse<T>> => {
     try {
         const { data, error } = await ProductService.create(props);
         if (!data || error) throw new Error(error);
@@ -13,7 +14,7 @@ export const CreateProduct = async <T extends CreateProductProps>(props: T): Pro
     }
 };
 
-export const UpsertProduct = async <T extends UpsertProductProps>(props: T): Promise<UpsertProductResponse<T>> => {
+export const UpsertProduct = async <T extends UpsertProductProps>(props: Exact<UpsertProductProps, T>): Promise<UpsertProductResponse<T>> => {
     try {
         const { data, error } = await ProductService.upsert(props);
         if (!data || error) throw new Error(error);
@@ -23,7 +24,7 @@ export const UpsertProduct = async <T extends UpsertProductProps>(props: T): Pro
     }
 };
 
-export const UpdateProduct = async <T extends UpdateProductProps>(props: T): Promise<UpdateProductResponse<T>> => {
+export const UpdateProduct = async <T extends UpdateProductProps>(props: Exact<UpdateProductProps, T>): Promise<UpdateProductResponse<T>> => {
     try {
         const { data, error } = await ProductService.update(props);
         if (!data || error) throw new Error(error);
@@ -33,7 +34,7 @@ export const UpdateProduct = async <T extends UpdateProductProps>(props: T): Pro
     }
 };
 
-export const DeleteProduct = async <T extends DeleteProductProps>(props: T): Promise<DeleteProductResponse<T>> => {
+export const DeleteProduct = async <T extends DeleteProductProps>(props: Exact<DeleteProductProps, T>): Promise<DeleteProductResponse<T>> => {
     try {
         const { data, error } = await ProductService.delete(props);
         if (!data || error) throw new Error(error);
@@ -47,7 +48,7 @@ export const DeleteProduct = async <T extends DeleteProductProps>(props: T): Pro
  * WARNING: do not use this for fetching data -> use API routes with caching instead
  */
 export const SelectProduct = async <T extends FindUniqueProductProps>(
-    props: T
+    props: Exact<FindUniqueProductProps, T>
 ): Promise<FindUniqueProductResponse<T>> => {
     try {
         const { data, error } = await ProductService.findUnique(props);
@@ -62,7 +63,7 @@ export const SelectProduct = async <T extends FindUniqueProductProps>(
  * WARNING: do not use this for fetching data -> use API routes with caching instead
  */
 export const SelectProductList = async <T extends FindManyProductProps>(
-    props: T
+    props: Exact<FindManyProductProps, T>
 ): Promise<FindManyProductResponse<T>> => {
     try {
         const { data, error } = await ProductService.findMany(props);

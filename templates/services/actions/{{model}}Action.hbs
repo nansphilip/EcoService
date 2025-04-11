@@ -2,8 +2,9 @@
 
 import {{modelName}}Service from "@services/class/{{modelName}}Class";
 import { Count{{modelName}}Props, Count{{modelName}}Response, Create{{modelName}}Props, Create{{modelName}}Response, Delete{{modelName}}Props, Delete{{modelName}}Response, FindMany{{modelName}}Props, FindMany{{modelName}}Response, FindUnique{{modelName}}Props, FindUnique{{modelName}}Response, Update{{modelName}}Props, Update{{modelName}}Response, Upsert{{modelName}}Props, Upsert{{modelName}}Response } from "@services/types/{{modelName}}Type";
+import { Exact } from "@utils/FetchConfig";
 
-export const Create{{modelName}} = async <T extends Create{{modelName}}Props>(props: T): Promise<Create{{modelName}}Response<T>> => {
+export const Create{{modelName}} = async <T extends Create{{modelName}}Props>(props: Exact<Create{{modelName}}Props, T>): Promise<Create{{modelName}}Response<T>> => {
     try {
         const { data, error } = await {{modelName}}Service.create(props);
         if (!data || error) throw new Error(error);
@@ -13,7 +14,7 @@ export const Create{{modelName}} = async <T extends Create{{modelName}}Props>(pr
     }
 };
 
-export const Upsert{{modelName}} = async <T extends Upsert{{modelName}}Props>(props: T): Promise<Upsert{{modelName}}Response<T>> => {
+export const Upsert{{modelName}} = async <T extends Upsert{{modelName}}Props>(props: Exact<Upsert{{modelName}}Props, T>): Promise<Upsert{{modelName}}Response<T>> => {
     try {
         const { data, error } = await {{modelName}}Service.upsert(props);
         if (!data || error) throw new Error(error);
@@ -23,7 +24,7 @@ export const Upsert{{modelName}} = async <T extends Upsert{{modelName}}Props>(pr
     }
 };
 
-export const Update{{modelName}} = async <T extends Update{{modelName}}Props>(props: T): Promise<Update{{modelName}}Response<T>> => {
+export const Update{{modelName}} = async <T extends Update{{modelName}}Props>(props: Exact<Update{{modelName}}Props, T>): Promise<Update{{modelName}}Response<T>> => {
     try {
         const { data, error } = await {{modelName}}Service.update(props);
         if (!data || error) throw new Error(error);
@@ -33,7 +34,7 @@ export const Update{{modelName}} = async <T extends Update{{modelName}}Props>(pr
     }
 };
 
-export const Delete{{modelName}} = async <T extends Delete{{modelName}}Props>(props: T): Promise<Delete{{modelName}}Response<T>> => {
+export const Delete{{modelName}} = async <T extends Delete{{modelName}}Props>(props: Exact<Delete{{modelName}}Props, T>): Promise<Delete{{modelName}}Response<T>> => {
     try {
         const { data, error } = await {{modelName}}Service.delete(props);
         if (!data || error) throw new Error(error);
@@ -47,7 +48,7 @@ export const Delete{{modelName}} = async <T extends Delete{{modelName}}Props>(pr
  * WARNING: do not use this for fetching data -> use API routes with caching instead
  */
 export const Select{{modelName}} = async <T extends FindUnique{{modelName}}Props>(
-    props: T
+    props: Exact<FindUnique{{modelName}}Props, T>
 ): Promise<FindUnique{{modelName}}Response<T>> => {
     try {
         const { data, error } = await {{modelName}}Service.findUnique(props);
@@ -62,7 +63,7 @@ export const Select{{modelName}} = async <T extends FindUnique{{modelName}}Props
  * WARNING: do not use this for fetching data -> use API routes with caching instead
  */
 export const Select{{modelName}}List = async <T extends FindMany{{modelName}}Props>(
-    props: T
+    props: Exact<FindMany{{modelName}}Props, T>
 ): Promise<FindMany{{modelName}}Response<T>> => {
     try {
         const { data, error } = await {{modelName}}Service.findMany(props);

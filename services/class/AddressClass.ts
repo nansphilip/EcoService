@@ -1,11 +1,11 @@
 import PrismaInstance from "@lib/prisma";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { AddressCount, CountAddressProps, CountAddressResponse, CreateAddressProps, CreateAddressResponse, DeleteAddressProps, DeleteAddressResponse, FindManyAddressProps, FindManyAddressResponse, FindUniqueAddressProps, FindUniqueAddressResponse, UpdateAddressProps, UpdateAddressResponse, UpsertAddressProps, UpsertAddressResponse, countAddressSchema, createAddressSchema, deleteAddressSchema, selectAddressSchema, selectManyAddressSchema, updateAddressSchema, upsertAddressSchema } from "@services/types/AddressType";
-import { ResponseFormat } from "@utils/FetchConfig";
+import { Exact, ResponseFormat } from "@utils/FetchConfig";
 import { ZodError } from "zod";
 
 export default class AddressService {
-    static async create<T extends CreateAddressProps>(props: T): Promise<ResponseFormat<CreateAddressResponse<T>>> {
+    static async create<T extends CreateAddressProps>(props: Exact<CreateAddressProps, T>): Promise<ResponseFormat<CreateAddressResponse<T>>> {
         try {
             const { data, include, omit, select } = createAddressSchema.parse(props);
 
@@ -31,7 +31,7 @@ export default class AddressService {
         }
     }
 
-    static async upsert<T extends UpsertAddressProps>(props: T): Promise<ResponseFormat<UpsertAddressResponse<T>>> {
+    static async upsert<T extends UpsertAddressProps>(props: Exact<UpsertAddressProps, T>): Promise<ResponseFormat<UpsertAddressResponse<T>>> {
         try {
             const { create, update, where, include, omit, select } = upsertAddressSchema.parse(props);
 
@@ -59,7 +59,7 @@ export default class AddressService {
         }
     }
 
-    static async update<T extends UpdateAddressProps>(props: T): Promise<ResponseFormat<UpdateAddressResponse<T>>> {
+    static async update<T extends UpdateAddressProps>(props: Exact<UpdateAddressProps, T>): Promise<ResponseFormat<UpdateAddressResponse<T>>> {
         try {
             const { data, where, include, omit, select } = updateAddressSchema.parse(props);
 
@@ -86,7 +86,7 @@ export default class AddressService {
         }
     }
 
-    static async delete<T extends DeleteAddressProps>(props: T): Promise<ResponseFormat<DeleteAddressResponse<T>>> {
+    static async delete<T extends DeleteAddressProps>(props: Exact<DeleteAddressProps, T>): Promise<ResponseFormat<DeleteAddressResponse<T>>> {
         try {
             const { where, include, omit, select } = deleteAddressSchema.parse(props);
 
@@ -112,7 +112,7 @@ export default class AddressService {
         }
     }
 
-    static async findUnique<T extends FindUniqueAddressProps>(props: T): Promise<ResponseFormat<FindUniqueAddressResponse<T>>> {
+    static async findUnique<T extends FindUniqueAddressProps>(props: Exact<FindUniqueAddressProps, T>): Promise<ResponseFormat<FindUniqueAddressResponse<T>>> {
         try {
             const { where, include, omit, select } = selectAddressSchema.parse(props);
 
@@ -138,7 +138,7 @@ export default class AddressService {
         }
     }
 
-    static async findMany<T extends FindManyAddressProps>(props: T): Promise<ResponseFormat<FindManyAddressResponse<T>>> {
+    static async findMany<T extends FindManyAddressProps>(props: Exact<FindManyAddressProps, T>): Promise<ResponseFormat<FindManyAddressResponse<T>>> {
         try {
             const {
                 cursor,

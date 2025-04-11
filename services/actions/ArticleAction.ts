@@ -2,8 +2,9 @@
 
 import ArticleService from "@services/class/ArticleClass";
 import { CountArticleProps, CountArticleResponse, CreateArticleProps, CreateArticleResponse, DeleteArticleProps, DeleteArticleResponse, FindManyArticleProps, FindManyArticleResponse, FindUniqueArticleProps, FindUniqueArticleResponse, UpdateArticleProps, UpdateArticleResponse, UpsertArticleProps, UpsertArticleResponse } from "@services/types/ArticleType";
+import { Exact } from "@utils/FetchConfig";
 
-export const CreateArticle = async <T extends CreateArticleProps>(props: T): Promise<CreateArticleResponse<T>> => {
+export const CreateArticle = async <T extends CreateArticleProps>(props: Exact<CreateArticleProps, T>): Promise<CreateArticleResponse<T>> => {
     try {
         const { data, error } = await ArticleService.create(props);
         if (!data || error) throw new Error(error);
@@ -13,7 +14,7 @@ export const CreateArticle = async <T extends CreateArticleProps>(props: T): Pro
     }
 };
 
-export const UpsertArticle = async <T extends UpsertArticleProps>(props: T): Promise<UpsertArticleResponse<T>> => {
+export const UpsertArticle = async <T extends UpsertArticleProps>(props: Exact<UpsertArticleProps, T>): Promise<UpsertArticleResponse<T>> => {
     try {
         const { data, error } = await ArticleService.upsert(props);
         if (!data || error) throw new Error(error);
@@ -23,7 +24,7 @@ export const UpsertArticle = async <T extends UpsertArticleProps>(props: T): Pro
     }
 };
 
-export const UpdateArticle = async <T extends UpdateArticleProps>(props: T): Promise<UpdateArticleResponse<T>> => {
+export const UpdateArticle = async <T extends UpdateArticleProps>(props: Exact<UpdateArticleProps, T>): Promise<UpdateArticleResponse<T>> => {
     try {
         const { data, error } = await ArticleService.update(props);
         if (!data || error) throw new Error(error);
@@ -33,7 +34,7 @@ export const UpdateArticle = async <T extends UpdateArticleProps>(props: T): Pro
     }
 };
 
-export const DeleteArticle = async <T extends DeleteArticleProps>(props: T): Promise<DeleteArticleResponse<T>> => {
+export const DeleteArticle = async <T extends DeleteArticleProps>(props: Exact<DeleteArticleProps, T>): Promise<DeleteArticleResponse<T>> => {
     try {
         const { data, error } = await ArticleService.delete(props);
         if (!data || error) throw new Error(error);
@@ -47,7 +48,7 @@ export const DeleteArticle = async <T extends DeleteArticleProps>(props: T): Pro
  * WARNING: do not use this for fetching data -> use API routes with caching instead
  */
 export const SelectArticle = async <T extends FindUniqueArticleProps>(
-    props: T
+    props: Exact<FindUniqueArticleProps, T>
 ): Promise<FindUniqueArticleResponse<T>> => {
     try {
         const { data, error } = await ArticleService.findUnique(props);
@@ -62,7 +63,7 @@ export const SelectArticle = async <T extends FindUniqueArticleProps>(
  * WARNING: do not use this for fetching data -> use API routes with caching instead
  */
 export const SelectArticleList = async <T extends FindManyArticleProps>(
-    props: T
+    props: Exact<FindManyArticleProps, T>
 ): Promise<FindManyArticleResponse<T>> => {
     try {
         const { data, error } = await ArticleService.findMany(props);

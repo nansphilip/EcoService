@@ -2,8 +2,9 @@
 
 import AddressService from "@services/class/AddressClass";
 import { CountAddressProps, CountAddressResponse, CreateAddressProps, CreateAddressResponse, DeleteAddressProps, DeleteAddressResponse, FindManyAddressProps, FindManyAddressResponse, FindUniqueAddressProps, FindUniqueAddressResponse, UpdateAddressProps, UpdateAddressResponse, UpsertAddressProps, UpsertAddressResponse } from "@services/types/AddressType";
+import { Exact } from "@utils/FetchConfig";
 
-export const CreateAddress = async <T extends CreateAddressProps>(props: T): Promise<CreateAddressResponse<T>> => {
+export const CreateAddress = async <T extends CreateAddressProps>(props: Exact<CreateAddressProps, T>): Promise<CreateAddressResponse<T>> => {
     try {
         const { data, error } = await AddressService.create(props);
         if (!data || error) throw new Error(error);
@@ -13,7 +14,7 @@ export const CreateAddress = async <T extends CreateAddressProps>(props: T): Pro
     }
 };
 
-export const UpsertAddress = async <T extends UpsertAddressProps>(props: T): Promise<UpsertAddressResponse<T>> => {
+export const UpsertAddress = async <T extends UpsertAddressProps>(props: Exact<UpsertAddressProps, T>): Promise<UpsertAddressResponse<T>> => {
     try {
         const { data, error } = await AddressService.upsert(props);
         if (!data || error) throw new Error(error);
@@ -23,7 +24,7 @@ export const UpsertAddress = async <T extends UpsertAddressProps>(props: T): Pro
     }
 };
 
-export const UpdateAddress = async <T extends UpdateAddressProps>(props: T): Promise<UpdateAddressResponse<T>> => {
+export const UpdateAddress = async <T extends UpdateAddressProps>(props: Exact<UpdateAddressProps, T>): Promise<UpdateAddressResponse<T>> => {
     try {
         const { data, error } = await AddressService.update(props);
         if (!data || error) throw new Error(error);
@@ -33,7 +34,7 @@ export const UpdateAddress = async <T extends UpdateAddressProps>(props: T): Pro
     }
 };
 
-export const DeleteAddress = async <T extends DeleteAddressProps>(props: T): Promise<DeleteAddressResponse<T>> => {
+export const DeleteAddress = async <T extends DeleteAddressProps>(props: Exact<DeleteAddressProps, T>): Promise<DeleteAddressResponse<T>> => {
     try {
         const { data, error } = await AddressService.delete(props);
         if (!data || error) throw new Error(error);
@@ -47,7 +48,7 @@ export const DeleteAddress = async <T extends DeleteAddressProps>(props: T): Pro
  * WARNING: do not use this for fetching data -> use API routes with caching instead
  */
 export const SelectAddress = async <T extends FindUniqueAddressProps>(
-    props: T
+    props: Exact<FindUniqueAddressProps, T>
 ): Promise<FindUniqueAddressResponse<T>> => {
     try {
         const { data, error } = await AddressService.findUnique(props);
@@ -62,7 +63,7 @@ export const SelectAddress = async <T extends FindUniqueAddressProps>(
  * WARNING: do not use this for fetching data -> use API routes with caching instead
  */
 export const SelectAddressList = async <T extends FindManyAddressProps>(
-    props: T
+    props: Exact<FindManyAddressProps, T>
 ): Promise<FindManyAddressResponse<T>> => {
     try {
         const { data, error } = await AddressService.findMany(props);
