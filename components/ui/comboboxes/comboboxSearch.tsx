@@ -11,36 +11,37 @@ import {
 import { combo } from "@lib/combo";
 import { Check, ChevronDown, X } from "lucide-react";
 import { ChangeEvent, KeyboardEvent, MouseEvent, useState } from "react";
-import { getOptionFromSlug, OptionComboType } from "./utils";
+import { ComboOptionType, getOptionFromSlug, MultiComboOptionType } from "./utils";
 
-type ComboboxProps<T extends string | undefined> = {
+type ComboboxProps<T extends ComboOptionType | MultiComboOptionType> = {
     label?: string;
     placeholder?: string;
     classComponent?: string;
+    initialOptions: T[];
     states: {
         query: string;
         setQuery: (value: string) => void;
         selected: string | null;
         setSelected: (value: string | null) => void;
-        options: OptionComboType<T>[];
-        setOptions: (value: OptionComboType<T>[]) => void;
+        options: T[];
+        setOptions: (value: T[]) => void;
     };
     isLoading?: boolean;
 };
 
-export const useComboboxStates = <T extends string | undefined>(
+export const useComboboxStates = <T extends ComboOptionType | MultiComboOptionType>(
     initialSelection: string | null,
-    initialOption: OptionComboType<T>[],
+    initialOptions: T[],
 ) => {
     const [query, setQuery] = useState<string>("");
     const [selected, setSelected] = useState<string | null>(initialSelection);
-    const [options, setOptions] = useState<OptionComboType<T>[]>(initialOption);
+    const [options, setOptions] = useState<T[]>(initialOptions);
     return { query, setQuery, selected, setSelected, options, setOptions };
 };
 
-export default function ComboboxSearch<T extends string | undefined>(props: ComboboxProps<T>) {
-    const { label, placeholder, classComponent, states, isLoading } = props;
-    const { setQuery, selected, setSelected, options } = states;
+export default function ComboboxSearch<T extends ComboOptionType | MultiComboOptionType>(props: ComboboxProps<T>) {
+    const { label, placeholder, classComponent, initialOptions, states, isLoading } = props;
+    const { setQuery, selected, setSelected, options, setOptions } = states;
 
     const handleQueryChange = (event: ChangeEvent<HTMLInputElement>) => {
         const value = event.target.value;
@@ -53,6 +54,7 @@ export default function ComboboxSearch<T extends string | undefined>(props: Comb
     };
 
     const handleDropdownClosing = () => {
+        setOptions(initialOptions);
         setQuery("");
     };
 
@@ -94,7 +96,7 @@ export default function ComboboxSearch<T extends string | undefined>(props: Comb
                 <ComboboxOptions
                     anchor="bottom"
                     className={combo(
-                        "w-(--input-width) border bg-white p-1 empty:invisible",
+                        "w-(--input-width) border border-gray-300 bg-white p-1 empty:invisible",
                         "rounded-lg",
                         "[--anchor-gap:6px]",
                     )}
@@ -102,7 +104,7 @@ export default function ComboboxSearch<T extends string | undefined>(props: Comb
                     {options.map((option, index) => (
                         <ComboboxOption
                             key={index}
-                            value={option.slug}
+                            value={option.slug} // TODO: change that to the option object
                             className={combo(
                                 "group bg-white data-focus:bg-blue-100",
                                 "flex items-center gap-2",
@@ -114,7 +116,7 @@ export default function ComboboxSearch<T extends string | undefined>(props: Comb
                             <Check className="invisible size-5 stroke-[2.5px] group-data-selected:visible" />
                             <div className="flex w-full items-center justify-start gap-2">
                                 <span>{option.name}</span>
-                                {option.type && (
+                                {"type" in option && (
                                     <span className="text-3xs rounded-full bg-gray-500 px-1.5 pt-[3px] pb-[2px] font-semibold text-white uppercase">
                                         {option.type}
                                     </span>
